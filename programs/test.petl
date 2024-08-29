@@ -1,0 +1,15 @@
+let t = readCsv(
+    "resources/examples/test1.csv",
+    ${
+        first: string,
+        last: string,
+        age: int,
+        email: string,
+        guid: string,
+        income: string
+    }
+);
+
+for row in collect(t) {
+    printl?(row)
+}
