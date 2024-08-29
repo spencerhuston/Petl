@@ -1,13 +1,12 @@
-from src.petl_enum import BaseEnum
+from src.utils.petl_enum import BaseEnum
 
 
-class Delimiter(str, BaseEnum):
+class RawDelimiter(str, BaseEnum):
     DENOTE = ":",
-    RETURN = "->",
     ASSIGN = "=",
     NEWLINE_SLASH = "\\",
     STMT_END = ";",
-    RANGE = "..",
+    PERIOD = ".",
     PLUS = "+",
     MINUS = "-",
     MULTIPLY = "*",
@@ -15,11 +14,6 @@ class Delimiter(str, BaseEnum):
     MODULUS = "%",
     GREATER_THAN = ">",
     LESS_THAN = "<",
-    GREATER_THAN_EQ = ">=",
-    LESS_THAN_EQ = "<=",
-    EQUAL = "==",
-    NOT_EQUAL = "!=",
-    LIST_CONCAT = "++",
     PIPE = "|",
     PAREN_LEFT = "(",
     PAREN_RIGHT = ")",
@@ -29,6 +23,5 @@ class Delimiter(str, BaseEnum):
     BRACE_RIGHT = "}",
     COMMNA = ",",
     CATCHALL = "_",
-    CASE_EXP = "=>",
-    BIRD = "|>",
     SCHEMA = "$"
+    EXCLAMATION = "!"

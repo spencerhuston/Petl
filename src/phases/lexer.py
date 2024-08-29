@@ -3,12 +3,12 @@ import traceback
 from copy import copy
 from typing import List, Optional
 
-from src.delimiter import Delimiter
-from src.file_position import FilePosition
-from src.petl_keyword import Keyword
-from src.petl_phase import PetlPhase
-from src.raw_delimiter import RawDelimiter
-from src.petl_token import Token
+from src.phases.petl_phase import PetlPhase
+from src.tokens.delimiter import Delimiter
+from src.tokens.petl_keyword import Keyword
+from src.tokens.petl_token import Token
+from src.tokens.raw_delimiter import RawDelimiter
+from src.utils.file_position import FilePosition
 
 
 class Lexer(PetlPhase):

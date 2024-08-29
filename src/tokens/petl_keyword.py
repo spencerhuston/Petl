@@ -1,4 +1,4 @@
-from src.petl_enum import BaseEnum
+from src.utils.petl_enum import BaseEnum
 
 
 class Keyword(str, BaseEnum):

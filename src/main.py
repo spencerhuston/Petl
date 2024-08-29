@@ -1,8 +1,8 @@
 import sys
 from typing import Dict, Any, Optional, List
 
-from src.log import Log
-from src.lexer import Lexer
+from src.phases.lexer import Lexer
+from src.utils.log import Log
 
 
 def parse_arguments():

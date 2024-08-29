@@ -1,4 +1,4 @@
-from src.log import Log
+from src.utils.log import Log
 
 
 class PetlPhase:

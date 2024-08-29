@@ -1,10 +1,9 @@
-from copy import copy
 from enum import Enum
 from typing import Union
 
-from src.file_position import FilePosition
-from src.delimiter import Delimiter
-from src.petl_keyword import Keyword
+from src.tokens.delimiter import Delimiter
+from src.tokens.petl_keyword import Keyword
+from src.utils.file_position import FilePosition
 
 
 class Token:
