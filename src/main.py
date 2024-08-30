@@ -3,7 +3,8 @@ from typing import Dict, Any, Optional, List
 
 from src.phases.lexer import Lexer
 from src.phases.parser import Parser
-from src.semantic_defintions.petl_expression import Expression
+from src.phases.type_resolver import TypeResolver
+from src.semantic_defintions.petl_expression import Expression, UnknownExpression
 from src.tokens.petl_token import Token
 from src.utils.log import Log
 
@@ -35,6 +36,9 @@ def execute_petl_script(petl_raw_str: str, debug: bool) -> bool:
     if tokens:
         parser: Parser = Parser(debug)
         root: Expression = parser.parse(tokens)
+        if root and not isinstance(root, UnknownExpression):
+            resolver: TypeResolver = TypeResolver(debug)
+            typed_root: Expression = resolver.resolve_expression(root)
     else:
         return False
 

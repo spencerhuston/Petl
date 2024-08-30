@@ -77,7 +77,7 @@ class Parser(PetlPhase):
         self.tokens_length = len(tokens)
         root: Optional[Expression] = self.parse_expression()
 
-        self.logger.debug_block("PARSED EXPRESSION", root.to_json_string())
+        self.logger.debug_block("PARSED EXPRESSION", root.to_string())
 
         return root
 
@@ -511,12 +511,17 @@ class Parser(PetlPhase):
             if alias:
                 if alias in self.aliases:
                     alias_type: PetlType = self.aliases[alias]
+                    self.advance()
+                    return alias_type
                 else:
-                    self.logger.error(f"Invalid alias \'{alias}\' provided\n{token.file_position.to_string}")
+                    self.logger.error(f"Invalid alias \'{alias}\' provided\n{token.file_position.to_string()}")
+                    return UnknownType()
             elif token:
-                self.logger.error(f"Invalid type signature\n{token.file_position.to_string}")
+                self.logger.error(f"Invalid type signature\n{token.file_position.to_string()}")
+                return UnknownType()
             else:
-                self.logger.error(f"Invalid type signature or end-of-file\n{token.file_position.to_string}")
+                self.logger.error(f"Invalid type signature or end-of-file\n{token.file_position.to_string()}")
+                return UnknownType()
 
         if self.match(Delimiter.RETURN, optional=True):
             return LambdaType(parameter_types=[first_type], return_type=self.parse_type())

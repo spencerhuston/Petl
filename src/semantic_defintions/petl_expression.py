@@ -1,19 +1,11 @@
-import dataclasses
-import json
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import Union, List, Optional, Tuple
+from pprint import pformat
+from typing import Union, List, Optional, Tuple, Self
 
 from src.semantic_defintions.operator import Operator
 from src.semantic_defintions.petl_types import PetlType, UnknownType
 from src.tokens.petl_token import Token
-
-
-class EnhancedJSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        if dataclasses.is_dataclass(o):
-            return dataclasses.asdict(o)
-        return super().default(o)
 
 
 @dataclass
@@ -21,8 +13,12 @@ class Expression(ABC):
     petl_type: PetlType = UnknownType()
     token: Token = Token()
 
-    def to_json_string(self):
-        return json.dumps(self, cls=EnhancedJSONEncoder)
+    def to_string(self):
+        return pformat(self)
+
+    def using_type(self, new_type: PetlType) -> Self:
+        self.petl_type = new_type
+        return self
 
 
 @dataclass
@@ -149,7 +145,7 @@ class Parameter:
 class Lambda(Expression):
     parameters: List[Parameter] = field(default_factory=list)
     return_type: PetlType = UnknownType()
-    after_lambda_expression: Expression = UnknownExpression()
+    body: Expression = UnknownExpression()
 
 
 @dataclass
