@@ -2,6 +2,8 @@ import sys
 from typing import Dict, Any, Optional, List
 
 from src.phases.lexer import Lexer
+from src.phases.parser import Parser
+from src.tokens.petl_token import Token
 from src.utils.log import Log
 
 
@@ -26,11 +28,12 @@ def read_petl_file(file_path: str, logger: Log) -> Optional[str]:
     return petl_file_str
 
 
-def execute_petl_script(petl_raw_str: str) -> bool:
-    lexer: Lexer = Lexer(logger.debug_enabled())
-    tokens: Optional[List[str]] = lexer.scan(petl_raw_str)
+def execute_petl_script(petl_raw_str: str, debug: bool) -> bool:
+    lexer: Lexer = Lexer(debug)
+    tokens: Optional[List[Token]] = lexer.scan(petl_raw_str)
     if tokens:
-        return True # TODO
+        parser: Parser = Parser(debug)
+        parser.parse(tokens)
     else:
         return False
 
@@ -44,6 +47,6 @@ if __name__ == "__main__":
     if arguments["file"]:
         petl_raw_str = read_petl_file(arguments["file"], logger)
         if petl_raw_str:
-            execute_petl_script(petl_raw_str)
+            execute_petl_script(petl_raw_str, debug)
     else: # start REPL
         logger.info("Petl REPL\n=========")

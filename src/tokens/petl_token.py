@@ -8,6 +8,7 @@ from src.utils.file_position import FilePosition
 
 class Token:
     class TokenType(Enum):
+        UNKNOWN = 0
         DELIMITER = 1
         KEYWORD = 2
         VALUE = 3
@@ -17,7 +18,7 @@ class Token:
     file_position: FilePosition
     token_value: Union[str, Keyword, Delimiter] = ""
 
-    def __init__(self, token_type: TokenType, file_position: FilePosition, token_value: str):
+    def __init__(self, token_type=TokenType.UNKNOWN, file_position=FilePosition(), token_value=""):
         self.token_type = token_type
         self.file_position = file_position
 

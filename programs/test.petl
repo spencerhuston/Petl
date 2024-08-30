@@ -11,5 +11,5 @@ let t = readCsv(
 );
 
 for row in collect(t) {
-    printl?(row)
+    println(row)
 }
