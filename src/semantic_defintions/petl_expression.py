@@ -184,6 +184,7 @@ class For(Expression):
     reference: str = ""
     iterable: Expression = UnknownExpression()
     body: Expression = UnknownExpression()
+    after_for_expression: Expression = UnknownExpression()
 
 
 @dataclass

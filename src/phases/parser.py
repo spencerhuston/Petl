@@ -296,7 +296,12 @@ class Parser(PetlPhase):
         self.match(Delimiter.BRACE_LEFT)
         body: Expression = self.parse_expression()
         self.match(Delimiter.BRACE_RIGHT)
-        return For(NoneType(), token, reference=element_reference, iterable=collection, body=body)
+
+        after_for_expression: Expression = UnknownExpression()
+        if self.match(Delimiter.STMT_END, optional=True):
+            after_for_expression = self.parse_expression()
+
+        return For(NoneType(), token, reference=element_reference, iterable=collection, body=body, after_for_expression=after_for_expression)
 
     def parse_collection_def(self) -> Optional[Expression]:
         token = self.current_token()

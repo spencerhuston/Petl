@@ -29,9 +29,25 @@ class TypeEnvironment:
             logger.error(f"Identifier {identifier} does not exist in this scope\n{token.file_position.to_string()}")
             return None
 
+
 class TypeResolver(PetlPhase):
     def __init__(self, debug=False):
         self.logger.__init__(debug)
+
+    def extract_iterable_type(self, collection_type: PetlType, token: Token) -> Optional[UnionType]:
+        if isinstance(collection_type, ListType):
+            return UnionType([collection_type.list_type])
+        elif isinstance(collection_type, TupleType):
+            return UnionType(collection_type.tuple_types)
+        elif isinstance(collection_type, DictType):
+            return UnionType([collection_type.key_type])
+        elif isinstance(collection_type, SchemaType):
+            return UnionType(collection_type.column_types)
+        elif isinstance(collection_type, TableType):
+            return UnionType(collection_type.schema_type.column_types)
+        else:
+            self.logger.error(f"Non-iterable provided for iterator\n{token.file_position.to_string()}")
+            return None
 
     def make_well_formed(self, t: PetlType, token: Token) -> PetlType:
         if isinstance(t, UnionType):
@@ -57,7 +73,7 @@ class TypeResolver(PetlPhase):
     def is_well_formed(self, t: PetlType) -> bool:
         if isinstance(t, UnknownType):
             return False
-        elif isinstance(t, UnionType)
+        elif isinstance(t, UnionType):
             return all(map(lambda ut: self.is_well_formed(ut), t.union_types))
         elif isinstance(t, ListType):
             return self.is_well_formed(t.list_type)
@@ -74,7 +90,6 @@ class TypeResolver(PetlPhase):
         else:
             return True
 
-
     def collection_types_conform(self, token: Token, expression_type_list: List[PetlType], expected_type_list: List[PetlType], environment: TypeEnvironment) -> List[PetlType]:
         zipped_types: List[Tuple[PetlType, PetlType]] = list(map(lambda t1, t2: (t1, t2), expression_type_list, expected_type_list))
         return list(map(lambda t: self._conform_types(token, t[0], t[1], environment), zipped_types))
@@ -84,8 +99,16 @@ class TypeResolver(PetlPhase):
             return self.make_well_formed(expression_type, token)
         elif isinstance(expression_type, UnknownType) and not isinstance(expected_type, UnknownType):
             return self.make_well_formed(expected_type, token)
-        if isinstance(expression_type, UnionType) and isinstance(expected_type, UnionType):
+        elif isinstance(expression_type, AnyType) and not isinstance(expected_type, AnyType):
+            return self.make_well_formed(expected_type)
+        elif not isinstance(expression_type, AnyType) and isinstance(expected_type, AnyType):
+            return self.make_well_formed(expression_type)
+        elif isinstance(expression_type, UnionType) and isinstance(expected_type, UnionType):
             return UnionType(self.collection_types_conform(token, expression_type.union_types, expected_type.union_types, environment))
+        elif isinstance(expression_type, UnionType) and not isinstance(expected_type, UnionType) and expected_type in expression_type.union_types:
+            return self.make_well_formed(expected_type, token)
+        elif not isinstance(expression_type, UnionType) and isinstance(expected_type, UnionType) and expression_type in expected_type.union_types:
+            return self.make_well_formed(expression_type, token)
         elif isinstance(expression_type, ListType) and isinstance(expected_type, ListType):
             return ListType(self._conform_types(token, expression_type.list_type, expected_type.list_type, environment))
         elif isinstance(expression_type, TupleType) and isinstance(expected_type, TupleType) and expression_type.tuple_types and expected_type.tuple_types:
@@ -174,7 +197,31 @@ class TypeResolver(PetlPhase):
         return Lambda(lambda_type, lambda_expression.token, lambda_expression.parameters, lambda_expression.return_type, body)
 
     def resolve_application(self, application: Application, environment: TypeEnvironment, expected_type: PetlType) -> Application:
-        pass
+        token: Token = application.token
+        typed_identifier: Expression = self.resolve(application.identifier, environment, UnknownType())
+        arguments: List[Expression] = copy(application.arguments)
+        if isinstance(typed_identifier.petl_type, LambdaType):
+            well_formed_arguments: List[Expression] = []
+            for argument, parameter_type in arguments, typed_identifier.petl_type.parameter_types:
+                well_formed_arguments.append(self.resolve(argument, environment, parameter_type))
+            well_formed_return_type: PetlType = self.conform_types(token, typed_identifier.petl_type.return_type, expected_type, environment)
+            Application(well_formed_return_type, token, typed_identifier, well_formed_arguments)
+        else:
+            if len(arguments) != 1:
+                self.logger.error(f"Type \'{typed_identifier.petl_type}\' requires one integer argument")
+                return application
+            argument: Expression = arguments[0]
+            well_formed_argument: Expression = UnknownExpression()
+            if isinstance(typed_identifier.petl_type, ListType):
+                well_formed_argument = self.resolve(argument, environment, IntType())
+            elif isinstance(typed_identifier.petl_type, DictType):
+                well_formed_argument = self.resolve(argument, environment, typed_identifier.petl_type.key_type)
+            elif isinstance(typed_identifier.petl_type, TupleType):
+                well_formed_argument = self.resolve(argument, environment, IntType())
+            elif isinstance(typed_identifier.petl_type, TableType):
+                well_formed_argument = self.resolve(argument, environment, StringType())
+            well_formed_type = self.conform_types(argument.token, typed_identifier.petl_type.list_type, expected_type, environment)
+            return Application(well_formed_type, token, typed_identifier, [well_formed_argument])
 
     def resolve_match(self, match: Match, environment: TypeEnvironment, expected_type: PetlType) -> Match:
         pass
@@ -183,13 +230,24 @@ class TypeResolver(PetlPhase):
         pass
 
     def resolve_reference(self, reference: Reference, environment: TypeEnvironment, expected_type: PetlType) -> Reference:
-        pass
+        return reference.using_type(self.conform_types(reference.token, environment.get(reference.identifier, reference.token, self.logger), expected_type, environment))
 
     def resolve_branch(self, branch: Branch, environment: TypeEnvironment, expected_type: PetlType) -> Branch:
-        pass
+        predicate: Expression = self.resolve(branch.predicate, environment, BoolType())
+        else_branch: Expression = self.resolve(branch.else_branch, environment, expected_type)
+        if_branch: Expression = self.resolve(branch.if_branch, environment, else_branch.petl_type)
+        return Branch(else_branch.petl_type, branch.token, predicate, if_branch, else_branch)
 
     def resolve_for(self, for_expression: For, environment: TypeEnvironment, expected_type: PetlType) -> For:
-        pass
+        iterable_expression: Expression = self.resolve(for_expression.iterable, environment, UnknownType())
+        iterable_type: Optional[UnionType] = self.extract_iterable_type(iterable_expression.petl_type, for_expression.token)
+        if iterable_type:
+            for_environment: TypeEnvironment = copy(environment).add(for_expression.reference, iterable_type)
+            body: Expression = self.resolve(for_expression.body, for_environment, NoneType())
+            after_for_expression: Expression = self.resolve(for_expression.after_for_expression, for_environment, expected_type)
+            return For(after_for_expression.petl_type, for_expression.token, for_expression.reference, iterable_expression, body, after_for_expression)
+        else:
+            return for_expression
 
     def resolve_list_definition(self, list_definition: ListDefinition, environment: TypeEnvironment, expected_type: PetlType) -> ListDefinition:
         pass
