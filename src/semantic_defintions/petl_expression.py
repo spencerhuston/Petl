@@ -1,7 +1,8 @@
 from abc import ABC
-from dataclasses import dataclass
-from typing import Union, List, Optional
+from dataclasses import dataclass, field
+from typing import Union, List, Optional, Type
 
+from src.semantic_defintions.operator import Operator
 from src.semantic_defintions.petl_types import PetlType, UnknownType
 from src.tokens.petl_token import Token
 
@@ -23,26 +24,32 @@ class UnknownExpression(Expression):
 
 # Start literal definitions
 
+@dataclass
 class Literal(ABC):
     value: Union[int, bool, str, None] = None
 
 
+@dataclass
 class IntLiteral(Literal):
     pass
 
 
+@dataclass
 class BoolLiteral(Literal):
     pass
 
 
+@dataclass
 class CharLiteral(Literal):
     pass
 
 
+@dataclass
 class StringLiteral(Literal):
     pass
 
 
+@dataclass
 class NoneLiteral(Literal):
     pass
 
@@ -61,11 +68,11 @@ class TypePattern(Pattern):
 
 
 class LiteralPattern(Pattern):
-    literal: Literal = NoneLiteral()
+    literal: Type[Literal] = NoneLiteral()
 
 
 class MultiLiteralPattern(Pattern):
-    literals: List[Literal] = []
+    literals: List[Type[Literal]] = field(default_factory=list)
 
 
 class RangePattern(Pattern):
@@ -91,6 +98,7 @@ class Case:
 # END AUXILIARY DEFINITIONS #
 #############################
 
+@dataclass
 class LitExpression(Expression):
     literal: Literal = Literal()
 
@@ -103,67 +111,80 @@ class Let(Expression):
     after_let_expression: Expression = UnknownExpression()
 
 
+@dataclass
 class Alias(Expression):
     identifier: str = ""
     alias_type: PetlType = UnknownType()
     after_alias_expression: Expression = UnknownExpression()
 
 
+@dataclass
 class Parameter:
     identifier: str = ""
     parameter_type: PetlType = UnknownType()
     token: Token = Token()
 
 
+@dataclass
 class Lambda(Expression):
-    parameters: List[Parameter] = []
+    parameters: List[Parameter] = field(default_factory=list)
     return_type: PetlType = UnknownType()
     after_lambda_expression: Expression = UnknownExpression()
 
 
+@dataclass
 class Application(Expression):
     identifier: Expression = UnknownExpression()
-    arguments: List[Expression] = []
+    arguments: List[Expression] = field(default_factory=list)
 
 
+@dataclass
 class Match(Expression):
     match_expression: Expression = UnknownExpression()
-    cases: List[Case] = []
+    cases: List[Case] = field(default_factory=list)
 
 
-# class Primitive(Expression):
-#     operator: Operator = UnknownOperator()
-#     left: Expression = UnknownExpression()
-#     right: Expression = UnknownExpression()
+@dataclass
+class Primitive(Expression):
+    operator: Operator = Operator()
+    left: Expression = UnknownExpression()
+    right: Expression = UnknownExpression()
 
 
+@dataclass
 class Reference(Expression):
     identifier: str = ""
 
 
+@dataclass
 class Branch(Expression):
     predicate: Expression = UnknownExpression()
     if_branch: Expression = UnknownExpression()
     else_branch: Expression = UnknownExpression()
 
 
+@dataclass
 class For(Expression):
     reference: str = ""
     iterable: Expression = UnknownExpression()
     body: Expression = UnknownExpression()
 
 
+@dataclass
 class ListDefinition(Expression):
-    values: List[Expression] = []
+    values: List[Expression] = field(default_factory=list)
 
 
+@dataclass
 class TupleDefinition(Expression):
-    values: List[Expression] = []
+    values: List[Expression] = field(default_factory=list)
 
 
+@dataclass
 class DictDefinition(Expression):
-    mapping: dict[Literal, Expression] = {}
+    mapping: dict[Type[Literal], Expression] = field(default_factory=dict)
 
 
+@dataclass
 class SchemaDefinition(Expression):
-    mapping: dict[str, PetlType] = {}
+    mapping: dict[str, PetlType] = field(default_factory=dict)

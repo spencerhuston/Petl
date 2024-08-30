@@ -1,17 +1,18 @@
 from enum import Enum
-from typing import Union
+from typing import Union, Optional
 
-from src.tokens.delimiter import Delimiter
-from src.tokens.petl_keyword import Keyword
+from src.semantic_defintions.operator import Operator
+from src.tokens.delimiter import Delimiter, delimiter_to_operator
+from src.tokens.petl_keyword import Keyword, keyword_to_operator
 from src.utils.file_position import FilePosition
 
 
 class Token:
     class TokenType(Enum):
-        UNKNOWN = 0
-        DELIMITER = 1
-        KEYWORD = 2
-        VALUE = 3
+        UNKNOWN = 0,
+        DELIMITER = 1,
+        KEYWORD = 2,
+        VALUE = 3,
         IDENT = 4
 
     token_type: TokenType = 0
@@ -31,6 +32,14 @@ class Token:
 
     def get_value(self) -> Union[str, Keyword, Delimiter]:
         return self.token_value
+
+    def to_operator(self) -> Optional[Operator]:
+        if self.token_type == Token.TokenType.DELIMITER:
+            return delimiter_to_operator(self.token_value)
+        elif self.token_type == Token.TokenType.KEYWORD:
+            return keyword_to_operator(self.token_value)
+        else:
+            return None
 
     def to_string(self) -> str:
         return f"{self.token_type}: {self.token_value}\n{self.file_position.to_string()}"
