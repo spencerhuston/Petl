@@ -1,19 +1,31 @@
+import dataclasses
+import json
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import Union, List, Optional, Type
+from typing import Union, List, Optional, Tuple
 
 from src.semantic_defintions.operator import Operator
 from src.semantic_defintions.petl_types import PetlType, UnknownType
 from src.tokens.petl_token import Token
 
 
+class EnhancedJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if dataclasses.is_dataclass(o):
+            return dataclasses.asdict(o)
+        return super().default(o)
+
+
 @dataclass
 class Expression(ABC):
     petl_type: PetlType = UnknownType()
     token: Token = Token()
-    pass
+
+    def to_json_string(self):
+        return json.dumps(self, cls=EnhancedJSONEncoder)
 
 
+@dataclass
 class UnknownExpression(Expression):
     pass
 
@@ -57,36 +69,44 @@ class NoneLiteral(Literal):
 # End literal definitions
 
 # Start pattern matching definitions
+@dataclass
 class Pattern(ABC):
     pass
 
 
+@dataclass
 class TypePattern(Pattern):
     identifier: str = ""
     case_type: PetlType = UnknownType()
     predicate: Optional[Expression] = None
 
 
+@dataclass
 class LiteralPattern(Pattern):
-    literal: Type[Literal] = NoneLiteral()
+    literal: Literal = NoneLiteral()
 
 
+@dataclass
 class MultiLiteralPattern(Pattern):
-    literals: List[Type[Literal]] = field(default_factory=list)
+    literals: List[Literal] = field(default_factory=list)
 
 
+@dataclass
 class RangePattern(Pattern):
     range: Expression = UnknownExpression()
 
 
+@dataclass
 class AnyPattern(Pattern):
     pass
 
 
+@dataclass
 class UnknownPattern(Pattern):
     pass
 
 
+@dataclass
 class Case:
     pattern: Pattern = UnknownPattern()
     case_expression: Expression = UnknownExpression()
@@ -176,15 +196,21 @@ class ListDefinition(Expression):
 
 
 @dataclass
+class RangeDefinition(Expression):
+    start: Literal = Literal()
+    end: Literal = Literal()
+
+
+@dataclass
 class TupleDefinition(Expression):
     values: List[Expression] = field(default_factory=list)
 
 
 @dataclass
 class DictDefinition(Expression):
-    mapping: dict[Type[Literal], Expression] = field(default_factory=dict)
+    mapping: List[Tuple[Literal, Expression]] = field(default_factory=list)
 
 
 @dataclass
 class SchemaDefinition(Expression):
-    mapping: dict[str, PetlType] = field(default_factory=dict)
+    mapping: List[Tuple[str, PetlType]] = field(default_factory=list)

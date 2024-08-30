@@ -3,6 +3,7 @@ from typing import Dict, Any, Optional, List
 
 from src.phases.lexer import Lexer
 from src.phases.parser import Parser
+from src.semantic_defintions.petl_expression import Expression
 from src.tokens.petl_token import Token
 from src.utils.log import Log
 
@@ -33,7 +34,7 @@ def execute_petl_script(petl_raw_str: str, debug: bool) -> bool:
     tokens: Optional[List[Token]] = lexer.scan(petl_raw_str)
     if tokens:
         parser: Parser = Parser(debug)
-        parser.parse(tokens)
+        root: Expression = parser.parse(tokens)
     else:
         return False
 

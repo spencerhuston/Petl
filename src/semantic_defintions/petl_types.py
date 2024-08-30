@@ -1,5 +1,6 @@
 import functools
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 from typing import List
 
 
@@ -17,48 +18,57 @@ def _type_list_to_string(main_type: str, type_list: List[PetlType]) -> str:
     return f"{main_type}[{type_list_str}]"
 
 
+@dataclass
 class AnyType(PetlType):
     def to_string(self) -> str:
         return "any"
 
 
+@dataclass
 class UnknownType(PetlType):
     def to_string(self) -> str:
         return "unknown"
 
 
+@dataclass
 class IntType(PetlType):
     def to_string(self) -> str:
         return "int"
 
 
+@dataclass
 class BoolType(PetlType):
     def to_string(self) -> str:
         return "bool"
 
 
+@dataclass
 class CharType(PetlType):
     def to_string(self) -> str:
         return "char"
 
 
+@dataclass
 class StringType(PetlType):
     def to_string(self) -> str:
         return "string"
 
 
+@dataclass
 class NoneType(PetlType):
     def to_string(self) -> str:
         return "none"
 
 
+@dataclass
 class UnionType(PetlType):
-    union_types: List[PetlType] = []
+    union_types: List[PetlType] = field(default_factory=list)
 
     def to_string(self) -> str:
         return _type_list_to_string("union", self.union_types)
 
 
+@dataclass
 class ListType(PetlType):
     list_type: PetlType = UnknownType()
 
@@ -66,13 +76,15 @@ class ListType(PetlType):
         return f"list[{self.list_type}]"
 
 
+@dataclass
 class TupleType(PetlType):
-    tuple_types: List[PetlType] = []
+    tuple_types: List[PetlType] = field(default_factory=list)
 
     def to_string(self) -> str:
         return _type_list_to_string("tuple", self.tuple_types)
 
 
+@dataclass
 class DictType(PetlType):
     key_type: PetlType = UnknownType()
     value_type: PetlType = UnknownType()
@@ -81,13 +93,15 @@ class DictType(PetlType):
         return f"dict[{self.key_type}:{self.value_type}]"
 
 
+@dataclass
 class SchemaType(PetlType):
-    column_types: List[PetlType] = []
+    column_types: List[PetlType] = field(default_factory=list)
 
     def to_string(self) -> str:
         return _type_list_to_string("schema", self.column_types)
 
 
+@dataclass
 class TableType(PetlType):
     schema_type: SchemaType = SchemaType()
 
@@ -95,8 +109,9 @@ class TableType(PetlType):
         return f"table[{self.schema_type.to_string()}]"
 
 
-class FunctionType(PetlType):
-    parameter_types: List[PetlType] = []
+@dataclass
+class LambdaType(PetlType):
+    parameter_types: List[PetlType] = field(default_factory=list)
     return_type: PetlType = UnknownType()
 
     def to_string(self) -> str:

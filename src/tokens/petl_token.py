@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 from typing import Union, Optional
 
@@ -7,6 +8,7 @@ from src.tokens.petl_keyword import Keyword, keyword_to_operator
 from src.utils.file_position import FilePosition
 
 
+@dataclass
 class Token:
     class TokenType(Enum):
         UNKNOWN = 0,
@@ -15,9 +17,7 @@ class Token:
         VALUE = 3,
         IDENT = 4
 
-    token_type: TokenType = 0
-    file_position: FilePosition
-    token_value: Union[str, Keyword, Delimiter] = ""
+    token_value: Union[str, Delimiter, Keyword] = ""
 
     def __init__(self, token_type=TokenType.UNKNOWN, file_position=FilePosition(), token_value=""):
         self.token_type = token_type
