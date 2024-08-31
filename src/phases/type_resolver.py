@@ -12,13 +12,11 @@ class TypeEnvironment:
     map: Dict[str, PetlType] = {}
     aliases: Dict[str, PetlType] = {}
 
-    def add(self, identifier: str, value_type: PetlType) -> Self:
+    def add(self, identifier: str, value_type: PetlType):
         self.map[identifier] = value_type
-        return self
 
-    def add_alias(self, identifier: str, value_type: PetlType) -> Self:
+    def add_alias(self, identifier: str, value_type: PetlType):
         self.aliases[identifier] = value_type
-        return self
 
     def get(self, identifier: str, token: Token, logger: Log) -> Optional[PetlType]:
         if identifier in self.map:
@@ -100,9 +98,9 @@ class TypeResolver(PetlPhase):
         elif isinstance(expression_type, UnknownType) and not isinstance(expected_type, UnknownType):
             return self.make_well_formed(expected_type, token)
         elif isinstance(expression_type, AnyType) and not isinstance(expected_type, AnyType):
-            return self.make_well_formed(expected_type)
+            return self.make_well_formed(expected_type, token)
         elif not isinstance(expression_type, AnyType) and isinstance(expected_type, AnyType):
-            return self.make_well_formed(expression_type)
+            return self.make_well_formed(expression_type, token)
         elif isinstance(expression_type, UnionType) and isinstance(expected_type, UnionType):
             return UnionType(self.collection_types_conform(token, expression_type.union_types, expected_type.union_types, environment))
         elif isinstance(expression_type, UnionType) and not isinstance(expected_type, UnionType) and expected_type in expression_type.union_types:
@@ -144,12 +142,16 @@ class TypeResolver(PetlPhase):
         else:
             return conformed_type
 
-    def resolve_expression(self, root_expression: Expression) -> Expression:
-        return self.resolve(root_expression, TypeEnvironment(), UnknownType())
+    def resolve_expression(self, root_expression: Expression) -> Optional[Expression]:
+        well_formed_root_expression: Optional[Expression] = self.resolve(root_expression, TypeEnvironment(), UnknownType())
+        if well_formed_root_expression:
+            self.logger.debug_block("TYPED EXPRESSION", well_formed_root_expression.to_string())
+        return well_formed_root_expression
 
-    def resolve(self, expression: Expression, environment: TypeEnvironment, expected_type: PetlType) -> Expression:
+    def resolve(self, expression: Expression, environment: TypeEnvironment, expected_type: PetlType) -> Optional[Expression]:
         if isinstance(expression, LitExpression):
-            return expression.using_type(self._conform_types(expression.token, expression.petl_type, expected_type, environment))
+            literal_type: PetlType = self.conform_types(expression.token, expression.petl_type, expected_type, environment)
+            return LitExpression(literal_type, expression.token, expression.literal)
         elif isinstance(expression, Let):
             return self.resolve_let(expression, environment, expected_type)
         elif isinstance(expression, Alias):
@@ -178,20 +180,27 @@ class TypeResolver(PetlPhase):
             return self.resolve_dict_definition(expression, environment, expected_type)
         elif isinstance(expression, SchemaDefinition):
             return self.resolve_schema_definition(expression, environment, expected_type)
+        else:
+            return None
 
     def resolve_let(self, let: Let, environment: TypeEnvironment, expected_type: PetlType) -> Let:
         let_expression: Expression = self.resolve(let.let_expression, environment, let.let_type)
-        after_let_expression: Expression = self.resolve(let.after_let_expression, environment.add(let.identifier, let.let_type), expected_type)
-        return Let(after_let_expression.petl_type, let.token, let.identifier, let_expression.petl_type, let_expression, after_let_expression)
+        let_environment: TypeEnvironment = copy(environment)
+        let_environment.add(let.identifier, let.let_type)
+        after_let_expression: Optional[Expression] = self.resolve(let.after_let_expression, let_environment, expected_type)
+        let_type: PetlType = after_let_expression.petl_type if after_let_expression else NoneType()
+        return Let(let_type, let.token, let.identifier, let_expression.petl_type, let_expression, after_let_expression)
 
     def resolve_alias(self, alias: Alias, environment: TypeEnvironment, expected_type: PetlType) -> Alias:
-        after_alias_expression: Expression = self.resolve(alias.after_alias_expression, environment.add_alias(alias.identifier, alias.alias_type), expected_type)
+        alias_environment: TypeEnvironment = copy(environment)
+        alias_environment.add_alias(alias.identifier, alias.alias_type)
+        after_alias_expression: Expression = self.resolve(alias.after_alias_expression, alias_environment, expected_type)
         return Alias(after_alias_expression.petl_type, alias.token, alias.identifier, alias.alias_type, after_alias_expression)
 
     def resolve_lambda(self, lambda_expression: Lambda, environment: TypeEnvironment, expected_type: PetlType) -> Lambda:
         lambda_environment: TypeEnvironment = copy(environment)
         for parameter in lambda_expression.parameters:
-            lambda_environment = lambda_environment.add(parameter.identifier, parameter.parameter_type)
+            lambda_environment.add(parameter.identifier, parameter.parameter_type)
         body: Expression = self.resolve(lambda_expression.body, lambda_environment, lambda_expression.return_type)
         lambda_type: PetlType = self._conform_types(lambda_expression.token, lambda_expression.petl_type, expected_type, environment)
         return Lambda(lambda_type, lambda_expression.token, lambda_expression.parameters, lambda_expression.return_type, body)
@@ -230,7 +239,10 @@ class TypeResolver(PetlPhase):
         pass
 
     def resolve_reference(self, reference: Reference, environment: TypeEnvironment, expected_type: PetlType) -> Reference:
-        return reference.using_type(self.conform_types(reference.token, environment.get(reference.identifier, reference.token, self.logger), expected_type, environment))
+        reference_type: Optional[PetlType] = environment.get(reference.identifier, reference.token, self.logger)
+        if reference_type:
+            well_formed_reference_type: PetlType = self.conform_types(reference.token, reference_type, expected_type, environment)
+            return Reference(well_formed_reference_type, reference.token, reference.identifier)
 
     def resolve_branch(self, branch: Branch, environment: TypeEnvironment, expected_type: PetlType) -> Branch:
         predicate: Expression = self.resolve(branch.predicate, environment, BoolType())
@@ -242,7 +254,8 @@ class TypeResolver(PetlPhase):
         iterable_expression: Expression = self.resolve(for_expression.iterable, environment, UnknownType())
         iterable_type: Optional[UnionType] = self.extract_iterable_type(iterable_expression.petl_type, for_expression.token)
         if iterable_type:
-            for_environment: TypeEnvironment = copy(environment).add(for_expression.reference, iterable_type)
+            for_environment: TypeEnvironment = copy(environment)
+            for_environment.add(for_expression.reference, iterable_type)
             body: Expression = self.resolve(for_expression.body, for_environment, NoneType())
             after_for_expression: Expression = self.resolve(for_expression.after_for_expression, for_environment, expected_type)
             return For(after_for_expression.petl_type, for_expression.token, for_expression.reference, iterable_expression, body, after_for_expression)
@@ -250,13 +263,37 @@ class TypeResolver(PetlPhase):
             return for_expression
 
     def resolve_list_definition(self, list_definition: ListDefinition, environment: TypeEnvironment, expected_type: PetlType) -> ListDefinition:
-        pass
+        token = list_definition.token
+        if isinstance(list_definition.petl_type, ListType):
+            list_element_type: PetlType = list_definition.petl_type.list_type
+            values_well_formed: List[Expression] = list(map(lambda v: self.resolve(v, environment, list_element_type), list_definition.values))
+            list_type: PetlType = ListType(values_well_formed[0].petl_type if values_well_formed else UnknownType())
+            well_formed_list_type: PetlType = self.conform_types(list_definition.token, list_type, expected_type, environment)
+            return ListDefinition(well_formed_list_type, token, list_definition.values)
+        else:
+            return list_definition
 
     def resolve_range_definition(self, range_definition: RangeDefinition, environment: TypeEnvironment, expected_type: PetlType) -> RangeDefinition:
-        pass
+        token = range_definition.token
+        well_formed_range_type: PetlType = self.conform_types(token, range_definition.petl_type, ListType(IntType()), environment)
+        well_formed_range_type = self.conform_types(token, well_formed_range_type, expected_type, environment)
+        if isinstance(range_definition.start, IntLiteral) and isinstance(range_definition.end, IntLiteral):
+            return RangeDefinition(well_formed_range_type, token, range_definition.start, range_definition.end)
+        else:
+            return range_definition
 
     def resolve_tuple_definition(self, tuple_definition: TupleDefinition, environment: TypeEnvironment, expected_type: PetlType) -> TupleDefinition:
-        pass
+        token = tuple_definition.token
+        if isinstance(tuple_definition.petl_type, TupleType):
+            tuple_type_well_formed: PetlType = self.conform_types(token, tuple_definition.petl_type, expected_type, environment)
+            if isinstance(tuple_type_well_formed, TupleType):
+                well_formed_values: List[Expression] = list(map(
+                    lambda v, tt: self.resolve(v, environment, tt),
+                    tuple_definition.values,
+                    tuple_type_well_formed.tuple_types)
+                )
+                return TupleDefinition(tuple_type_well_formed, token, well_formed_values)
+        return tuple_definition
 
     def resolve_dict_definition(self, dict_definition: DictDefinition, environment: TypeEnvironment, expected_type: PetlType) -> DictDefinition:
         pass

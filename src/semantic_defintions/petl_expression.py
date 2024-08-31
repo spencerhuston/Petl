@@ -1,7 +1,7 @@
 from abc import ABC
 from dataclasses import dataclass, field
 from pprint import pformat
-from typing import Union, List, Optional, Tuple, Self
+from typing import Union, List, Optional, Tuple
 
 from src.semantic_defintions.operator import Operator
 from src.semantic_defintions.petl_types import PetlType, UnknownType
@@ -15,10 +15,6 @@ class Expression(ABC):
 
     def to_string(self):
         return pformat(self)
-
-    def using_type(self, new_type: PetlType) -> Self:
-        self.petl_type = new_type
-        return self
 
 
 @dataclass

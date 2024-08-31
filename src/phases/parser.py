@@ -66,7 +66,7 @@ class Parser(PetlPhase):
 
     def get_exp_literal(self, element: Expression) -> Optional[Literal]:
         if isinstance(element, LitExpression):
-            literal: Literal = LitExpression.literal
+            literal: Literal = element.literal
             if literal.value:
                 return literal
         self.logger.error(f"Expected literal value\n{self.current_token().file_position.to_string()}")

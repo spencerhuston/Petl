@@ -84,7 +84,7 @@ class Lexer(PetlPhase):
         if character in RawDelimiter and not self.inside_quotes:
             self.push_non_delim_token(extra=True)
             delim_text = character
-            if self.peek_raw_delim(index, self.raw_text):
+            if self.peek_raw_delim(index):
                 self.skip = True
                 delim_text += self.raw_text[index + 1]
                 self.push_delim_tokens(delim_text, extra=True)
@@ -110,8 +110,8 @@ class Lexer(PetlPhase):
                (self.token_text.startswith('\"') and self.token_text.endswith('\"')) or \
                (self.token_text.startswith('\'') and self.token_text.endswith('\''))
 
-    def peek_raw_delim(self, index: int, raw_text: str) -> bool:
-        return index < len(raw_text) - 1 and raw_text[index + 1] is RawDelimiter and not self.inside_quotes
+    def peek_raw_delim(self, index: int) -> bool:
+        return index < len(self.raw_text) - 1 and self.raw_text[index + 1] in RawDelimiter and not self.inside_quotes
 
     def push_non_delim_token(self, extra=False):
         file_position: FilePosition = self.create_file_position(extra=extra, delim=False)
