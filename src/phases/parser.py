@@ -325,6 +325,9 @@ class Parser(PetlPhase):
                 mapping.append((key, value))
             self.match(Delimiter.BRACKET_RIGHT)
             return DictDefinition(DictType(first_element.petl_type, first_value.petl_type), token, mapping)
+        else:
+            self.match(Delimiter.BRACKET_RIGHT)
+            return ListDefinition(ListType(first_element.petl_type), token, values=[first_element])
 
     def parse_tuple_def_or_smp_expression(self) -> Optional[Expression]:
         token = self.current_token()

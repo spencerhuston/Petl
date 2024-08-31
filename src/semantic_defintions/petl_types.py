@@ -73,7 +73,7 @@ class ListType(PetlType):
     list_type: PetlType = UnknownType()
 
     def to_string(self) -> str:
-        return f"list[{self.list_type}]"
+        return f"list[{self.list_type.to_string()}]"
 
 
 @dataclass
@@ -90,7 +90,7 @@ class DictType(PetlType):
     value_type: PetlType = UnknownType()
 
     def to_string(self) -> str:
-        return f"dict[{self.key_type}:{self.value_type}]"
+        return f"dict[{self.key_type.to_string()}:{self.value_type.to_string()}]"
 
 
 @dataclass
@@ -119,4 +119,4 @@ class LambdaType(PetlType):
             lambda a, b: a + ", " + b,
             [petl_type.to_string() for petl_type in self.parameter_types]
         )
-        return f"({parameter_type_list_str}) -> {self.return_type}"
+        return f"({parameter_type_list_str}) -> {self.return_type.to_string()}"

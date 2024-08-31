@@ -32,13 +32,13 @@ class TypeResolver(PetlPhase):
     def __init__(self, debug=False):
         self.logger.__init__(debug)
 
-    def extract_iterable_type(self, collection_type: PetlType, token: Token) -> Optional[UnionType]:
+    def extract_iterable_type(self, collection_type: PetlType, token: Token, dict_value_type=False) -> Optional[PetlType]:
         if isinstance(collection_type, ListType):
-            return UnionType([collection_type.list_type])
+            return collection_type.list_type
         elif isinstance(collection_type, TupleType):
             return UnionType(collection_type.tuple_types)
         elif isinstance(collection_type, DictType):
-            return UnionType([collection_type.key_type])
+            return collection_type.value_type if dict_value_type else collection_type.key_type
         elif isinstance(collection_type, SchemaType):
             return UnionType(collection_type.column_types)
         elif isinstance(collection_type, TableType):
@@ -236,7 +236,9 @@ class TypeResolver(PetlPhase):
             well_formed_argument = self.resolve(argument, environment, IntType())
         elif isinstance(typed_identifier.petl_type, TableType):
             well_formed_argument = self.resolve(argument, environment, StringType())
-        well_formed_type = self.conform_types(argument.token, self.extract_iterable_type(typed_identifier.petl_type, token), expected_type, environment)
+        elif isinstance(typed_identifier.petl_type, UnionType):
+            well_formed_argument = self.resolve(argument, environment, typed_identifier.petl_type)
+        well_formed_type = self.conform_types(argument.token, self.extract_iterable_type(typed_identifier.petl_type, token, dict_value_type=True), expected_type, environment)
         return Application(well_formed_type, token, typed_identifier, [well_formed_argument])
 
     def resolve_match(self, match: Match, environment: TypeEnvironment, expected_type: PetlType) -> Match:
@@ -259,10 +261,10 @@ class TypeResolver(PetlPhase):
 
     def resolve_for(self, for_expression: For, environment: TypeEnvironment, expected_type: PetlType) -> For:
         iterable_expression: Expression = self.resolve(for_expression.iterable, environment, UnknownType())
-        iterable_type: Optional[UnionType] = self.extract_iterable_type(iterable_expression.petl_type, for_expression.token)
+        iterable_type: Optional[Union[PetlType, List[PetlType]]] = self.extract_iterable_type(iterable_expression.petl_type, for_expression.token)
         if iterable_type:
             for_environment: TypeEnvironment = copy(environment)
-            for_environment.add(for_expression.reference, iterable_type)
+            for_environment.add(for_expression.reference, iterable_type) # TODO
             body: Expression = self.resolve(for_expression.body, for_environment, UnknownType())
             after_for_expression: Optional[Expression] = self.resolve(for_expression.after_for_expression, for_environment, expected_type)
             for_type: PetlType = after_for_expression.petl_type if after_for_expression else NoneType()
