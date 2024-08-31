@@ -186,7 +186,7 @@ class TypeResolver(PetlPhase):
     def resolve_let(self, let: Let, environment: TypeEnvironment, expected_type: PetlType) -> Let:
         let_expression: Expression = self.resolve(let.let_expression, environment, let.let_type)
         let_environment: TypeEnvironment = copy(environment)
-        let_environment.add(let.identifier, let.let_type)
+        let_environment.add(let.identifier, let_expression.petl_type)
         after_let_expression: Optional[Expression] = self.resolve(let.after_let_expression, let_environment, expected_type)
         let_type: PetlType = after_let_expression.petl_type if after_let_expression else NoneType()
         return Let(let_type, let.token, let.identifier, let_expression.petl_type, let_expression, after_let_expression)
@@ -211,26 +211,33 @@ class TypeResolver(PetlPhase):
         arguments: List[Expression] = copy(application.arguments)
         if isinstance(typed_identifier.petl_type, LambdaType):
             well_formed_arguments: List[Expression] = []
-            for argument, parameter_type in arguments, typed_identifier.petl_type.parameter_types:
+            if len(arguments) != len(typed_identifier.petl_type.parameter_types):
+                self.logger.error(f"Argument mismatch\n{token.file_position.to_string()}")
+                return application
+            zipped_args_param_types: List[Tuple[Expression, PetlType]] = list(map(lambda a, t: (a, t), arguments, typed_identifier.petl_type.parameter_types))
+            for argument, parameter_type in zipped_args_param_types:
                 well_formed_arguments.append(self.resolve(argument, environment, parameter_type))
             well_formed_return_type: PetlType = self.conform_types(token, typed_identifier.petl_type.return_type, expected_type, environment)
-            Application(well_formed_return_type, token, typed_identifier, well_formed_arguments)
+            return Application(well_formed_return_type, token, typed_identifier, well_formed_arguments)
         else:
-            if len(arguments) != 1:
-                self.logger.error(f"Type \'{typed_identifier.petl_type}\' requires one integer argument")
-                return application
-            argument: Expression = arguments[0]
-            well_formed_argument: Expression = UnknownExpression()
-            if isinstance(typed_identifier.petl_type, ListType):
-                well_formed_argument = self.resolve(argument, environment, IntType())
-            elif isinstance(typed_identifier.petl_type, DictType):
-                well_formed_argument = self.resolve(argument, environment, typed_identifier.petl_type.key_type)
-            elif isinstance(typed_identifier.petl_type, TupleType):
-                well_formed_argument = self.resolve(argument, environment, IntType())
-            elif isinstance(typed_identifier.petl_type, TableType):
-                well_formed_argument = self.resolve(argument, environment, StringType())
-            well_formed_type = self.conform_types(argument.token, typed_identifier.petl_type.list_type, expected_type, environment)
-            return Application(well_formed_type, token, typed_identifier, [well_formed_argument])
+            return self.resolve_collection_application(token, typed_identifier, arguments, environment, expected_type)
+
+    def resolve_collection_application(self, token: Token, typed_identifier: Expression, arguments: List[Expression], environment: TypeEnvironment, expected_type: PetlType):
+        if len(arguments) != 1:
+            self.logger.error(f"Type \'{typed_identifier.petl_type}\' requires one integer argument")
+            return typed_identifier
+        argument: Expression = arguments[0]
+        well_formed_argument: Expression = UnknownExpression()
+        if isinstance(typed_identifier.petl_type, ListType):
+            well_formed_argument = self.resolve(argument, environment, IntType())
+        elif isinstance(typed_identifier.petl_type, DictType):
+            well_formed_argument = self.resolve(argument, environment, typed_identifier.petl_type.key_type)
+        elif isinstance(typed_identifier.petl_type, TupleType):
+            well_formed_argument = self.resolve(argument, environment, IntType())
+        elif isinstance(typed_identifier.petl_type, TableType):
+            well_formed_argument = self.resolve(argument, environment, StringType())
+        well_formed_type = self.conform_types(argument.token, self.extract_iterable_type(typed_identifier.petl_type, token), expected_type, environment)
+        return Application(well_formed_type, token, typed_identifier, [well_formed_argument])
 
     def resolve_match(self, match: Match, environment: TypeEnvironment, expected_type: PetlType) -> Match:
         pass
@@ -256,9 +263,10 @@ class TypeResolver(PetlPhase):
         if iterable_type:
             for_environment: TypeEnvironment = copy(environment)
             for_environment.add(for_expression.reference, iterable_type)
-            body: Expression = self.resolve(for_expression.body, for_environment, NoneType())
-            after_for_expression: Expression = self.resolve(for_expression.after_for_expression, for_environment, expected_type)
-            return For(after_for_expression.petl_type, for_expression.token, for_expression.reference, iterable_expression, body, after_for_expression)
+            body: Expression = self.resolve(for_expression.body, for_environment, UnknownType())
+            after_for_expression: Optional[Expression] = self.resolve(for_expression.after_for_expression, for_environment, expected_type)
+            for_type: PetlType = after_for_expression.petl_type if after_for_expression else NoneType()
+            return For(for_type, for_expression.token, for_expression.reference, iterable_expression, body, after_for_expression)
         else:
             return for_expression
 
@@ -280,6 +288,7 @@ class TypeResolver(PetlPhase):
         if isinstance(range_definition.start, IntLiteral) and isinstance(range_definition.end, IntLiteral):
             return RangeDefinition(well_formed_range_type, token, range_definition.start, range_definition.end)
         else:
+            self.logger.error("Range definition supports only integer type")
             return range_definition
 
     def resolve_tuple_definition(self, tuple_definition: TupleDefinition, environment: TypeEnvironment, expected_type: PetlType) -> TupleDefinition:
@@ -296,7 +305,15 @@ class TypeResolver(PetlPhase):
         return tuple_definition
 
     def resolve_dict_definition(self, dict_definition: DictDefinition, environment: TypeEnvironment, expected_type: PetlType) -> DictDefinition:
-        pass
+        token = dict_definition.token
+        if isinstance(dict_definition.petl_type, DictType):
+            pass
+        else:
+            return dict_definition
 
     def resolve_schema_definition(self, schema_definition: SchemaDefinition, environment: TypeEnvironment, expected_type: PetlType) -> SchemaDefinition:
-        pass
+        token = schema_definition.token
+        if isinstance(schema_definition.petl_type, SchemaType):
+            pass
+        else:
+            return schema_definition

@@ -416,7 +416,7 @@ class Parser(PetlPhase):
         parameter_types: List[PetlType] = []
 
         if not self.match(Delimiter.PIPE, optional=True):
-            while self.match(Delimiter.COMMNA, optional=True) or self.match(Delimiter.PIPE, optional=True):
+            while self.match(Delimiter.COMMNA, optional=True) or not self.match(Delimiter.PIPE, optional=True):
                 parameter: Parameter = self.parse_parameter()
                 parameters.append(parameter)
                 parameter_types.append(parameter.parameter_type)
@@ -450,7 +450,7 @@ class Parser(PetlPhase):
 
                 while self.match(Delimiter.PAREN_LEFT, optional=True):
                     outer_arguments: List[Expression] = self.parse_arguments()
-                    application.identifier = Application(UnknownType(), token, application, outer_arguments)
+                    application = Application(UnknownType(), token, application, outer_arguments)
                 return application
             else:
                 return identifier
@@ -490,12 +490,12 @@ class Parser(PetlPhase):
             self.match(Delimiter.BRACKET_RIGHT)
             first_type = DictType(key_type, value_type)
         elif self.match(Keyword.TUPLE, optional=True):
-            self.match(Delimiter.PAREN_LEFT)
+            self.match(Delimiter.BRACKET_LEFT)
             tuple_types: List[PetlType] = [self.parse_type()]
 
             while self.match(Delimiter.COMMNA, optional=True):
                 tuple_types.append(self.parse_type())
-            self.match(Delimiter.PAREN_RIGHT, optional=True)
+            self.match(Delimiter.BRACKET_RIGHT, optional=True)
             first_type = TupleType(tuple_types)
         elif self.match(Keyword.SCHEMA, optional=True):
             first_type = SchemaType()
@@ -521,14 +521,10 @@ class Parser(PetlPhase):
                 else:
                     self.logger.error(f"Invalid alias \'{alias}\' provided\n{token.file_position.to_string()}")
                     return UnknownType()
-            elif token:
-                self.logger.error(f"Invalid type signature\n{token.file_position.to_string()}")
-                return UnknownType()
-            else:
-                self.logger.error(f"Invalid type signature or end-of-file\n{token.file_position.to_string()}")
-                return UnknownType()
 
         if self.match(Delimiter.RETURN, optional=True):
             return LambdaType(parameter_types=[first_type], return_type=self.parse_type())
-
+        if token and not first_type:
+            self.logger.error(f"Expected type signature but received none\n{token.file_position.to_string()}")
+            return UnknownType()
         return first_type

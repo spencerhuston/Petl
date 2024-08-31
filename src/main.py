@@ -33,10 +33,10 @@ def read_petl_file(file_path: str, logger: Log) -> Optional[str]:
 def execute_petl_script(petl_raw_str: str, debug: bool) -> bool:
     lexer: Lexer = Lexer(debug)
     tokens: Optional[List[Token]] = lexer.scan(petl_raw_str)
-    if tokens:
+    if tokens and not lexer.logger.errors_occurred():
         parser: Parser = Parser(debug)
         root: Expression = parser.parse(tokens)
-        if root and not isinstance(root, UnknownExpression):
+        if root and not parser.logger.errors_occurred() and not isinstance(root, UnknownExpression):
             resolver: TypeResolver = TypeResolver(debug)
             typed_root: Expression = resolver.resolve_expression(root)
     else:

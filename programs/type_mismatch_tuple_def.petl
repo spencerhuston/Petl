@@ -1,0 +1,1 @@
+let t: tuple[char, int, bool] = ('a', true, 5)

@@ -1,0 +1,7 @@
+let test = |x: int| -> int -> int {
+    |y: int| -> int {
+        x;
+        y
+    }
+};
+test(5)(3)
