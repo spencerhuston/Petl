@@ -7,6 +7,7 @@ from src.phases.interpreter import Interpreter, load_builtins
 from src.phases.lexer import Lexer
 from src.phases.parser import Parser
 from src.semantic_defintions.petl_expression import Expression, UnknownExpression
+from src.semantic_defintions.petl_value import PetlValue
 from src.tokens.petl_token import Token
 from src.utils.log import Log
 
@@ -41,9 +42,37 @@ def execute_petl_script(petl_raw_str: str, debug: bool) -> bool:
         if root and not parser.logger.errors_occurred() and not isinstance(root, UnknownExpression):
             interpreter: Interpreter = Interpreter(debug)
             environment: InterpreterEnvironment = load_builtins(parser.builtins)
-            interpreter.interpret(root, environment)
+            result_value: PetlValue = interpreter.interpret(root, environment)
+            logger.debug(result_value.to_string())
     else:
         return False
+
+
+def run_petl_repl(logger: Log):
+    banner_str = "=" * 9
+    logger.info(f"{banner_str}\nPetl REPL\n{banner_str}")
+    interpreter_input: str = ""
+    ended_with_slash: bool = False
+    while True:
+        repl_input = input("> " if not ended_with_slash else "> \t")
+        ended_with_slash = False
+        if repl_input == "quit":
+            logger.info("Quitting REPL...")
+            break
+        elif not repl_input:
+            continue
+
+        if repl_input.endswith("\\"):
+            repl_input = repl_input.replace("\\", "")
+            interpreter_input += repl_input + "\n"
+            ended_with_slash = True
+        elif repl_input.endswith(";"):
+            repl_input = repl_input.replace(";", "")
+            interpreter_input += repl_input + "\n"
+        else:
+            interpreter_input += repl_input
+            execute_petl_script(interpreter_input, logger.debug_enabled())
+            interpreter_input = ""
 
 
 if __name__ == "__main__":
@@ -57,6 +86,6 @@ if __name__ == "__main__":
             if petl_raw_str:
                 execute_petl_script(petl_raw_str, debug)
         else: # start REPL
-            logger.info("Petl REPL\n=========")
+            run_petl_repl(logger)
     except Exception as main_exception:
         logger.error(f"Unhandled exception occurred: {main_exception}, {traceback.format_exc()}")

@@ -53,7 +53,7 @@ class BoolValue(PetlValue):
         self.value: bool = value
 
     def to_string(self) -> str:
-        return str(self.value)
+        return str("true" if self.value else "false")
 
 
 class CharValue(PetlValue):

@@ -3,7 +3,7 @@ from typing import Tuple
 from src.phases.environment import InterpreterEnvironment
 from src.semantic_defintions.petl_expression import Expression, UnknownExpression
 from src.semantic_defintions.petl_types import *
-from src.semantic_defintions.petl_value import PetlValue, NoneValue, LambdaValue
+from src.semantic_defintions.petl_value import PetlValue, NoneValue, LambdaValue, StringValue
 from src.utils.log import Log
 
 
@@ -35,13 +35,22 @@ def get_builtin(name: str) -> Builtin:
 
 
 class ReadLn(Builtin):
-    pass
+    def __init__(self):
+        self.name = "readln"
+        self.lambda_type = LambdaType([], StringType())
+
+    def evaluate(self, argument_values: List[PetlValue], environment: InterpreterEnvironment, logger: Log) -> PetlValue:
+        return StringValue(input())
+
+    def to_value(self) -> LambdaValue:
+        parameters = []
+        return self._to_value(parameters)
 
 
 class Print(Builtin):
     def __init__(self):
-        self.name = "println"
-        self.lambda_type = LambdaType([AnyType()], StringType())
+        self.name = "print"
+        self.lambda_type = LambdaType([AnyType()], NoneType())
 
     def evaluate(self, argument_values: List[PetlValue], environment: InterpreterEnvironment, logger: Log) -> PetlValue:
         print(argument_values[0].to_string(), end="")
@@ -55,7 +64,7 @@ class Print(Builtin):
 class PrintLn(Builtin):
     def __init__(self):
         self.name = "println"
-        self.lambda_type = LambdaType([AnyType()], StringType())
+        self.lambda_type = LambdaType([AnyType()], NoneType())
 
     def evaluate(self, argument_values: List[PetlValue], environment: InterpreterEnvironment, logger: Log) -> PetlValue:
         print(argument_values[0].to_string())

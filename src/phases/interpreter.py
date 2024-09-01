@@ -52,13 +52,14 @@ class Interpreter(PetlPhase):
             self.error(f"Invalid type for pattern matching on literal value", token)
             return NoneValue()
 
-    def interpret(self, root: Expression, environment: InterpreterEnvironment):
+    def interpret(self, root: Expression, environment: InterpreterEnvironment) -> PetlValue:
         try:
-            self.evaluate(root, environment, AnyType())
-        except InterpreterException as e:
-            pass
+            return self.evaluate(root, environment, AnyType())
+        except InterpreterException as ie:
+            return NoneValue()
         except Exception as e:
             self.logger.error(f"Unhandled exception while interpreting: {e}, {traceback.format_exc()}")
+            return NoneValue()
 
     def evaluate(self, expression: Expression, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         evaluated_value: PetlValue = NoneValue()

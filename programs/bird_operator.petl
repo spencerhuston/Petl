@@ -1,3 +1,3 @@
-let a = |f: int -> int| -> int { f(x) };
+let a = |f: int -> int, x: int| -> int { f(x) };
 let b = |x: int| -> int { x };
-println(a(b))
+println(b |> a(3))
