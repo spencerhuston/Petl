@@ -1,5 +1,6 @@
 from copy import copy
 
+from src.builtins.petl_builtins import get_builtin
 from src.phases.environment import InterpreterEnvironment
 from src.phases.petl_phase import PetlPhase
 from src.phases.type_resolver import types_conform
@@ -109,13 +110,16 @@ class Interpreter(PetlPhase):
             return NoneValue()
 
         lambda_environment: InterpreterEnvironment = copy(environment)
+        argument_values: List[PetlValue] = []
         for argument, parameter in application.arguments, identifier.parameters:
-            lambda_environment.add(parameter.identifier, self.evaluate(argument, environment, parameter.parameter_type))
+            argument_value: PetlValue = self.evaluate(argument, environment, parameter.parameter_type)
+            lambda_environment.add(parameter.identifier, argument_value)
+            argument_values.append(argument_value)
 
         lambda_return_value: PetlValue = NoneValue()
         if isinstance(identifier.petl_type, LambdaType):
             if identifier.builtin:
-
+                get_builtin(identifier.builtin).evaluate(argument_values, lambda_environment)
             else:
                 lambda_return_value = self.evaluate(identifier.body, lambda_environment, identifier.petl_type.return_type)
             types_conform(application.token, lambda_return_value.petl_type, expected_type, self.logger)
@@ -175,9 +179,9 @@ class Interpreter(PetlPhase):
         if isinstance(identifier.petl_type, DictType):
             argument_value: PetlValue = self.evaluate(application.arguments[0], environment, identifier.petl_type.key_type)
 
-            values: List[PetlValue] = list(filter(lambda v: values_equal(v[0], argument_value), identifier.values))
-            if len(values) == 1 and types_conform(application.token, values[0].petl_type, expected_type, self.logger):
-                return values[0]
+            value: Optional[PetlValue] = next((v[1] for v in identifier.values if values_equal(v[0], argument_value)), None)
+            if value and types_conform(application.token, value.petl_type, expected_type, self.logger):
+                return value
             else:
                 self.logger.error(f"Key does not exist in dictionary\n{application.arguments[0].token.file_position.to_string()}")
         return NoneValue()

@@ -1,4 +1,4 @@
-from src.builtins.builtins import get_builtin
+from src.builtins.petl_builtins import get_builtin
 from src.phases.petl_phase import PetlPhase
 from src.semantic_defintions.petl_expression import *
 from src.semantic_defintions.petl_types import *

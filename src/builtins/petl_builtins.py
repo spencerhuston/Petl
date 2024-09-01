@@ -16,7 +16,7 @@ class Builtin(ABC, PetlPhase):
         self.environment: InterpreterEnvironment = InterpreterEnvironment()
 
     @abstractmethod
-    def evaluate(self, arguments: List[PetlValue], environment: InterpreterEnvironment) -> PetlValue:
+    def evaluate(self, argument_values: List[PetlValue], environment: InterpreterEnvironment) -> PetlValue:
         pass
 
 
@@ -38,7 +38,6 @@ class Print(Builtin):
 
 
 class PrintLn(Builtin):
-    def evaluate(self, arguments: List[PetlValue], environment: InterpreterEnvironment) -> PetlValue:
-        if len(arguments) != 1:
-            self.logger.error(f"println requires 1 argument")
-            return NoneValue()
+    def evaluate(self, argument_values: List[PetlValue], environment: InterpreterEnvironment) -> PetlValue:
+        print(argument_values[0].to_string())
+        return NoneValue()

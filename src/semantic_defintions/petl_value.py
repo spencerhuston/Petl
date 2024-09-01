@@ -8,7 +8,11 @@ from src.semantic_defintions.petl_types import *
 class PetlValue(ABC):
     petl_type: PetlType = UnknownType()
 
+    @abstractmethod
     def to_string(self) -> str:
+        pass
+
+    def to_formatted_string(self) -> str:
         return pformat(self)
 
 
@@ -38,11 +42,17 @@ class IntValue(PetlValue):
         self.petl_type: PetlType = IntType()
         self.value: int = value
 
+    def to_string(self) -> str:
+        return str(self.value)
+
 
 class BoolValue(PetlValue):
     def __init__(self, value: bool):
         self.petl_type: PetlType = BoolType()
         self.value: bool = value
+
+    def to_string(self) -> str:
+        return str(self.value)
 
 
 class CharValue(PetlValue):
@@ -50,11 +60,17 @@ class CharValue(PetlValue):
         self.petl_type: PetlType = CharType()
         self.value: str = value
 
+    def to_string(self) -> str:
+        return self.value
+
 
 class StringValue(PetlValue):
     def __init__(self, value: str):
         self.petl_type: PetlType = StringType()
         self.value: str = value
+
+    def to_string(self) -> str:
+        return self.value
 
 
 class NoneValue(PetlValue):
@@ -62,11 +78,18 @@ class NoneValue(PetlValue):
         self.petl_type: PetlType = NoneType()
         self.value: None = None
 
+    def to_string(self) -> str:
+        return "none"
+
 
 class ListValue(PetlValue):
     def __init__(self, petl_type: PetlType, values: List[PetlValue]):
         self.petl_type = petl_type
         self.values = values
+
+    def to_string(self) -> str:
+        elements_string: str = functools.reduce(lambda v1, v2: v1 + ", " + v2, map(lambda v: v.to_string(), self.values))
+        return f"[{elements_string}]"
 
 
 class TupleValue(PetlValue):
@@ -74,17 +97,35 @@ class TupleValue(PetlValue):
         self.petl_type = petl_type
         self.values = values
 
+    def to_string(self) -> str:
+        elements_string: str = functools.reduce(lambda v1, v2: v1 + ", " + v2, map(lambda v: v.to_string(), self.values))
+        return f"({elements_string})"
+
 
 class DictValue(PetlValue):
     def __init__(self, petl_type: PetlType, values: List[Tuple[PetlValue, PetlValue]]):
         self.petl_type = petl_type
         self.values = values
 
+    def to_string(self) -> str:
+        elements_string: str = functools.reduce(
+            lambda v1, v2: v1 + ", " + v2,
+            map(lambda v: v[0].to_string() + ":" + v[1].to_string(), self.values)
+        )
+        return f"[{elements_string}]"
+
 
 class SchemaValue(PetlValue):
     def __init__(self, petl_type: PetlType, values: List[Tuple[StringValue, PetlType]]):
         self.petl_type = petl_type
         self.values = values
+
+    def to_string(self) -> str:
+        elements_string: str = functools.reduce(
+            lambda v1, v2: v1 + ", " + v2,
+            map(lambda v: v[0].to_string() + ": " + v[1].to_string(), self.values)
+        )
+        return "${" + elements_string + "}"
 
 
 class TableValue(PetlValue):
@@ -93,6 +134,9 @@ class TableValue(PetlValue):
         self.schema = schema
         self.rows = rows
 
+    def to_string(self) -> str:
+        return "not-supported"
+
 
 class LambdaValue(PetlValue):
     def __init__(self, builtin: str, parameters: List[Tuple[str, PetlType]], body: Expression, environment):
@@ -100,3 +144,7 @@ class LambdaValue(PetlValue):
         self.parameters = parameters
         self.body = body
         self.environment = environment
+
+    def to_string(self) -> str:
+        return "not-supported"
+
