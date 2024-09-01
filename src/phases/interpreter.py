@@ -1,41 +1,16 @@
 from copy import copy
-from typing import Dict
 
+from src.phases.environment import InterpreterEnvironment
 from src.phases.petl_phase import PetlPhase
 from src.phases.type_resolver import types_conform
 from src.semantic_defintions.petl_expression import *
 from src.semantic_defintions.petl_value import *
-from src.utils.log import Log
-
-
-class InterpreterEnvironment:
-    _map: Dict[str, PetlValue] = {}
-    _aliases: Dict[str, PetlType] = {}
-
-    def add(self, identifier: str, value: PetlValue):
-        self._map[identifier] = value
-
-    def add_alias(self, identifier: str, alias_type: PetlType):
-        self._aliases[identifier] = alias_type
-
-    def get(self, identifier: str, token: Token, logger: Log) -> PetlValue:
-        if identifier in self._map:
-            return self._map[identifier]
-        else:
-            logger.error(f"Identifier {identifier} does not exist in this scope\n{token.file_position.to_string()}")
-            return NoneValue()
-
-    def get_alias(self, alias: str, token: Token, logger: Log) -> PetlType:
-        if alias in self._aliases:
-            return self._aliases[alias]
-        else:
-            logger.error(f"Alias {alias} does not exist in this scope\n{token.file_position.to_string()}")
-            return NoneType()
 
 
 class Interpreter(PetlPhase):
     def __init__(self, debug=False):
         self.logger.__init__(debug)
+        self.environment = InterpreterEnvironment()
 
     def interpret(self, root_expression):
         self.evaluate(root_expression, InterpreterEnvironment(), AnyType())
@@ -140,7 +115,7 @@ class Interpreter(PetlPhase):
         lambda_return_value: PetlValue = NoneValue()
         if isinstance(identifier.petl_type, LambdaType):
             if identifier.builtin:
-                pass
+
             else:
                 lambda_return_value = self.evaluate(identifier.body, lambda_environment, identifier.petl_type.return_type)
             types_conform(application.token, lambda_return_value.petl_type, expected_type, self.logger)

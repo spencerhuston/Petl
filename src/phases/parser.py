@@ -1,3 +1,4 @@
+from src.builtins.builtins import get_builtin
 from src.phases.petl_phase import PetlPhase
 from src.semantic_defintions.petl_expression import *
 from src.semantic_defintions.petl_types import *
@@ -227,7 +228,7 @@ class Parser(PetlPhase):
         token = self.current_token()
         if token.token_type == Token.TokenType.KEYWORD and is_builtin_function(token.token_value):
             self.advance()
-            return Reference(UnknownType(), token, token.token_value)
+            return Reference(get_builtin(token.token_value).petl_type, token, token.token_value)
         elif self.match(Delimiter.PAREN_LEFT, optional=True):
             self.advance()
             simple_exp: Expression = self.parse_tuple_def_or_smp_expression()

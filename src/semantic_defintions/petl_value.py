@@ -95,7 +95,7 @@ class TableValue(PetlValue):
 
 
 class LambdaValue(PetlValue):
-    def __init__(self, builtin: bool, parameters: List[Tuple[str, PetlType]], body: Expression, environment):
+    def __init__(self, builtin: str, parameters: List[Tuple[str, PetlType]], body: Expression, environment):
         self.builtin = builtin
         self.parameters = parameters
         self.body = body
