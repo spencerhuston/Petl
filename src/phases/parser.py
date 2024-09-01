@@ -19,6 +19,10 @@ class Parser(PetlPhase):
         self.aliases: dict[str, PetlType] = {}
         self.builtins: Set[Builtin] = set()
 
+    def error(self, text: str, token: Optional[Token] = None):
+        file_position_str: str = "\n" + token.file_position.to_string() if token else ""
+        self.logger.error(f"{text}{file_position_str}")
+
     def current_token(self) -> Optional[Token]:
         if self.current_token_index >= self.tokens_length:
             return None
@@ -45,13 +49,13 @@ class Parser(PetlPhase):
         token = self.current_token()
         if not token:
             if not optional:
-                self.logger.error(f"Expected {against}, found end-of-file while parsing")
+                self.error(f"Expected {against}, found end-of-file while parsing")
             return False
 
         matched = token.token_value == against
 
         if not matched and not optional:
-            self.logger.error(f"Expected {against}, got {token.token_value}\n{token.file_position.to_string()}")
+            self.error(f"Expected {against}, got {token.token_value}", token)
             self.advance()
         elif matched:
             self.advance()
@@ -65,7 +69,7 @@ class Parser(PetlPhase):
             return token.token_value
         else:
             if not optional:
-                self.logger.error(f"Expected identifier, got {token.token_value}\n{token.file_position.to_string()}")
+                self.error(f"Expected identifier, got {token.token_value}", token)
             return None
 
     def get_exp_literal(self, element: Expression) -> Optional[Literal]:
@@ -73,7 +77,7 @@ class Parser(PetlPhase):
             literal: Literal = element.literal
             if literal.value is not None:
                 return literal
-        self.logger.error(f"Expected literal value\n{self.current_token().file_position.to_string()}")
+        self.error(f"Expected literal value", self.current_token())
         return None
 
     def parse(self, tokens: List[Token]) -> Optional[Expression]:
@@ -413,7 +417,7 @@ class Parser(PetlPhase):
                 else:
                     return LiteralPattern(self.get_exp_literal(literal_expression))
 
-        self.logger.error(f"Invalid pattern\n{token.file_position.to_string()}")
+        self.error(f"Invalid pattern", token)
         return None
 
     def parse_case(self) -> Optional[Case]:
@@ -550,12 +554,12 @@ class Parser(PetlPhase):
                     self.advance()
                     return alias_type
                 else:
-                    self.logger.error(f"Invalid alias \'{alias}\' provided\n{token.file_position.to_string()}")
+                    self.error(f"Invalid alias \'{alias}\' provided", token)
                     return UnknownType()
 
         if self.match(Delimiter.RETURN, optional=True):
             return LambdaType(parameter_types=[first_type], return_type=self.parse_type())
         if token and not first_type:
-            self.logger.error(f"Expected type signature but received none\n{token.file_position.to_string()}")
+            self.error(f"Expected type signature but received none", token)
             return UnknownType()
         return first_type

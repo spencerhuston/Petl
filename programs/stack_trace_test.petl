@@ -1,0 +1,9 @@
+let t1 = |x: int| -> char { x };
+let t2 = |x: int| -> int { t1(x) };
+let t3 = |x: int| -> int { t2(x) };
+let t4 = |x: int| -> int { t3(x) };
+let t5 = |x: int| -> int { t4(x) };
+let t6 = |x: int| -> int { t5(x) };
+let a = 5;
+let b: int = t6(a);
+println(b)

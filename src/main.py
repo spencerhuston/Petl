@@ -1,4 +1,5 @@
 import sys
+import traceback
 from typing import Dict, Any, Optional, List
 
 from src.phases.environment import InterpreterEnvironment
@@ -50,10 +51,12 @@ if __name__ == "__main__":
     debug: bool = arguments["debug"]
 
     logger: Log = Log(debug)
-
-    if arguments["file"]:
-        petl_raw_str = read_petl_file(arguments["file"], logger)
-        if petl_raw_str:
-            execute_petl_script(petl_raw_str, debug)
-    else: # start REPL
-        logger.info("Petl REPL\n=========")
+    try:
+        if arguments["file"]:
+            petl_raw_str = read_petl_file(arguments["file"], logger)
+            if petl_raw_str:
+                execute_petl_script(petl_raw_str, debug)
+        else: # start REPL
+            logger.info("Petl REPL\n=========")
+    except Exception as main_exception:
+        logger.error(f"Unhandled exception occurred: {main_exception}, {traceback.format_exc()}")

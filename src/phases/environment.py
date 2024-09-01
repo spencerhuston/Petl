@@ -16,16 +16,16 @@ class InterpreterEnvironment:
     def add_alias(self, identifier: str, alias_type: PetlType):
         self._aliases[identifier] = alias_type
 
-    def get(self, identifier: str, token: Token, logger: Log) -> PetlValue:
+    def get(self, identifier: str, token: Token, error) -> PetlValue:
         if identifier in self._map:
             return self._map[identifier]
         else:
-            logger.error(f"Identifier {identifier} does not exist in this scope\n{token.file_position.to_string()}")
+            error(f"Identifier {identifier} does not exist in this scope", token)
             return NoneValue()
 
-    def get_alias(self, alias: str, token: Token, logger: Log) -> PetlType:
+    def get_alias(self, alias: str, token: Token, error) -> PetlType:
         if alias in self._aliases:
             return self._aliases[alias]
         else:
-            logger.error(f"Alias {alias} does not exist in this scope\n{token.file_position.to_string()}")
+            error(f"Alias {alias} does not exist in this scope", token)
             return NoneType()
