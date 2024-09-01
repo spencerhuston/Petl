@@ -78,13 +78,9 @@ def _types_conform(token: Token, expression_type: PetlType, expected_type: PetlT
             _types_conform(token, expression_type.value_type, expected_type.value_type)
         )
     elif isinstance(expression_type, SchemaType) and isinstance(expected_type, SchemaType):
-        return SchemaType(
-            _collection_types_conform(token, expression_type.column_types, expected_type.column_types))
+        return expression_type
     elif isinstance(expression_type, TableType) and isinstance(expected_type, TableType):
-        return TableType(SchemaType(
-            _collection_types_conform(token, expression_type.schema_type.column_types,
-                                      expected_type.schema_type.column_types))
-        )
+        return expression_type
     elif isinstance(expression_type, LambdaType) and isinstance(expected_type, LambdaType):
         well_formed_parameter_types: List[PetlType] = _collection_types_conform(token,
                                                                                 expression_type.parameter_types,

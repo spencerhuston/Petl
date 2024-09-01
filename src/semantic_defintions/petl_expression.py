@@ -201,7 +201,7 @@ class TupleDefinition(Expression):
 
 @dataclass
 class DictDefinition(Expression):
-    mapping: List[Tuple[Literal, Expression]] = field(default_factory=list)
+    mapping: List[Tuple[Expression, Expression]] = field(default_factory=list)
 
 
 @dataclass

@@ -23,12 +23,6 @@ let filtered_table = new_table |> where(|| -> bool { new_table("retired") });
 writeCsv("output.csv", new_table, ${name: string, age: int, retired: bool}, true)
 
 
-Possible features?
-- Tuple deconstruction
-- lazy evaluation
-- List slicing
-
-
 FEATURES:
 1. lambdas only 
 2. basic arithmetic 

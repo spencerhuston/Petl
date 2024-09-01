@@ -71,7 +71,7 @@ class Parser(PetlPhase):
     def get_exp_literal(self, element: Expression) -> Optional[Literal]:
         if isinstance(element, LitExpression):
             literal: Literal = element.literal
-            if literal.value:
+            if literal.value is not None:
                 return literal
         self.logger.error(f"Expected literal value\n{self.current_token().file_position.to_string()}")
         return None
@@ -283,7 +283,7 @@ class Parser(PetlPhase):
                 self.advance()
                 return LitExpression(StringType(), token, StringLiteral(token.token_value))
             else:
-                integer_literal: Expression = LitExpression(IntType(), token, IntLiteral(token.token_value))
+                integer_literal: Expression = LitExpression(IntType(), token, IntLiteral(int(token.token_value)))
                 self.advance()
                 if self.match(Delimiter.RANGE, optional=True):
                     range_start: Literal = self.get_exp_literal(integer_literal)
@@ -321,7 +321,7 @@ class Parser(PetlPhase):
         body: Expression = self.parse_expression()
         self.match(Delimiter.BRACE_RIGHT)
 
-        after_for_expression: Expression = UnknownExpression()
+        after_for_expression: Optional[Expression] = None
         if self.match(Delimiter.STMT_END, optional=True):
             after_for_expression = self.parse_expression()
 
@@ -341,9 +341,9 @@ class Parser(PetlPhase):
             return ListDefinition(ListType(elements[0].petl_type), token, values=elements)
         elif self.match(Delimiter.DENOTE, optional=True):
             first_value: Expression = self.parse_simple_expression()
-            mapping: List[Tuple[Literal, Expression]] = [(self.get_exp_literal(first_element), first_value)]
+            mapping: List[Tuple[Expression, Expression]] = [(first_element, first_value)]
             while self.match(Delimiter.COMMNA, optional=True):
-                key: Literal = self.get_exp_literal(self.parse_simple_expression())
+                key: Expression = self.parse_simple_expression()
                 self.match(Delimiter.DENOTE)
                 value: Expression = self.parse_simple_expression()
                 mapping.append((key, value))

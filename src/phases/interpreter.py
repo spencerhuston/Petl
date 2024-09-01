@@ -55,7 +55,7 @@ class Interpreter(PetlPhase):
         elif isinstance(expression, DictDefinition):
             return self.evaluate_dict_definition(expression, environment, expected_type)
         elif isinstance(expression, SchemaDefinition):
-            return self.evaluate_schema_definition(expression, environment, expected_type)
+            return self.evaluate_schema_definition(expression, expected_type)
         else:
             self.logger.error(f"Invalid expression found\n{expression.token.file_position.to_string()}")
             return NoneValue()
@@ -227,7 +227,28 @@ class Interpreter(PetlPhase):
         return NoneValue()
 
     def evaluate_for(self, for_expression: For, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
-        pass
+        def get_iterable_values(iterable: PetlValue) -> Optional[List[PetlValue]]:
+            if isinstance(iterable, ListValue):
+                return iterable.values
+            elif isinstance(iterable, TupleValue):
+                return iterable.values
+            elif isinstance(iterable, DictValue):
+                return list(map(lambda v: v[0], iterable.values))
+            elif isinstance(iterable, TableValue):
+                return iterable.rows
+
+        iterable: PetlValue = self.evaluate(for_expression.iterable, environment, UnknownType())
+        iterable_values: Optional[List[PetlValue]] = get_iterable_values(iterable)
+
+        for iterable_value in iterable_values:
+            for_body_environment: InterpreterEnvironment = copy(environment)
+            for_body_environment.add(for_expression.reference, iterable_value)
+            self.evaluate(for_expression.body, for_body_environment, AnyType())
+
+        if for_expression.after_for_expression:
+            return self.evaluate(for_expression.after_for_expression, environment, expected_type)
+        else:
+            return NoneValue()
 
     def evaluate_list_definition(self, list_definition: ListDefinition, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         if isinstance(list_definition.petl_type, ListType):
@@ -249,7 +270,7 @@ class Interpreter(PetlPhase):
             if start_value < 0 or end_value < 0:
                 self.logger.error(f"Range bounds cannot be negative\n{range_definition.token.file_position.to_string()}")
             elif types_conform(range_definition.token, ListType(IntType()), expected_type, self.logger):
-                return ListValue(ListType(IntType()), list(map(lambda l: IntValue(l), range(start_value, end_value))))
+                return ListValue(ListType(IntType()), list(map(lambda l: IntValue(l), range(start_value, end_value + 1))))
         return NoneValue()
 
     def evaluate_tuple_definition(self, tuple_definition: TupleDefinition, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
@@ -262,27 +283,14 @@ class Interpreter(PetlPhase):
         return NoneValue()
 
     def evaluate_dict_definition(self, dict_definition: DictDefinition, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
-        def literal_to_expression(literal: Literal) -> Expression:
-            if isinstance(literal, IntLiteral):
-                return LitExpression(IntType(), dict_definition.token, literal)
-            elif isinstance(literal, BoolLiteral):
-                return LitExpression(BoolType(), dict_definition.token, literal)
-            elif isinstance(literal, CharLiteral):
-                return LitExpression(CharType(), dict_definition.token, literal)
-            elif isinstance(literal, StringLiteral):
-                return LitExpression(StringType(), dict_definition.token, literal)
-            else:
-                self.logger.error(f"Invalid dictionary key type\n{dict_definition.token.file_position.to_string()}")
-                return LitExpression(NoneType(), dict_definition.token, NoneLiteral())
-
         def all_types_align(dict_values: List[Tuple[PetlValue, PetlValue]]) -> bool:
             return dict_values and \
-                   all(map(lambda v: types_conform(dict_definition.token, v[0], dict_values[0][0].petl_type, self.logger), dict_values)) and \
-                   all(map(lambda v: types_conform(dict_definition.token, v[1], dict_values[0][1].petl_type, self.logger), dict_values))
+                   all(map(lambda v: types_conform(dict_definition.token, v[0].petl_type, dict_values[0][0].petl_type, self.logger), dict_values)) and \
+                   all(map(lambda v: types_conform(dict_definition.token, v[1].petl_type, dict_values[0][1].petl_type, self.logger), dict_values))
 
         if isinstance(dict_definition.petl_type, DictType):
             key_type: PetlType = dict_definition.petl_type.key_type
-            entry_key_values: List[PetlValue] = list(map(lambda entry: self.evaluate(literal_to_expression(entry[0]), environment, key_type), dict_definition.mapping))
+            entry_key_values: List[PetlValue] = list(map(lambda entry: self.evaluate(entry[0], environment, key_type), dict_definition.mapping))
             value_type: PetlType = dict_definition.petl_type.value_type
             entry_values: List[PetlValue] = list(map(lambda entry: self.evaluate(entry[1], environment, value_type), dict_definition.mapping))
             dict_values: List[Tuple[PetlValue, PetlValue]] = list(map(lambda k, v: (k, v), entry_key_values, entry_values))
@@ -297,5 +305,9 @@ class Interpreter(PetlPhase):
                 return DictValue(dict_type, dict_values)
         return NoneValue()
 
-    def evaluate_schema_definition(self, schema_definition: SchemaDefinition, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
-        pass
+    def evaluate_schema_definition(self, schema_definition: SchemaDefinition, expected_type: PetlType) -> PetlValue:
+        if types_conform(schema_definition.token, schema_definition.petl_type, expected_type, self.logger):
+            columns: List[Tuple[StringValue, PetlType]] = list(map(lambda column: (StringValue(column[0]), column[1]), schema_definition.mapping))
+            column_types: List[PetlType] = list(map(lambda column: column[1], columns))
+            return SchemaValue(SchemaType(column_types), columns)
+        return NoneValue()
