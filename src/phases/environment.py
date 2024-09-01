@@ -3,7 +3,6 @@ from typing import Dict
 from src.semantic_defintions.petl_types import PetlType, NoneType
 from src.semantic_defintions.petl_value import PetlValue, NoneValue
 from src.tokens.petl_token import Token
-from src.utils.log import Log
 
 
 class InterpreterEnvironment:
@@ -20,12 +19,12 @@ class InterpreterEnvironment:
         if identifier in self._map:
             return self._map[identifier]
         else:
-            error(f"Identifier {identifier} does not exist in this scope", token)
+            error(f"Identifier \'{identifier}\' does not exist in this scope", token)
             return NoneValue()
 
     def get_alias(self, alias: str, token: Token, error) -> PetlType:
         if alias in self._aliases:
             return self._aliases[alias]
         else:
-            error(f"Alias {alias} does not exist in this scope", token)
+            error(f"Alias \'{alias}\' does not exist in this scope", token)
             return NoneType()

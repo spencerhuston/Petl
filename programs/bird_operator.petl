@@ -1,0 +1,3 @@
+let a = |f: int -> int| -> int { f(x) };
+let b = |x: int| -> int { x };
+println(a(b))

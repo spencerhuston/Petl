@@ -1,3 +1,4 @@
+import traceback
 from copy import copy
 from typing import Set
 
@@ -18,6 +19,10 @@ def load_builtins(builtins: Set[Builtin]) -> InterpreterEnvironment:
     return environment
 
 
+class InterpreterException(Exception):
+    pass
+
+
 class Interpreter(PetlPhase):
     def __init__(self, debug=False):
         self.logger.__init__(debug)
@@ -25,12 +30,12 @@ class Interpreter(PetlPhase):
         self.stack_trace: List[FilePosition] = []
 
     def error(self, text: str, token: Optional[Token] = None):
-        file_position_str: str = f"{token.file_position.to_string()}\n\tin" if self.stack_trace[-1] == token.file_position else ""
-        stack_trace_strs: List[str] = list(map(lambda fp: fp.to_string(), self.stack_trace))
-        stack_trace_strs.reverse()
-        stack_trace_str: str = functools.reduce(lambda fp1, fp2: f"{fp1}\n\tin\n{fp2}", stack_trace_strs)
-        self.logger.error(f"{file_position_str}{text}\n{stack_trace_str}")
-        raise Exception
+        if not self.stack_trace or (self.stack_trace and self.stack_trace[-1] != token.file_position):
+            self.stack_trace.append(token.file_position)
+        stack_trace_strs: List[str] = list(map(lambda fp: fp.to_string(), list(reversed(self.stack_trace))))
+        stack_trace_str: Optional[str] = "" if not stack_trace_strs else functools.reduce(lambda fp1, fp2: f"{fp1}\n\tin\n{fp2}", stack_trace_strs)
+        self.logger.error(f"{text}\n{stack_trace_str}")
+        raise InterpreterException
 
     def literal_to_value(self, token: Token, literal: Literal) -> PetlValue:
         if isinstance(literal, IntLiteral):
@@ -50,8 +55,10 @@ class Interpreter(PetlPhase):
     def interpret(self, root: Expression, environment: InterpreterEnvironment):
         try:
             self.evaluate(root, environment, AnyType())
-        except Exception as e:
+        except InterpreterException as e:
             pass
+        except Exception as e:
+            self.logger.error(f"Unhandled exception while interpreting: {e}, {traceback.format_exc()}")
 
     def evaluate(self, expression: Expression, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         evaluated_value: PetlValue = NoneValue()

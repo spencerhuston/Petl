@@ -1,7 +1,6 @@
 from src.semantic_defintions.petl_expression import *
 from src.semantic_defintions.petl_types import *
 from src.tokens.petl_token import Token
-from src.utils.log import Log
 
 
 def _make_well_formed(t: PetlType, token: Token) -> PetlType:
