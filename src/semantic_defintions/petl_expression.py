@@ -117,7 +117,7 @@ class LitExpression(Expression):
 
 @dataclass
 class Let(Expression):
-    identifier: str = ""
+    identifiers: List[str] = field(default_factory=list)
     let_type: PetlType = UnknownType()
     let_expression: Expression = UnknownExpression()
     after_let_expression: Expression = UnknownExpression()

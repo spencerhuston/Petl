@@ -1,23 +1,28 @@
-from abc import ABC, abstractmethod
-from typing import List
+from typing import Tuple
 
 from src.phases.environment import InterpreterEnvironment
-from src.phases.petl_phase import PetlPhase
-from src.semantic_defintions.petl_types import PetlType, LambdaType
-from src.semantic_defintions.petl_value import PetlValue, NoneValue
+from src.semantic_defintions.petl_expression import Expression, UnknownExpression
+from src.semantic_defintions.petl_types import *
+from src.semantic_defintions.petl_value import PetlValue, NoneValue, LambdaValue
+from src.utils.log import Log
 
 
-class Builtin(ABC, PetlPhase):
-    def __init__(self, debug=False):
-        self.logger.__init__(debug)
-        self.petl_type: LambdaType = LambdaType()
-        self.parameters: List[str, PetlType] = []
-        self.return_type: PetlType
-        self.environment: InterpreterEnvironment = InterpreterEnvironment()
+class Builtin(ABC):
+    name: str
+    lambda_type: LambdaType
 
     @abstractmethod
-    def evaluate(self, argument_values: List[PetlValue], environment: InterpreterEnvironment) -> PetlValue:
+    def evaluate(self, argument_values: List[PetlValue], environment: InterpreterEnvironment, logger: Log) -> PetlValue:
         pass
+
+    @abstractmethod
+    def to_value(self) -> LambdaValue:
+        pass
+
+    def _to_value(self, parameters: List[Tuple[str, PetlType]]) -> LambdaValue:
+        body: Expression = UnknownExpression()
+        environment: InterpreterEnvironment = InterpreterEnvironment()
+        return LambdaValue(self.lambda_type, self, parameters, body, environment)
 
 
 def get_builtin(name: str) -> Builtin:
@@ -34,10 +39,28 @@ class ReadLn(Builtin):
 
 
 class Print(Builtin):
-    pass
+    def __init__(self):
+        self.name = "println"
+        self.lambda_type = LambdaType([AnyType()], StringType())
+
+    def evaluate(self, argument_values: List[PetlValue], environment: InterpreterEnvironment, logger: Log) -> PetlValue:
+        print(argument_values[0].to_string(), end="")
+        return NoneValue()
+
+    def to_value(self) -> LambdaValue:
+        parameters = [("str", AnyType())]
+        return self._to_value(parameters)
 
 
 class PrintLn(Builtin):
-    def evaluate(self, argument_values: List[PetlValue], environment: InterpreterEnvironment) -> PetlValue:
+    def __init__(self):
+        self.name = "println"
+        self.lambda_type = LambdaType([AnyType()], StringType())
+
+    def evaluate(self, argument_values: List[PetlValue], environment: InterpreterEnvironment, logger: Log) -> PetlValue:
         print(argument_values[0].to_string())
         return NoneValue()
+
+    def to_value(self) -> LambdaValue:
+        parameters = [("str", AnyType())]
+        return self._to_value(parameters)

@@ -1,6 +1,7 @@
 from copy import copy
+from typing import Set
 
-from src.builtins.petl_builtins import get_builtin
+from src.builtins.petl_builtins import get_builtin, Builtin
 from src.phases.environment import InterpreterEnvironment
 from src.phases.petl_phase import PetlPhase
 from src.phases.type_resolver import types_conform
@@ -8,13 +9,21 @@ from src.semantic_defintions.petl_expression import *
 from src.semantic_defintions.petl_value import *
 
 
+def load_builtins(builtins: Set[Builtin]) -> InterpreterEnvironment:
+    environment: InterpreterEnvironment = InterpreterEnvironment()
+    if builtins:
+        for builtin in builtins:
+            environment.add(builtin.name, builtin.to_value())
+    return environment
+
+
 class Interpreter(PetlPhase):
     def __init__(self, debug=False):
         self.logger.__init__(debug)
         self.environment = InterpreterEnvironment()
 
-    def interpret(self, root_expression):
-        self.evaluate(root_expression, InterpreterEnvironment(), AnyType())
+    def interpret(self, root: Expression, environment: InterpreterEnvironment):
+        self.evaluate(root, environment, AnyType())
 
     def evaluate(self, expression: Expression, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         if isinstance(expression, LitExpression):
@@ -54,9 +63,9 @@ class Interpreter(PetlPhase):
     def evaluate_literal(self, literal_expression: LitExpression, expected_type: PetlType) -> PetlValue:
         if types_conform(literal_expression.token, literal_expression.petl_type, expected_type, self.logger):
             if isinstance(literal_expression.literal, IntLiteral):
-                return IntValue(literal_expression.literal.value)
+                return IntValue(int(literal_expression.literal.value))
             elif isinstance(literal_expression.literal, BoolLiteral):
-                return BoolValue(literal_expression.literal.value)
+                return BoolValue(True if literal_expression.literal.value.lower() == "true" else False)
             elif isinstance(literal_expression.literal, CharLiteral):
                 return CharValue(literal_expression.literal.value)
             elif isinstance(literal_expression.literal, StringLiteral):
@@ -67,8 +76,17 @@ class Interpreter(PetlPhase):
 
     def evaluate_let(self, let: Let, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         let_value: PetlValue = self.evaluate(let.let_expression, environment, let.let_type)
+        unpacked_values: List[Tuple[str, PetlValue]] = [(let.identifiers[0], let_value)]
+        if len(let.identifiers) > 1 and isinstance(let_value, TupleValue):
+            unpacked_values = list(map(lambda i, v: (i, v), let.identifiers, let_value.values))
+        elif len(let.identifiers) > 1 and not isinstance(let_value, TupleValue):
+            self.logger.error(f"Cannot unpack, requires tuple value\n{let.token.file_position.to_string()}")
+            return NoneValue()
+
         after_let_environment = copy(environment)
-        after_let_environment.add(let.identifier, let_value)
+        for unpacked_value in unpacked_values:
+            after_let_environment.add(unpacked_value[0], unpacked_value[1])
+
         if let.after_let_expression:
             return self.evaluate(let.after_let_expression, after_let_environment, expected_type)
         else:
@@ -85,7 +103,7 @@ class Interpreter(PetlPhase):
     def evaluate_lambda(self, lambda_expression: Lambda, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         if types_conform(lambda_expression.token, lambda_expression.petl_type, expected_type, self.logger):
             parameters: List[Tuple[str, PetlType]] = list(map(lambda p: (p.identifier, p.parameter_type), lambda_expression.parameters))
-            return LambdaValue(False, parameters, copy(lambda_expression.body), copy(environment))
+            return LambdaValue(lambda_expression.petl_type, "", parameters, copy(lambda_expression.body), copy(environment))
         else:
             return NoneValue()
 
@@ -111,15 +129,15 @@ class Interpreter(PetlPhase):
 
         lambda_environment: InterpreterEnvironment = copy(environment)
         argument_values: List[PetlValue] = []
-        for argument, parameter in application.arguments, identifier.parameters:
-            argument_value: PetlValue = self.evaluate(argument, environment, parameter.parameter_type)
-            lambda_environment.add(parameter.identifier, argument_value)
+        for argument, parameter in list(map(lambda a, p: (a, p), application.arguments, identifier.parameters)):
+            argument_value: PetlValue = self.evaluate(argument, environment, parameter[1])
+            lambda_environment.add(parameter[0], argument_value)
             argument_values.append(argument_value)
 
         lambda_return_value: PetlValue = NoneValue()
         if isinstance(identifier.petl_type, LambdaType):
             if identifier.builtin:
-                get_builtin(identifier.builtin).evaluate(argument_values, lambda_environment)
+                lambda_return_value = identifier.builtin.evaluate(argument_values, lambda_environment, self.logger)
             else:
                 lambda_return_value = self.evaluate(identifier.body, lambda_environment, identifier.petl_type.return_type)
             types_conform(application.token, lambda_return_value.petl_type, expected_type, self.logger)
@@ -215,7 +233,7 @@ class Interpreter(PetlPhase):
         if isinstance(list_definition.petl_type, ListType):
             element_type: PetlType = list_definition.petl_type.list_type
             list_values: List[PetlValue] = list(map(lambda v: self.evaluate(v, environment, element_type), list_definition.values))
-            if list_values and all(map(lambda v: types_conform(list_definition.token, v.petl_types, list_values[0].petl_type, self.logger), list_values)):
+            if list_values and all(map(lambda v: types_conform(list_definition.token, v.petl_type, list_values[0].petl_type, self.logger), list_values)):
                 element_type = list_values[0].petl_type
             else:
                 element_type = UnknownType()
@@ -237,10 +255,11 @@ class Interpreter(PetlPhase):
     def evaluate_tuple_definition(self, tuple_definition: TupleDefinition, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         if isinstance(tuple_definition.petl_type, TupleType):
             tuple_element_types: List[PetlType] = tuple_definition.petl_type.tuple_types
-            if types_conform(tuple_definition.token, tuple_definition.petl_type, expected_type, self.logger):
-                tuple_values: List[PetlValue] = list(map(lambda tv, tet: self.evaluate(tv, environment, tet), tuple_definition.values, tuple_element_types))
+            tuple_values: List[PetlValue] = list(map(lambda tv, tet: self.evaluate(tv, environment, tet), tuple_definition.values, tuple_element_types))
+            tuple_type: Optional[PetlType] = types_conform(tuple_definition.token, TupleType(list(map(lambda tt: tt.petl_type, tuple_values))), expected_type, self.logger)
+            if tuple_type:
                 return TupleValue(tuple_definition.petl_type, tuple_values)
-            return NoneValue()
+        return NoneValue()
 
     def evaluate_dict_definition(self, dict_definition: DictDefinition, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         def literal_to_expression(literal: Literal) -> Expression:

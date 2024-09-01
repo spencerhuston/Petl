@@ -1,0 +1,6 @@
+let a = 5;
+println(a);
+let a1: list[int], b: char, c: int = ([1, 2, 3], 'b', 3);
+println(a1(2));
+println(b);
+println(c)

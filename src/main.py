@@ -1,7 +1,8 @@
 import sys
 from typing import Dict, Any, Optional, List
 
-from src.phases.interpreter import Interpreter
+from src.phases.environment import InterpreterEnvironment
+from src.phases.interpreter import Interpreter, load_builtins
 from src.phases.lexer import Lexer
 from src.phases.parser import Parser
 from src.semantic_defintions.petl_expression import Expression, UnknownExpression
@@ -38,7 +39,8 @@ def execute_petl_script(petl_raw_str: str, debug: bool) -> bool:
         root: Expression = parser.parse(tokens)
         if root and not parser.logger.errors_occurred() and not isinstance(root, UnknownExpression):
             interpreter: Interpreter = Interpreter(debug)
-            interpreter.interpret(root)
+            environment: InterpreterEnvironment = load_builtins(parser.builtins)
+            interpreter.interpret(root, environment)
     else:
         return False
 

@@ -1,10 +1,12 @@
-from src.builtins.petl_builtins import get_builtin
+from typing import Set
+
+from src.builtins.petl_builtins import get_builtin, Builtin
 from src.phases.petl_phase import PetlPhase
 from src.semantic_defintions.petl_expression import *
 from src.semantic_defintions.petl_types import *
-from src.tokens.petl_token import Token
 from src.tokens.delimiter import Delimiter
 from src.tokens.petl_keyword import Keyword, is_builtin_function
+from src.tokens.petl_token import Token
 
 
 class Parser(PetlPhase):
@@ -15,6 +17,7 @@ class Parser(PetlPhase):
         self.current_token_index = 0
         self.dummy_count = 0
         self.aliases: dict[str, PetlType] = {}
+        self.builtins: Set[Builtin] = set()
 
     def current_token(self) -> Optional[Token]:
         if self.current_token_index >= self.tokens_length:
@@ -94,13 +97,12 @@ class Parser(PetlPhase):
                     let_type: PetlType = simple_exp.petl_type
                     after_let_expression: Expression = self.parse_expression()
                     expression_type: PetlType = after_let_expression.petl_type
-                    return Let(expression_type, token, dummy_identifier, let_type, simple_exp, after_let_expression)
+                    return Let(expression_type, token, [dummy_identifier], let_type, simple_exp, after_let_expression)
                 else:
                     return simple_exp
         return UnknownExpression()
 
-    def parse_let(self) -> Optional[Let]:
-        token = self.current_token()
+    def parse_let_identifier(self) -> Optional[Tuple[str, PetlType]]:
         identifier: Optional[str] = self.match_ident()
 
         if not identifier:
@@ -109,6 +111,25 @@ class Parser(PetlPhase):
         let_type: PetlType = UnknownType()
         if self.match(Delimiter.DENOTE):
             let_type = self.parse_type()
+        return identifier, let_type
+
+    def parse_let(self) -> Optional[Let]:
+        token = self.current_token()
+        let_identifier: Optional[Tuple[str, PetlType]] = self.parse_let_identifier()
+
+        if not let_identifier:
+            return None
+
+        let_identifiers: List[str] = [let_identifier[0]]
+        let_types: List[PetlType] = [let_identifier[1]]
+        while self.match(Delimiter.COMMNA, optional=True):
+            additional_identifier = self.parse_let_identifier()
+            if not additional_identifier:
+                return None
+            let_identifiers.append(additional_identifier[0])
+            let_types.append(additional_identifier[1])
+
+        let_type = let_types[0] if len(let_types) == 1 else TupleType(let_types)
 
         self.match(Delimiter.ASSIGN)
         let_expression: Expression = self.parse_simple_expression()
@@ -118,7 +139,7 @@ class Parser(PetlPhase):
             after_let_expression = self.parse_expression()
         expression_type = after_let_expression.petl_type if after_let_expression else NoneType
 
-        return Let(expression_type, token, identifier, let_type, let_expression, after_let_expression)
+        return Let(expression_type, token, let_identifiers, let_type, let_expression, after_let_expression)
 
     def parse_simple_expression(self) -> Optional[Expression]:
         if self.match(Keyword.IF, optional=True):
@@ -228,7 +249,9 @@ class Parser(PetlPhase):
         token = self.current_token()
         if token.token_type == Token.TokenType.KEYWORD and is_builtin_function(token.token_value):
             self.advance()
-            return Reference(get_builtin(token.token_value).petl_type, token, token.token_value)
+            builtin_reference: Builtin = get_builtin(token.token_value)
+            self.builtins.add(builtin_reference)
+            return Reference(builtin_reference.lambda_type, token, token.token_value)
         elif self.match(Delimiter.PAREN_LEFT, optional=True):
             self.advance()
             simple_exp: Expression = self.parse_tuple_def_or_smp_expression()

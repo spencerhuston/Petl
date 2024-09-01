@@ -6,7 +6,8 @@ from src.semantic_defintions.petl_types import *
 
 
 class PetlValue(ABC):
-    petl_type: PetlType = UnknownType()
+    def __init__(self, petl_type: PetlType):
+        self.petl_type = petl_type
 
     @abstractmethod
     def to_string(self) -> str:
@@ -39,7 +40,7 @@ def values_equal(value1: PetlValue, value2: PetlValue) -> bool:
 
 class IntValue(PetlValue):
     def __init__(self, value: int):
-        self.petl_type: PetlType = IntType()
+        PetlValue.__init__(self, IntType())
         self.value: int = value
 
     def to_string(self) -> str:
@@ -48,7 +49,7 @@ class IntValue(PetlValue):
 
 class BoolValue(PetlValue):
     def __init__(self, value: bool):
-        self.petl_type: PetlType = BoolType()
+        PetlValue.__init__(self, BoolType())
         self.value: bool = value
 
     def to_string(self) -> str:
@@ -57,7 +58,7 @@ class BoolValue(PetlValue):
 
 class CharValue(PetlValue):
     def __init__(self, value: str):
-        self.petl_type: PetlType = CharType()
+        PetlValue.__init__(self, CharType())
         self.value: str = value
 
     def to_string(self) -> str:
@@ -66,7 +67,7 @@ class CharValue(PetlValue):
 
 class StringValue(PetlValue):
     def __init__(self, value: str):
-        self.petl_type: PetlType = StringType()
+        PetlValue.__init__(self, StringType())
         self.value: str = value
 
     def to_string(self) -> str:
@@ -75,7 +76,7 @@ class StringValue(PetlValue):
 
 class NoneValue(PetlValue):
     def __init__(self):
-        self.petl_type: PetlType = NoneType()
+        PetlValue.__init__(self, NoneType())
         self.value: None = None
 
     def to_string(self) -> str:
@@ -84,7 +85,7 @@ class NoneValue(PetlValue):
 
 class ListValue(PetlValue):
     def __init__(self, petl_type: PetlType, values: List[PetlValue]):
-        self.petl_type = petl_type
+        PetlValue.__init__(self, petl_type)
         self.values = values
 
     def to_string(self) -> str:
@@ -94,7 +95,7 @@ class ListValue(PetlValue):
 
 class TupleValue(PetlValue):
     def __init__(self, petl_type: PetlType, values: List[PetlValue]):
-        self.petl_type = petl_type
+        PetlValue.__init__(self, petl_type)
         self.values = values
 
     def to_string(self) -> str:
@@ -104,7 +105,7 @@ class TupleValue(PetlValue):
 
 class DictValue(PetlValue):
     def __init__(self, petl_type: PetlType, values: List[Tuple[PetlValue, PetlValue]]):
-        self.petl_type = petl_type
+        PetlValue.__init__(self, petl_type)
         self.values = values
 
     def to_string(self) -> str:
@@ -117,7 +118,7 @@ class DictValue(PetlValue):
 
 class SchemaValue(PetlValue):
     def __init__(self, petl_type: PetlType, values: List[Tuple[StringValue, PetlType]]):
-        self.petl_type = petl_type
+        PetlValue.__init__(self, petl_type)
         self.values = values
 
     def to_string(self) -> str:
@@ -130,7 +131,7 @@ class SchemaValue(PetlValue):
 
 class TableValue(PetlValue):
     def __init__(self, petl_type: PetlType, schema: SchemaValue, rows: List[PetlValue]):
-        self.petl_type = petl_type
+        PetlValue.__init__(self, petl_type)
         self.schema = schema
         self.rows = rows
 
@@ -139,7 +140,8 @@ class TableValue(PetlValue):
 
 
 class LambdaValue(PetlValue):
-    def __init__(self, builtin: str, parameters: List[Tuple[str, PetlType]], body: Expression, environment):
+    def __init__(self, petl_type: PetlType, builtin, parameters: List[Tuple[str, PetlType]], body: Expression, environment):
+        PetlValue.__init__(self, petl_type)
         self.builtin = builtin
         self.parameters = parameters
         self.body = body

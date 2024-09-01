@@ -1,6 +1,7 @@
 let test = |x: int| -> int -> int {
     |y: int| -> int {
-        x;
+        println(x);
+        println(y);
         y
     }
 };
