@@ -53,7 +53,7 @@ class Print(Builtin):
         self.lambda_type = LambdaType([AnyType()], NoneType())
 
     def evaluate(self, argument_values: List[PetlValue], environment: InterpreterEnvironment, logger: Log) -> PetlValue:
-        print(argument_values[0].to_string(), end="")
+        print(argument_values[0].to_string().encode().decode('unicode_escape'), end="")
         return NoneValue()
 
     def to_value(self) -> LambdaValue:
@@ -67,7 +67,7 @@ class PrintLn(Builtin):
         self.lambda_type = LambdaType([AnyType()], NoneType())
 
     def evaluate(self, argument_values: List[PetlValue], environment: InterpreterEnvironment, logger: Log) -> PetlValue:
-        print(argument_values[0].to_string())
+        print(argument_values[0].to_string().encode().decode('unicode_escape'))
         return NoneValue()
 
     def to_value(self) -> LambdaValue:

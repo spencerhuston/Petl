@@ -43,7 +43,7 @@ def execute_petl_script(petl_raw_str: str, debug: bool) -> bool:
             interpreter: Interpreter = Interpreter(debug)
             environment: InterpreterEnvironment = load_builtins(parser.builtins)
             result_value: PetlValue = interpreter.interpret(root, environment)
-            logger.debug(result_value.to_string())
+            logger.debug(f"DEBUG: {result_value.to_string()}")
     else:
         return False
 

@@ -282,7 +282,12 @@ class Parser(PetlPhase):
         elif token.token_type == Token.TokenType.VALUE:
             if token.token_value.startswith('\''):
                 self.advance()
-                return LitExpression(CharType(), token, CharLiteral(token.token_value))
+                if len(token.token_value) == 3:
+                    return LitExpression(CharType(), token, CharLiteral(token.token_value))
+                elif token.token_value.startswith("\'\\") and len(token.token_value) == 4:
+                    return LitExpression(CharType(), token, CharLiteral(token.token_value))
+                else:
+                    return LitExpression(StringType(), token, StringLiteral(token.token_value.replace('\'', '\"')))
             elif token.token_value.startswith('\"'):
                 self.advance()
                 return LitExpression(StringType(), token, StringLiteral(token.token_value))

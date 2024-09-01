@@ -62,7 +62,7 @@ class CharValue(PetlValue):
         self.value: str = value
 
     def to_string(self) -> str:
-        return self.value
+        return self.value.replace('\'', '')
 
 
 class StringValue(PetlValue):
@@ -71,7 +71,7 @@ class StringValue(PetlValue):
         self.value: str = value
 
     def to_string(self) -> str:
-        return self.value
+        return self.value.replace('\"', '')
 
 
 class NoneValue(PetlValue):
