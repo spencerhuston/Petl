@@ -397,7 +397,7 @@ class Parser(PetlPhase):
             if self.match(Keyword.IF, optional=True):
                 predicate = self.parse_simple_expression()
             return TypePattern(token.token_value, case_type, predicate)
-        elif token.token_type == Token.TokenType.IDENT and token.token_value == "_":
+        elif token.token_type == Token.TokenType.DELIMITER and token.token_value == "_":
             self.advance()
             return AnyPattern()
         elif token.token_type == Token.TokenType.VALUE:

@@ -111,7 +111,7 @@ class DictValue(PetlValue):
     def to_string(self) -> str:
         elements_string: str = functools.reduce(
             lambda v1, v2: v1 + ", " + v2,
-            map(lambda v: v[0].to_string() + ":" + v[1].to_string(), self.values)
+            map(lambda v: v[0].to_string() + ": " + v[1].to_string(), self.values)
         )
         return f"[{elements_string}]"
 

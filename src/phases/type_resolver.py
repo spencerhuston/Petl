@@ -97,10 +97,11 @@ def _types_conform(token: Token, expression_type: PetlType, expected_type: PetlT
         return UnknownType()
 
 
-def types_conform(token: Token, expression_type: PetlType, expected_type: PetlType, logger: Log) -> Optional[PetlType]:
+def types_conform(token: Token, expression_type: PetlType, expected_type: PetlType, logger: Log, no_error=False) -> Optional[PetlType]:
     conformed_type: PetlType = _types_conform(token, expression_type, expected_type)
     if not _is_well_formed(conformed_type):
-        logger.error(f"Type mismatch: {expression_type.to_string()} vs. {expected_type.to_string()}\n{token.file_position.to_string()}")
+        if not no_error:
+            logger.error(f"Type mismatch: {expression_type.to_string()} vs. {expected_type.to_string()}\n{token.file_position.to_string()}")
         return None
     else:
         return conformed_type

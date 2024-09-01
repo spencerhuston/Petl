@@ -22,6 +22,21 @@ class Interpreter(PetlPhase):
         self.logger.__init__(debug)
         self.environment = InterpreterEnvironment()
 
+    def literal_to_value(self, token: Token, literal: Literal) -> PetlValue:
+        if isinstance(literal, IntLiteral):
+            return IntValue(literal.value)
+        elif isinstance(literal, BoolLiteral):
+            return BoolValue(literal.value)
+        if isinstance(literal, CharLiteral):
+            return CharValue(literal.value)
+        elif isinstance(literal, StringLiteral):
+            return StringValue(literal.value)
+        elif isinstance(literal, NoneLiteral):
+            return NoneValue()
+        else:
+            self.logger.error(f"Invalid type for pattern matching on literal value\n{token.file_position.to_string()}")
+            return NoneValue()
+
     def interpret(self, root: Expression, environment: InterpreterEnvironment):
         self.evaluate(root, environment, AnyType())
 
@@ -65,7 +80,7 @@ class Interpreter(PetlPhase):
             if isinstance(literal_expression.literal, IntLiteral):
                 return IntValue(int(literal_expression.literal.value))
             elif isinstance(literal_expression.literal, BoolLiteral):
-                return BoolValue(True if literal_expression.literal.value.lower() == "true" else False)
+                return BoolValue(literal_expression.literal.value)
             elif isinstance(literal_expression.literal, CharLiteral):
                 return CharValue(literal_expression.literal.value)
             elif isinstance(literal_expression.literal, StringLiteral):
@@ -204,8 +219,71 @@ class Interpreter(PetlPhase):
                 self.logger.error(f"Key does not exist in dictionary\n{application.arguments[0].token.file_position.to_string()}")
         return NoneValue()
 
+    def evaluate_type_pattern(self, case: Case, match_value: PetlValue, environment: InterpreterEnvironment, expected_type: PetlType) -> Optional[PetlValue]:
+        if isinstance(case.pattern, TypePattern):
+            type_pattern: TypePattern = case.pattern
+            token: Token = case.case_expression.token.file_position.to_string()
+            if types_conform(token, match_value.petl_type, type_pattern.case_type, self.logger, no_error=True):
+                case_environment: InterpreterEnvironment = copy(environment)
+                case_environment.add(type_pattern.identifier, match_value)
+                predicate_value: PetlValue = BoolValue(True)
+                if type_pattern.predicate:
+                    predicate_value: PetlValue = self.evaluate(type_pattern.predicate, case_environment, BoolType())
+                if isinstance(predicate_value, BoolValue) and predicate_value.value:
+                    return self.evaluate(case.case_expression, case_environment, expected_type)
+        return None
+
+    def evaluate_literal_pattern(self, case: Case, match_value: PetlValue, environment: InterpreterEnvironment, expected_type: PetlType) -> Optional[PetlValue]:
+        if isinstance(case.pattern, LiteralPattern):
+            literal_pattern: LiteralPattern = case.pattern
+            token: Token = case.case_expression.token.file_position.to_string()
+            if values_equal(match_value, self.literal_to_value(token, literal_pattern.literal)):
+                return self.evaluate(case.case_expression, environment, expected_type)
+        return None
+
+    def evaluate_multiliteral_pattern(self, case: Case, match_value: PetlValue, environment: InterpreterEnvironment, expected_type: PetlType) -> Optional[PetlValue]:
+        if isinstance(case.pattern, MultiLiteralPattern):
+            multiliteral_pattern: MultiLiteralPattern = case.pattern
+            token: Token = case.case_expression.token.file_position.to_string()
+            if any(map(lambda l: values_equal(match_value, self.literal_to_value(token, l)), multiliteral_pattern.literals)):
+                return self.evaluate(case.case_expression, environment, expected_type)
+        return None
+
+    def evaluate_range_pattern(self, case: Case, match_value: PetlValue, environment: InterpreterEnvironment, expected_type: PetlType) -> Optional[PetlValue]:
+        if isinstance(case.pattern, RangePattern):
+            range_pattern: RangePattern = case.pattern
+            if isinstance(range_pattern.range, RangeDefinition):
+                range_definition: PetlValue = self.evaluate_range_definition(range_pattern.range, ListType(IntType()))
+                if isinstance(range_definition, ListValue):
+                    list_values: List[PetlValue] = range_definition.values
+                    if any(map(lambda v: values_equal(v, match_value), list_values)):
+                        return self.evaluate(case.case_expression, environment, expected_type)
+        return None
+
     def evaluate_match(self, match: Match, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
-        pass
+        match_value: PetlValue = self.evaluate(match.match_expression, environment, AnyType())
+        case_value: Optional[PetlValue] = None
+        for case in match.cases:
+            if isinstance(case.pattern, TypePattern):
+                case_value = self.evaluate_type_pattern(case, match_value, environment, expected_type)
+            elif isinstance(case.pattern, LiteralPattern):
+                case_value = self.evaluate_literal_pattern(case, match_value, environment, expected_type)
+            elif isinstance(case.pattern, MultiLiteralPattern):
+                case_value = self.evaluate_multiliteral_pattern(case, match_value, environment, expected_type)
+            elif isinstance(case.pattern, RangePattern):
+                case_value = self.evaluate_range_pattern(case, match_value, environment, expected_type)
+            elif isinstance(case.pattern, AnyPattern):
+                case_value = self.evaluate(case.case_expression, environment, expected_type)
+            else:
+                self.logger.error(f"Invalid pattern found\n{case.case_expression.token.file_position.to_string()}")
+                return NoneValue()
+
+            if case_value:
+                return case_value
+
+        if not case_value:
+            self.logger.error(f"Reached end of pattern-match, add catch-all case\n{match.token.file_position.to_string()}")
+        return NoneValue()
 
     def evaluate_primitve(self, primitive: Primitive, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         pass
