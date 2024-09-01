@@ -331,6 +331,10 @@ class Parser(PetlPhase):
 
     def parse_tuple_def_or_smp_expression(self) -> Optional[Expression]:
         token = self.current_token()
+
+        if self.match(Delimiter.PAREN_RIGHT, optional=True):
+            return LitExpression(NoneType(), token, NoneLiteral())
+
         first_element: Expression = self.parse_simple_expression()
         tuple_types: List[PetlType] = [first_element.petl_type]
         tuple_elements: List[Expression] = [first_element]
