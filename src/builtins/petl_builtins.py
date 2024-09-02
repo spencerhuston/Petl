@@ -1,12 +1,16 @@
+from typing import Any, Optional
+
 from src.phases.environment import InterpreterEnvironment, copy_environment
 from src.semantic_defintions.petl_expression import UnknownExpression, Application
 from src.semantic_defintions.petl_value import *
+from src.tokens.petl_token import Token
 
 
 class Builtin(ABC):
-    name: str
-    func_type: FuncType
-    parameters: List[Tuple[str, PetlType]] = []
+    def __init__(self, name: str, parameters: List[Tuple[str, PetlType]], return_type: PetlType):
+        self.name: str = name
+        self.parameters: List[Tuple[str, PetlType]] = parameters
+        self.func_type = FuncType([parameter[1] for parameter in parameters], return_type)
 
     @abstractmethod
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
@@ -25,6 +29,10 @@ def get_builtin(name: str) -> Builtin:
         return PrintLn()
     elif name == "map":
         return Map()
+    elif name == "filter":
+        return Filter()
+    elif name == "zip":
+        return Zip()
     elif name == "substr":
         return Substr()
     elif name == "len":
@@ -37,11 +45,36 @@ def get_builtin(name: str) -> Builtin:
         return ToInt()
 
 
+def extract_iterable_values(name: str, iterable_value: PetlValue, token: Token, error) -> Optional[List[Any]]:
+    if isinstance(iterable_value, ListValue) and isinstance(iterable_value.petl_type, ListType):
+        return iterable_value.values
+    elif isinstance(iterable_value, TupleValue) and isinstance(iterable_value.petl_type, TupleType):
+        return iterable_value.values
+    elif isinstance(iterable_value, DictValue) and isinstance(iterable_value.petl_type, DictType):
+        return iterable_value.values
+    elif isinstance(iterable_value, TableValue) and isinstance(iterable_value.petl_type, TableType):
+        return iterable_value.rows
+    else:
+        error(f"{name} function requires iterable type, not {iterable_value.petl_type.to_string()}", token)
+        return None
+
+
+def extract_element_type(iterable_value: PetlValue) -> PetlType:
+    if isinstance(iterable_value.petl_type, ListType):
+        return iterable_value.petl_type.list_type
+    elif isinstance(iterable_value.petl_type, TupleType):
+        return UnionType(iterable_value.petl_type.tuple_types)
+    elif isinstance(iterable_value.petl_type, DictType):
+        return iterable_value.petl_type
+    elif isinstance(iterable_value.petl_type, TableType):
+        return UnionType(iterable_value.petl_type.schema_type.column_types)
+    else:
+        NoneType()
+
+
 class ReadLn(Builtin):
     def __init__(self):
-        self.name = "readln"
-        self.func_type = FuncType([], StringType())
-        self.parameters = []
+        Builtin.__init__(self, "readln", [], StringType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         return StringValue(input())
@@ -49,9 +82,7 @@ class ReadLn(Builtin):
 
 class Print(Builtin):
     def __init__(self):
-        self.name = "print"
-        self.func_type = FuncType([AnyType()], NoneType())
-        self.parameters = [("value", AnyType())]
+        Builtin.__init__(self, "print", [("value", AnyType())], NoneType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         value: PetlValue = environment.get("value", application.token, error)
@@ -61,9 +92,7 @@ class Print(Builtin):
 
 class PrintLn(Builtin):
     def __init__(self):
-        self.name = "println"
-        self.func_type = FuncType([AnyType()], NoneType())
-        self.parameters = [("value", AnyType())]
+        Builtin.__init__(self, "println", [("value", AnyType())], NoneType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         value: PetlValue = environment.get("value", application.token, error)
@@ -73,12 +102,11 @@ class PrintLn(Builtin):
 
 class Map(Builtin):
     def __init__(self):
-        self.name = "map"
-        self.func_type = FuncType([IterableType(), FuncType([AnyType()], AnyType())], ListType(AnyType()))
-        self.parameters = [
+        parameters = [
             ("iterable", IterableType()),
             ("mapping_function", FuncType([AnyType()], AnyType()))
         ]
+        Builtin.__init__(self, "map", parameters, ListType(AnyType()))
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         iterable_value: PetlValue = environment.get("iterable", application.token, error)
@@ -86,44 +114,73 @@ class Map(Builtin):
         if isinstance(mapping_value.petl_type, FuncType) and isinstance(mapping_value, FuncValue):
             element_type: PetlType = mapping_value.petl_type.return_type
             mapping_function_value: FuncValue = mapping_value
-            if isinstance(iterable_value, ListValue):
-                iterable_values = iterable_value.values
-            elif isinstance(iterable_value, TupleValue):
-                iterable_values = iterable_value.values
-            elif isinstance(iterable_value, DictValue):
-                iterable_values = iterable_value.values
-            elif isinstance(iterable_value, TableValue):
-                iterable_values = iterable_value.rows
-            else:
-                error(f"Map function requires iterable type, not {iterable_value.petl_type.to_string()}", application.token)
-                return NoneValue()
+            iterable_values = extract_iterable_values(self.name, iterable_value, application.token, error)
+            if iterable_values:
+                def evaluate_element(value: PetlValue, function_value: FuncValue) -> PetlValue:
+                    body_environment: InterpreterEnvironment = copy_environment(environment)
+                    argument_identifier: str = function_value.parameters[0][0]
+                    body_environment.add(argument_identifier, value)
+                    return interpreter.evaluate(function_value.body, body_environment, element_type)
 
-            def evaluate_element(value: PetlValue, function_value: FuncValue) -> PetlValue:
-                body_environment: InterpreterEnvironment = copy_environment(environment)
-                argument_identifier: str = function_value.parameters[0][0]
-                body_environment.add(argument_identifier, value)
-                return interpreter.evaluate(function_value.body, body_environment, element_type)
-
-            element_values: List[PetlValue] = list(map(lambda v: evaluate_element(v, mapping_function_value), iterable_values))
-            return ListValue(element_type, element_values)
+                element_values: List[PetlValue] = list(map(lambda v: evaluate_element(v, mapping_function_value), iterable_values))
+                return ListValue(element_type, element_values)
         return NoneValue()
 
 
 class Filter(Builtin):
     def __init__(self):
-        self.name = "filter"
-        self.func_type = FuncType([IterableType(), FuncType([AnyType()], BoolType())], ListType(AnyType()))
-        self.parameters = [
+        parameters = [
             ("iterable", IterableType()),
-            ("filter_function", FuncType([AnyType()], AnyType()))
+            ("mapping_function", FuncType([AnyType()], BoolType()))
         ]
+        Builtin.__init__(self, "filter", parameters, ListType(AnyType()))
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
-        pass
+        iterable_value: PetlValue = environment.get("iterable", application.token, error)
+        filter_value: PetlValue = environment.get("filter_function", application.token, error)
+        if isinstance(filter_value.petl_type, FuncType) and isinstance(filter_value, FuncValue):
+            element_type: PetlType = filter_value.petl_type.return_type
+            mapping_function_value: FuncValue = filter_value
+            iterable_values = extract_iterable_values(self.name, iterable_value, application.token, error)
+            if iterable_values:
+                def evaluate_element(value: PetlValue, function_value: FuncValue) -> bool:
+                    body_environment: InterpreterEnvironment = copy_environment(environment)
+                    argument_identifier: str = function_value.parameters[0][0]
+                    body_environment.add(argument_identifier, value)
+                    result: PetlValue = interpreter.evaluate(function_value.body, body_environment, element_type)
+                    if isinstance(result, BoolValue):
+                        return result.value
+                    else:
+                        return False
+
+                element_values: List[PetlValue] = list(filter(lambda v: evaluate_element(v, mapping_function_value), iterable_values))
+                return ListValue(element_type, element_values)
+        return NoneValue()
 
 
 class Zip(Builtin):
-    pass
+    def __init__(self):
+        parameters = [
+            ("iterable1", IterableType()),
+            ("iterable2", IterableType()),
+        ]
+        Builtin.__init__(self, "zip", parameters, ListType(TupleType([AnyType(), AnyType()])))
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        iterable1_value: PetlValue = environment.get("iterable1", application.token, error)
+        iterable2_value: PetlValue = environment.get("iterable2", application.token, error)
+        iterable1_values = extract_iterable_values(self.name, iterable1_value, application.token, error)
+        iterable2_values = extract_iterable_values(self.name, iterable2_value, application.token, error)
+        if iterable1_values and iterable2_values:
+            if len(iterable1_values) == len(iterable2_values):
+                iterable1_element_type: PetlType = extract_element_type(iterable1_value)
+                iterable2_element_type: PetlType = extract_element_type(iterable2_value)
+                zipped_element_type: TupleType = TupleType([iterable1_element_type, iterable2_element_type])
+                zipped_values: List[TupleValue] = list(map(lambda v1, v2: TupleValue(zipped_element_type, [v1, v2]), iterable1_values, iterable2_values))
+                return ListValue(ListType(zipped_element_type), zipped_values)
+            else:
+                error(f"Zip requires iterables of equal length", application.token)
+        return NoneValue()
 
 
 class Foldl(Builtin):
@@ -135,18 +192,43 @@ class Foldr(Builtin):
 
 
 class Slice(Builtin):
-    pass
+    def __init__(self):
+        parameters = [
+            ("list", ListType()),
+            ("start", IntType()),
+            ("end", IntType())
+        ]
+        Builtin.__init__(self, "slice", parameters, ListType(AnyType()))
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        list_value: PetlValue = environment.get("list", application.token, error)
+        start_value: PetlValue = environment.get("string_value", application.token, error)
+        end_value: PetlValue = environment.get("string_value", application.token, error)
+        element_type: PetlType = extract_element_type(list_value)
+
+        if isinstance(list_value, ListValue) and isinstance(start_value, IntValue) and isinstance(end_value, IntValue):
+            list_values: List[PetlValue] = list_value.values
+            start: int = start_value.value
+            end: int = end_value.value
+
+            if start < 0 or end < 0 or \
+                    start >= len(list_values) or end >= len(list_values) or \
+                    start_value > end_value:
+                error(f"Invalid slice range value(s)", application.token)
+                return NoneValue()
+
+            return ListValue(element_type, list_values)
+        return NoneValue()
 
 
 class Substr(Builtin):
     def __init__(self):
-        self.name = "substr"
-        self.func_type = FuncType([StringType(), IntType(), IntType()], StringType())
-        self.parameters = [
+        parameters = [
             ("string_value", StringType()),
             ("start", IntType()),
             ("end", IntType())
         ]
+        Builtin.__init__(self, "substr", parameters, StringType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         string_value: PetlValue = environment.get("string_value", application.token, error)
@@ -170,9 +252,8 @@ class Substr(Builtin):
 
 class Len(Builtin):
     def __init__(self):
-        self.name = "len"
-        self.func_type = FuncType([IterableType()], IntType())
-        self.parameters = [("iterable", IterableType())]
+        parameters = [("iterable", IterableType())]
+        Builtin.__init__(self, "len", parameters, IntType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         iterable_value: PetlValue = environment.get("iterable", application.token, error)
@@ -191,9 +272,8 @@ class Len(Builtin):
 
 class Type(Builtin):
     def __init__(self):
-        self.name = "type"
-        self.func_type = FuncType([AnyType()], StringType())
-        self.parameters = [("value", AnyType())]
+        parameters = [("value", AnyType())]
+        Builtin.__init__(self, "type", parameters, StringType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         return StringValue(environment.get("value", application.token, error).petl_type.to_string())
@@ -201,9 +281,8 @@ class Type(Builtin):
 
 class ToStr(Builtin):
     def __init__(self):
-        self.name = "toStr"
-        self.func_type = FuncType([IntType()], StringType())
-        self.parameters = [("i", IntType())]
+        parameters = [("i", IntType())]
+        Builtin.__init__(self, "toStr", parameters, StringType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         value: PetlValue = environment.get("i", application.token, error)
@@ -214,9 +293,8 @@ class ToStr(Builtin):
 
 class ToInt(Builtin):
     def __init__(self):
-        self.name = "toInt"
-        self.func_type = FuncType([StringType()], IntType())
-        self.parameters = [("s", StringType())]
+        parameters = [("s", StringType())]
+        Builtin.__init__(self, "toInt", parameters, IntType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         value: PetlValue = environment.get("s", application.token, error)
@@ -226,7 +304,15 @@ class ToInt(Builtin):
 
 
 class CreateTable(Builtin):
-    pass
+    def __init__(self):
+        parameters = [
+            ("path", StringType()),
+            ("headers", BoolType())
+        ]
+        Builtin.__init__(self, "createTable", parameters, TableType())
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        pass
 
 
 class ReadCsv(Builtin):
