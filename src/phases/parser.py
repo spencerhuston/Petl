@@ -305,7 +305,6 @@ class Parser(PetlPhase):
 
     def parse_branch(self) -> Optional[Branch]:
         token = self.current_token()
-        self.match(Delimiter.PAREN_LEFT)
         predicate: Expression = self.parse_simple_expression()
         self.match(Delimiter.PAREN_RIGHT)
         self.match(Delimiter.BRACE_LEFT)

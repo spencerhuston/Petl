@@ -1,0 +1,13 @@
+let a = 5;
+let f = |x: int| -> int {
+    if (x == 5) {
+        2
+    } else {
+        3
+    }
+};
+let b = f(a);
+println(b);
+let a = 4;
+let b = f(a);
+println(b)

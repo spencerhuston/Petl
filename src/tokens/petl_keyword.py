@@ -41,8 +41,8 @@ class Keyword(str, BaseEnum):
     SUBSTR = "substr",
     LEN = "len",
     TYPE = "type",
-    INTTOSTRING = "intToString",
-    STRINGTOINT = "stringToInt",
+    TOSTR = "toStr",
+    TOINT = "toInt",
     CREATETABLE = "createTable",
     READCSV = "readCsv",
     WRITECSV = "writeCsv",
@@ -80,8 +80,8 @@ def is_builtin_function(value: str) -> bool:
            value == Keyword.SUBSTR or \
            value == Keyword.LEN or \
            value == Keyword.TYPE or \
-           value == Keyword.INTTOSTRING or \
-           value == Keyword.STRINGTOINT or \
+           value == Keyword.TOSTR or \
+           value == Keyword.TOINT or \
            value == Keyword.CREATETABLE or \
            value == Keyword.READCSV or \
            value == Keyword.WRITECSV or \

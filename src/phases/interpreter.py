@@ -176,7 +176,7 @@ class Interpreter(PetlPhase):
         if isinstance(identifier.petl_type, LambdaType):
             self.stack_trace.append(application.token.file_position)
             if identifier.builtin:
-                lambda_return_value = identifier.builtin.evaluate(argument_values, lambda_environment, self.error)
+                lambda_return_value = identifier.builtin.evaluate(application.token, argument_values, lambda_environment, self.error)
             else:
                 lambda_return_value = self.evaluate(identifier.body, lambda_environment, identifier.petl_type.return_type)
             types_conform(application.token, lambda_return_value.petl_type, expected_type, self.error)

@@ -52,6 +52,7 @@ def execute_petl_script(petl_raw_str: str, debug: bool) -> bool:
 def read_repl_input(history: List[str], history_index: int) -> Optional[str]:
     GREEN: str = "\033[1;33m"
     RESET: str = "\033[00m"
+
     def print_input_banner(text: str):
         print(f"> {GREEN}\x1B[3m{text}{RESET}", end="")
 
