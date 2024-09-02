@@ -84,7 +84,20 @@ class PrintLn(Builtin):
 
 
 class Map(Builtin):
-    pass
+    def __init__(self):
+        self.name = "map"
+        self.lambda_type = LambdaType([AnyType(), LambdaType([AnyType()], AnyType())], AnyType())
+
+    def evaluate(self, token: Token, argument_values: List[PetlValue], environment: InterpreterEnvironment, error) -> PetlValue:
+        print(argument_values[0].to_string().encode().decode('unicode_escape'))
+        return NoneValue()
+
+    def to_value(self) -> LambdaValue:
+        parameters = [
+            ("collection", AnyType()),
+            ("lambda", AnyType())
+        ]
+        return self._to_value(parameters)
 
 
 class Filter(Builtin):

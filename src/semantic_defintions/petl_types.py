@@ -69,7 +69,12 @@ class UnionType(PetlType):
 
 
 @dataclass
-class ListType(PetlType):
+class IterableType(PetlType, ABC):
+    pass
+
+
+@dataclass
+class ListType(IterableType):
     list_type: PetlType = UnknownType()
 
     def to_string(self) -> str:
@@ -77,7 +82,7 @@ class ListType(PetlType):
 
 
 @dataclass
-class TupleType(PetlType):
+class TupleType(IterableType):
     tuple_types: List[PetlType] = field(default_factory=list)
 
     def to_string(self) -> str:
@@ -85,7 +90,7 @@ class TupleType(PetlType):
 
 
 @dataclass
-class DictType(PetlType):
+class DictType(IterableType):
     key_type: PetlType = UnknownType()
     value_type: PetlType = UnknownType()
 
@@ -94,7 +99,7 @@ class DictType(PetlType):
 
 
 @dataclass
-class SchemaType(PetlType):
+class SchemaType(IterableType):
     column_types: List[PetlType] = field(default_factory=list)
 
     def to_string(self) -> str:
@@ -102,7 +107,7 @@ class SchemaType(PetlType):
 
 
 @dataclass
-class TableType(PetlType):
+class TableType(IterableType):
     schema_type: SchemaType = SchemaType()
 
     def to_string(self) -> str:
