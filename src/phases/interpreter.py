@@ -310,8 +310,99 @@ class Interpreter(PetlPhase):
             self.error(f"Reached end of pattern-match, add catch-all case", match.token)
         return NoneValue()
 
+    def evaluate_arithmetic_operator(self, left: PetlValue, right: PetlValue, operator: Operator) -> Optional[PetlValue]:
+        if operator.operator_type == Operator.OperatorType.PLUS:
+            if isinstance(left, IntValue) and isinstance(right, IntValue):
+                return IntValue(left.value + right.value)
+            elif isinstance(left, CharValue) and isinstance(right, CharValue):
+                concat_value: str = (left.value + right.value).replace('\'', '')
+                return StringValue(f"\"{concat_value}\"")
+            elif isinstance(left, StringValue) and isinstance(right, StringValue):
+                concat_value: str = (left.value + right.value).replace('\"', '')
+                return StringValue(f"\"{concat_value}\"")
+            elif isinstance(left, CharValue) and isinstance(right, StringValue):
+                concat_value: str = (left.value + right.value).replace('\'', '').replace('\"', '')
+                return StringValue(f"\"{concat_value}\"")
+            elif isinstance(left, StringValue) and isinstance(right, CharValue):
+                concat_value: str = (left.value + right.value).replace('\'', '').replace('\"', '')
+                return StringValue(f"\"{concat_value}\"")
+        elif operator.operator_type == Operator.OperatorType.MINUS:
+            if isinstance(left, IntValue) and isinstance(right, IntValue):
+                return IntValue(left.value - right.value)
+        elif operator.operator_type == Operator.OperatorType.MULTIPLY:
+            if isinstance(left, IntValue) and isinstance(right, IntValue):
+                return IntValue(left.value * right.value)
+        elif operator.operator_type == Operator.OperatorType.DIVIDE:
+            if isinstance(left, IntValue) and isinstance(right, IntValue):
+                return IntValue(int(left.value / right.value))
+        elif operator.operator_type == Operator.OperatorType.MODULUS:
+            if isinstance(left, IntValue) and isinstance(right, IntValue):
+                return IntValue(left.value % right.value)
+        return None
+
+    def evaluate_boolean_operator(self, left: PetlValue, right: PetlValue, operator: Operator) -> Optional[PetlValue]:
+        if operator.operator_type == Operator.OperatorType.GREATER_THAN:
+            if isinstance(left, IntValue) and isinstance(right, IntValue):
+                return BoolValue(left.value > right.value)
+        elif operator.operator_type == Operator.OperatorType.LESS_THAN:
+            if isinstance(left, IntValue) and isinstance(right, IntValue):
+                return BoolValue(left.value < right.value)
+        elif operator.operator_type == Operator.OperatorType.GREATER_THAN_EQUAL_TO:
+            if isinstance(left, IntValue) and isinstance(right, IntValue):
+                return BoolValue(left.value >= right.value)
+        elif operator.operator_type == Operator.OperatorType.LESS_THAN_EQUAL_TO:
+            if isinstance(left, IntValue) and isinstance(right, IntValue):
+                return BoolValue(left.value <= right.value)
+        elif operator.operator_type == Operator.OperatorType.EQUAL:
+            return BoolValue(values_equal(left, right))
+        elif operator.operator_type == Operator.OperatorType.NOT_EQUAL:
+            return BoolValue(not values_equal(left, right))
+        elif operator.operator_type == Operator.OperatorType.AND:
+            if isinstance(left, BoolValue) and isinstance(right, BoolValue):
+                return BoolValue(left.value and right.value)
+        elif operator.operator_type == Operator.OperatorType.OR:
+            if isinstance(left, BoolValue) and isinstance(right, BoolValue):
+                return BoolValue(left.value or right.value)
+        return None
+
+    def evaluate_collection_operator(self, left: PetlValue, right: PetlValue, operator: Operator) -> Optional[PetlValue]:
+        if operator.operator_type == Operator.OperatorType.COLLECTION_CONCAT:
+            if isinstance(left, ListValue) and isinstance(right, ListValue):
+                return ListValue(left.petl_type, copy(left.values) + copy(right.values))
+            elif isinstance(left, TupleValue) and isinstance(right, TupleValue):
+                left_values: List[PetlValue] = copy(left.values)
+                right_values: List[PetlValue] = copy(right.values)
+                if isinstance(left.petl_type, TupleType) and isinstance(right.petl_type, TupleValue):
+                    left_types: List[PetlType] = copy(left.petl_type.tuple_types)
+                    right_types: List[PetlType] = copy(right.petl_type.tuple_types)
+                    return TupleValue(TupleType(left_types + right_types), left_values + right_values)
+            elif isinstance(left, DictValue) and isinstance(right, DictValue):
+                pass
+        return None
+
+    def evaluate_operator(self, token: Token, left: PetlValue, right: PetlValue, operator: Operator) -> PetlValue:
+        result_value: Optional[PetlValue] = None
+        if operator.is_arithmetic():
+            result_value = self.evaluate_arithmetic_operator(left, right, operator)
+        elif operator.is_boolean():
+            result_value = self.evaluate_boolean_operator(left, right, operator)
+        elif operator.is_collection():
+            result_value = self.evaluate_collection_operator(left, right, operator)
+        else:
+            self.error(f"Invalid operator", token)
+
+        if not result_value:
+            self.error(f"Invalid types for operator \'{operator.to_string()}\'", token)
+            return NoneValue()
+        return result_value
+
     def evaluate_primitve(self, primitive: Primitive, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
-        pass
+        left_value: PetlValue = self.evaluate(primitive.left, environment, AnyType())
+        right_value: PetlValue = self.evaluate(primitive.right, environment, AnyType())
+        result_value: PetlValue = self.evaluate_operator(primitive.token, left_value, right_value, primitive.operator)
+        if types_conform(primitive.token, result_value.petl_type, expected_type, self.error):
+            return result_value
+        return NoneValue()
 
     def evaluate_reference(self, reference: Reference, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         reference_value: PetlValue = environment.get(reference.identifier, reference.token, self.error)

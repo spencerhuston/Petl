@@ -23,6 +23,9 @@ class Operator:
     def __init__(self, operator_type=OperatorType.UNKNOWN):
         self.operator_type = operator_type
 
+    def to_string(self) -> str:
+        return self.operator_type.value
+
     def is_arithmetic(self) -> bool:
         return self.operator_type == Operator.OperatorType.PLUS or \
                self.operator_type == Operator.OperatorType.MINUS or \
@@ -60,5 +63,3 @@ class Operator:
 
     def is_binary(self, min: int) -> bool:
         return (self.is_arithmetic() or self.is_boolean() or self.is_collection()) and (self.get_precedence() >= min)
-
-    # def interpret???

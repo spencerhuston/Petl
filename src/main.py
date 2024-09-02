@@ -1,3 +1,4 @@
+import functools
 import sys
 import traceback
 from typing import Dict, Any, Optional, List
@@ -25,7 +26,7 @@ def parse_arguments():
 def read_petl_file(file_path: str, logger: Log) -> Optional[str]:
     petl_file_str: Optional[str] = None
     if file_path.endswith(".petl"):
-        with open("programs/" + file_path, "r") as petl_file:
+        with open(file_path, "r") as petl_file:
             petl_file_str = petl_file.read()
             logger.debug_block("RAW SCRIPT", petl_file_str)
     else:
@@ -48,29 +49,74 @@ def execute_petl_script(petl_raw_str: str, debug: bool) -> bool:
         return False
 
 
+def read_repl_input(history: List[str], history_index: int) -> Optional[str]:
+    GREEN: str = "\033[1;33m"
+    RESET: str = "\033[00m"
+    def print_input_banner(text: str):
+        print(f"> {GREEN}\x1B[3m{text}{RESET}", end="")
+
+    last_input: str = ""
+    while True:
+        if not last_input:
+            print_input_banner("")
+        repl_input = input()
+
+        if repl_input == "@quit":
+            logger.info("Quitting REPL...")
+            return None
+        elif repl_input == "@help":
+            logger.info(f"{GREEN}REPL commands:\n" + \
+                        "\t@quit    - Quit the REPL\n" + \
+                        "\t@help    - Display this help message\n" + \
+                        "\t@prev    - Show previous input in history\n" + \
+                        "\t@next    - Show next input in history\n" + \
+                        "\t@clear   - Clear all input history\n" + \
+                        f"\t@history - Display all input history{RESET}")
+        elif repl_input == "@prev" or repl_input == "@next":
+            if history:
+                if repl_input == "@prev":
+                    history_index = len(history) - 1 if history_index == 0 else history_index - 1
+                elif repl_input == "@next":
+                    history_index = 0 if history_index >= len(history) - 1 else history_index + 1
+                last_input = history[history_index]
+                print_input_banner(f"{history[history_index]} - ")
+        elif repl_input == "@clear":
+            return "@clear"
+        elif repl_input == "@history":
+            if history:
+                logger.info(f"{GREEN}" + functools.reduce(lambda i1, i2: f"{i1}\n{i2}", history) + f"{RESET}")
+        elif not repl_input:
+            if last_input:
+                return last_input
+        else:
+            return repl_input
+
+
 def run_petl_repl(logger: Log):
     banner_str = "=" * 9
     logger.info(f"{banner_str}\nPetl REPL\n{banner_str}")
-    interpreter_input: str = ""
-    ended_with_slash: bool = False
-    while True:
-        repl_input = input("> " if not ended_with_slash else "> \t")
-        ended_with_slash = False
-        if repl_input == "quit":
-            logger.info("Quitting REPL...")
-            break
-        elif not repl_input:
-            continue
 
-        if repl_input.endswith("\\"):
+    interpreter_input: str = ""
+    history: List[str] = []
+    history_index: int = 0
+
+    while True:
+        repl_input: Optional[str] = read_repl_input(history, history_index)
+        if not repl_input:
+            break
+        elif repl_input == "@clear":
+            history = []
+            history_index = 0
+        elif repl_input.endswith("\\"):
             repl_input = repl_input.replace("\\", "")
             interpreter_input += repl_input + "\n"
-            ended_with_slash = True
         elif repl_input.endswith(";"):
             repl_input = repl_input.replace(";", "")
             interpreter_input += repl_input + "\n"
         else:
             interpreter_input += repl_input
+            history.append(interpreter_input)
+            history_index = len(history)
             execute_petl_script(interpreter_input, logger.debug_enabled())
             interpreter_input = ""
 
