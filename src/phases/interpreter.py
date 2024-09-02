@@ -70,7 +70,7 @@ class Interpreter(PetlPhase):
         elif isinstance(expression, Alias):
             evaluated_value = self.evaluate_alias(expression, environment, expected_type)
         elif isinstance(expression, Lambda):
-            evaluated_value = self.evaluate_lambda(expression, environment, expected_type)
+            evaluated_value = self.evaluate_lambda_definition(expression, environment, expected_type)
         elif isinstance(expression, Application):
             evaluated_value = self.evaluate_application(expression, environment, expected_type)
         elif isinstance(expression, Match):
@@ -138,17 +138,17 @@ class Interpreter(PetlPhase):
         else:
             return NoneValue()
 
-    def evaluate_lambda(self, lambda_expression: Lambda, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
+    def evaluate_lambda_definition(self, lambda_expression: Lambda, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         if types_conform(lambda_expression.token, lambda_expression.petl_type, expected_type, self.error):
             parameters: List[Tuple[str, PetlType]] = list(map(lambda p: (p.identifier, p.parameter_type), lambda_expression.parameters))
-            return LambdaValue(lambda_expression.petl_type, "", parameters, copy(lambda_expression.body), copy(environment))
+            return FuncValue(lambda_expression.petl_type, "", parameters, copy(lambda_expression.body), copy(environment))
         else:
             return NoneValue()
 
     def evaluate_application(self, application: Application, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         identifier: PetlValue = self.evaluate(application.identifier, environment, UnknownType())
-        if isinstance(identifier, LambdaValue):
-            return self.evaluate_lambda_application(application, identifier, environment, expected_type)
+        if isinstance(identifier, FuncValue):
+            return self.evaluate_function_application(application, identifier, environment, expected_type)
         elif isinstance(identifier, StringValue):
             return self.evaluate_string_application(application, identifier, environment, expected_type)
         elif isinstance(identifier, ListValue):
@@ -160,29 +160,29 @@ class Interpreter(PetlPhase):
         else:
             self.error(f"Invalid type for application: {identifier.petl_type.to_string()}", application.token)
 
-    def evaluate_lambda_application(self, application: Application, identifier: LambdaValue, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
+    def evaluate_function_application(self, application: Application, identifier: FuncValue, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         if len(application.arguments) != len(identifier.parameters):
-            self.error(f"Invalid argument count for lambda", application.token)
+            self.error(f"Invalid argument count for function", application.token)
             return NoneValue()
 
-        lambda_environment: InterpreterEnvironment = copy(environment)
+        function_environment: InterpreterEnvironment = copy(environment)
         argument_values: List[PetlValue] = []
         for argument, parameter in list(map(lambda a, p: (a, p), application.arguments, identifier.parameters)):
             argument_value: PetlValue = self.evaluate(argument, environment, parameter[1])
-            lambda_environment.add(parameter[0], argument_value)
+            function_environment.add(parameter[0], argument_value)
             argument_values.append(argument_value)
 
-        lambda_return_value: PetlValue = NoneValue()
-        if isinstance(identifier.petl_type, LambdaType):
+        function_return_value: PetlValue = NoneValue()
+        if isinstance(identifier.petl_type, FuncType):
             self.stack_trace.append(application.token.file_position)
             if identifier.builtin:
-                lambda_return_value = identifier.builtin.evaluate(application.token, argument_values, lambda_environment, self.error)
+                function_return_value = identifier.builtin.evaluate(application, function_environment, self, self.error)
             else:
-                lambda_return_value = self.evaluate(identifier.body, lambda_environment, identifier.petl_type.return_type)
-            types_conform(application.token, lambda_return_value.petl_type, expected_type, self.error)
+                function_return_value = self.evaluate(identifier.body, function_environment, identifier.petl_type.return_type)
+            types_conform(application.token, function_return_value.petl_type, expected_type, self.error)
             self.stack_trace.pop()
 
-        return lambda_return_value
+        return function_return_value
 
     def evaluate_string_application(self, application: Application, identifier: StringValue, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         if len(application.arguments) != 1:
@@ -315,17 +315,13 @@ class Interpreter(PetlPhase):
             if isinstance(left, IntValue) and isinstance(right, IntValue):
                 return IntValue(left.value + right.value)
             elif isinstance(left, CharValue) and isinstance(right, CharValue):
-                concat_value: str = (left.value + right.value).replace('\'', '')
-                return StringValue(f"\"{concat_value}\"")
+                return StringValue(left.value + right.value)
             elif isinstance(left, StringValue) and isinstance(right, StringValue):
-                concat_value: str = (left.value + right.value).replace('\"', '')
-                return StringValue(f"\"{concat_value}\"")
+                return StringValue(left.value + right.value)
             elif isinstance(left, CharValue) and isinstance(right, StringValue):
-                concat_value: str = (left.value + right.value).replace('\'', '').replace('\"', '')
-                return StringValue(f"\"{concat_value}\"")
+                return StringValue(left.value + right.value)
             elif isinstance(left, StringValue) and isinstance(right, CharValue):
-                concat_value: str = (left.value + right.value).replace('\'', '').replace('\"', '')
-                return StringValue(f"\"{concat_value}\"")
+                return StringValue(left.value + right.value)
         elif operator.operator_type == Operator.OperatorType.MINUS:
             if isinstance(left, IntValue) and isinstance(right, IntValue):
                 return IntValue(left.value - right.value)
@@ -430,9 +426,13 @@ class Interpreter(PetlPhase):
                 return list(map(lambda v: v[0], iterable.values))
             elif isinstance(iterable, TableValue):
                 return iterable.rows
+            return None
 
         iterable: PetlValue = self.evaluate(for_expression.iterable, environment, UnknownType())
         iterable_values: Optional[List[PetlValue]] = get_iterable_values(iterable)
+        if not iterable_values:
+            self.error(f"Provided type is not iterable", for_expression.token)
+            return NoneValue()
 
         for iterable_value in iterable_values:
             for_body_environment: InterpreterEnvironment = copy(environment)

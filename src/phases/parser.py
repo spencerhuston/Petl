@@ -255,7 +255,7 @@ class Parser(PetlPhase):
             self.advance()
             builtin_reference: Builtin = get_builtin(token.token_value)
             self.builtins.add(builtin_reference)
-            return Reference(builtin_reference.lambda_type, token, token.token_value)
+            return Reference(builtin_reference.func_type, token, token.token_value)
         elif self.match(Delimiter.PAREN_LEFT, optional=True):
             self.advance()
             simple_exp: Expression = self.parse_tuple_def_or_smp_expression()
@@ -465,7 +465,7 @@ class Parser(PetlPhase):
         self.match(Delimiter.BRACE_LEFT)
         body: Expression = self.parse_expression()
         self.match(Delimiter.BRACE_RIGHT)
-        lambda_type: LambdaType = LambdaType(parameter_types, return_type)
+        lambda_type: FuncType = FuncType(parameter_types, return_type)
         return Lambda(lambda_type, token, parameters, return_type, body)
 
     def parse_arguments(self) -> Optional[List[Expression]]:
@@ -549,7 +549,7 @@ class Parser(PetlPhase):
                 self.match(Delimiter.PAREN_RIGHT)
             self.match(Delimiter.RETURN)
             return_type: PetlType = self.parse_type()
-            first_type = LambdaType(parameter_types, return_type)
+            first_type = FuncType(parameter_types, return_type)
         else:
             alias: Optional[str] = self.match_ident(optional=True)
             if alias:
@@ -562,7 +562,7 @@ class Parser(PetlPhase):
                     return UnknownType()
 
         if self.match(Delimiter.RETURN, optional=True):
-            return LambdaType(parameter_types=[first_type], return_type=self.parse_type())
+            return FuncType(parameter_types=[first_type], return_type=self.parse_type())
         if token and not first_type:
             self.error(f"Expected type signature but received none", token)
             return UnknownType()

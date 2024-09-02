@@ -139,7 +139,7 @@ class TableValue(PetlValue):
         return "not-supported"
 
 
-class LambdaValue(PetlValue):
+class FuncValue(PetlValue):
     def __init__(self, petl_type: PetlType, builtin, parameters: List[Tuple[str, PetlType]], body: Expression, environment):
         PetlValue.__init__(self, petl_type)
         self.builtin = builtin
@@ -149,4 +149,3 @@ class LambdaValue(PetlValue):
 
     def to_string(self) -> str:
         return "not-supported"
-

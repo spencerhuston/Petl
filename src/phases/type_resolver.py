@@ -16,8 +16,8 @@ def _make_well_formed(t: PetlType, token: Token) -> PetlType:
         return SchemaType(list(map(lambda st: _make_well_formed(st, token), t.column_types)))
     elif isinstance(t, TableType):
         return TableType(SchemaType(list(map(lambda st: _make_well_formed(st, token), t.schema_type.column_types))))
-    elif isinstance(t, LambdaType):
-        return LambdaType(list(map(lambda pt: _make_well_formed(pt, token), t.parameter_types)), _make_well_formed(t.return_type, token))
+    elif isinstance(t, FuncType):
+        return FuncType(list(map(lambda pt: _make_well_formed(pt, token), t.parameter_types)), _make_well_formed(t.return_type, token))
     elif not isinstance(t, UnknownType):
         return t
     else:
@@ -39,7 +39,7 @@ def _is_well_formed(t: PetlType) -> bool:
         return all(map(lambda st: _is_well_formed(st), t.column_types))
     elif isinstance(t, TableType):
         return all(map(lambda tct: _is_well_formed(tct), t.schema_type.column_types))
-    elif isinstance(t, LambdaType):
+    elif isinstance(t, FuncType):
         return all(map(lambda pt: _is_well_formed(pt), t.parameter_types)) and _is_well_formed(t.return_type)
     else:
         return True
@@ -60,33 +60,31 @@ def _types_conform(token: Token, expression_type: PetlType, expected_type: PetlT
     elif not isinstance(expression_type, AnyType) and isinstance(expected_type, AnyType):
         return _make_well_formed(expression_type, token)
     elif isinstance(expression_type, UnionType) and isinstance(expected_type, UnionType):
-        return UnionType(
-            _collection_types_conform(token, expression_type.union_types, expected_type.union_types))
+        return UnionType(_collection_types_conform(token, expression_type.union_types, expected_type.union_types))
     elif isinstance(expression_type, UnionType) and not isinstance(expected_type, UnionType) and expected_type in expression_type.union_types:
         return _make_well_formed(expected_type, token)
     elif not isinstance(expression_type, UnionType) and isinstance(expected_type, UnionType) and expression_type in expected_type.union_types:
         return _make_well_formed(expression_type, token)
-    elif isinstance(expression_type, ListType) and isinstance(expected_type, ListType):
-        return ListType(_types_conform(token, expression_type.list_type, expected_type.list_type))
-    elif isinstance(expression_type, TupleType) and isinstance(expected_type, TupleType) and expression_type.tuple_types and expected_type.tuple_types:
-        return TupleType(
-            _collection_types_conform(token, expression_type.tuple_types, expected_type.tuple_types))
-    elif isinstance(expression_type, DictType) and isinstance(expected_type, DictType):
-        return DictType(
-            _types_conform(token, expression_type.key_type, expected_type.key_type),
-            _types_conform(token, expression_type.value_type, expected_type.value_type)
-        )
+    elif isinstance(expression_type, IterableType) and isinstance(expected_type, IterableType):
+        if isinstance(expression_type, ListType) and isinstance(expected_type, ListType):
+            return ListType(_types_conform(token, expression_type.list_type, expected_type.list_type))
+        elif isinstance(expression_type, TupleType) and isinstance(expected_type, TupleType) and expression_type.tuple_types and expected_type.tuple_types:
+            return TupleType(_collection_types_conform(token, expression_type.tuple_types, expected_type.tuple_types))
+        elif isinstance(expression_type, DictType) and isinstance(expected_type, DictType):
+            return DictType(
+                _types_conform(token, expression_type.key_type, expected_type.key_type),
+                _types_conform(token, expression_type.value_type, expected_type.value_type)
+            )
+        elif isinstance(expression_type, TableType) and isinstance(expected_type, TableType):
+            return expression_type
     elif isinstance(expression_type, SchemaType) and isinstance(expected_type, SchemaType):
         return expression_type
-    elif isinstance(expression_type, TableType) and isinstance(expected_type, TableType):
-        return expression_type
-    elif isinstance(expression_type, LambdaType) and isinstance(expected_type, LambdaType):
+    elif isinstance(expression_type, FuncType) and isinstance(expected_type, FuncType):
         well_formed_parameter_types: List[PetlType] = _collection_types_conform(token,
                                                                                 expression_type.parameter_types,
                                                                                 expected_type.parameter_types)
-        well_formed_return_type: PetlType = _types_conform(token, expression_type.return_type,
-                                                                expected_type.return_type)
-        return LambdaType(well_formed_parameter_types, well_formed_return_type)
+        well_formed_return_type: PetlType = _types_conform(token, expression_type.return_type, expected_type.return_type)
+        return FuncType(well_formed_parameter_types, well_formed_return_type)
     elif not isinstance(expression_type, UnknownType) and not isinstance(expected_type, UnknownType):
         if type(expression_type) is type(expected_type):
             return _make_well_formed(expression_type, token)

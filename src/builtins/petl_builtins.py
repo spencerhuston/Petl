@@ -1,26 +1,21 @@
 from src.phases.environment import InterpreterEnvironment
-from src.semantic_defintions.petl_expression import UnknownExpression
+from src.semantic_defintions.petl_expression import UnknownExpression, Application
 from src.semantic_defintions.petl_value import *
-from src.tokens.petl_token import Token
-from src.utils.log import Log
 
 
 class Builtin(ABC):
     name: str
-    lambda_type: LambdaType
+    func_type: FuncType
+    parameters: List[Tuple[str, PetlType]] = []
 
     @abstractmethod
-    def evaluate(self, token: Token, argument_values: List[PetlValue], environment: InterpreterEnvironment, error) -> PetlValue:
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         pass
 
-    @abstractmethod
-    def to_value(self) -> LambdaValue:
-        pass
-
-    def _to_value(self, parameters: List[Tuple[str, PetlType]]) -> LambdaValue:
+    def to_value(self) -> FuncValue:
         body: Expression = UnknownExpression()
-        environment: InterpreterEnvironment = InterpreterEnvironment()
-        return LambdaValue(self.lambda_type, self, parameters, body, environment)
+        environment = InterpreterEnvironment()
+        return FuncValue(self.func_type, self, self.parameters, body, environment)
 
 
 def get_builtin(name: str) -> Builtin:
@@ -30,6 +25,8 @@ def get_builtin(name: str) -> Builtin:
         return Print()
     elif name == "println":
         return PrintLn()
+    elif name == "map":
+        return Map()
     elif name == "substr":
         return Substr()
     elif name == "len":
@@ -45,63 +42,61 @@ def get_builtin(name: str) -> Builtin:
 class ReadLn(Builtin):
     def __init__(self):
         self.name = "readln"
-        self.lambda_type = LambdaType([], StringType())
+        self.func_type = FuncType([], StringType())
+        self.parameters = []
 
-    def evaluate(self, token: Token, argument_values: List[PetlValue], environment: InterpreterEnvironment, logger: Log) -> PetlValue:
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         return StringValue(input())
-
-    def to_value(self) -> LambdaValue:
-        parameters = []
-        return self._to_value(parameters)
 
 
 class Print(Builtin):
     def __init__(self):
         self.name = "print"
-        self.lambda_type = LambdaType([AnyType()], NoneType())
+        self.func_type = FuncType([AnyType()], NoneType())
+        self.parameters = [("value", AnyType())]
 
-    def evaluate(self, token: Token, argument_values: List[PetlValue], environment: InterpreterEnvironment, error) -> PetlValue:
-        print(argument_values[0].to_string().encode().decode('unicode_escape'), end="")
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        value: PetlValue = environment.get("value", application.token, error)
+        print(value.to_string().encode().decode('unicode_escape'), end="")
         return NoneValue()
-
-    def to_value(self) -> LambdaValue:
-        parameters = [("str", AnyType())]
-        return self._to_value(parameters)
 
 
 class PrintLn(Builtin):
     def __init__(self):
         self.name = "println"
-        self.lambda_type = LambdaType([AnyType()], NoneType())
+        self.func_type = FuncType([AnyType()], NoneType())
+        self.parameters = [("value", AnyType())]
 
-    def evaluate(self, token: Token, argument_values: List[PetlValue], environment: InterpreterEnvironment, error) -> PetlValue:
-        print(argument_values[0].to_string().encode().decode('unicode_escape'))
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        value: PetlValue = environment.get("value", application.token, error)
+        print(value.to_string().encode().decode('unicode_escape'))
         return NoneValue()
-
-    def to_value(self) -> LambdaValue:
-        parameters = [("str", AnyType())]
-        return self._to_value(parameters)
 
 
 class Map(Builtin):
     def __init__(self):
         self.name = "map"
-        self.lambda_type = LambdaType([AnyType(), LambdaType([AnyType()], AnyType())], AnyType())
-
-    def evaluate(self, token: Token, argument_values: List[PetlValue], environment: InterpreterEnvironment, error) -> PetlValue:
-        print(argument_values[0].to_string().encode().decode('unicode_escape'))
-        return NoneValue()
-
-    def to_value(self) -> LambdaValue:
-        parameters = [
-            ("collection", AnyType()),
-            ("lambda", AnyType())
+        self.func_type = FuncType([IterableType(), FuncType([AnyType()], AnyType())], ListType(AnyType()))
+        self.parameters = [
+            ("iterable", IterableType()),
+            ("mapping_function", FuncType([AnyType()], AnyType()))
         ]
-        return self._to_value(parameters)
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        pass
 
 
 class Filter(Builtin):
-    pass
+    def __init__(self):
+        self.name = "filter"
+        self.func_type = FuncType([IterableType(), FuncType([AnyType()], BoolType())], ListType(AnyType()))
+        self.parameters = [
+            ("iterable", IterableType()),
+            ("filter_function", FuncType([AnyType()], AnyType()))
+        ]
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        pass
 
 
 class Zip(Builtin):
@@ -123,93 +118,88 @@ class Slice(Builtin):
 class Substr(Builtin):
     def __init__(self):
         self.name = "substr"
-        self.lambda_type = LambdaType([StringType(), IntType(), IntType()], StringType())
-
-    def evaluate(self, token: Token, argument_values: List[PetlValue], environment: InterpreterEnvironment, error) -> PetlValue:
-        string_value: str = argument_values[0].value
-        start_value: int = argument_values[1].value
-        end_value: int = argument_values[2].value
-
-        if start_value < 0 or end_value < 0 or \
-                start_value >= len(string_value) or end_value >= len(string_value) or \
-                start_value > end_value:
-            error(f"Invalid substr range value(s)", token)
-            return NoneValue()
-
-        return StringValue(string_value.replace('\"', '')[start_value:end_value])
-
-    def to_value(self) -> LambdaValue:
-        parameters = [
-            ("str", StringType()),
+        self.func_type = FuncType([StringType(), IntType(), IntType()], StringType())
+        self.parameters = [
+            ("string_value", StringType()),
             ("start", IntType()),
             ("end", IntType())
         ]
-        return self._to_value(parameters)
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        string_value: PetlValue = environment.get("string_value", application.token, error)
+        start_value: PetlValue = environment.get("string_value", application.token, error)
+        end_value: PetlValue = environment.get("string_value", application.token, error)
+
+        if isinstance(string_value, StringValue) and isinstance(start_value, IntValue) and isinstance(end_value, IntValue):
+            string: str = string_value.value
+            start: int = start_value.value
+            end: int = end_value.value
+
+            if start < 0 or end < 0 or \
+                    start >= len(string) or end >= len(string) or \
+                    start_value > end_value:
+                error(f"Invalid substr range value(s)", application.token)
+                return NoneValue()
+
+            return StringValue(string[start_value:end_value])
+        return NoneValue()
 
 
 class Len(Builtin):
     def __init__(self):
         self.name = "len"
-        self.lambda_type = LambdaType([AnyType()], IntType())
+        self.func_type = FuncType([IterableType()], IntType())
+        self.parameters = [("iterable", IterableType())]
 
-    def evaluate(self, token: Token, argument_values: List[PetlValue], environment: InterpreterEnvironment, error) -> PetlValue:
-        argument: PetlValue = argument_values[0]
-        if isinstance(argument, ListValue):
-            return IntValue(len(argument.values))
-        elif isinstance(argument, TupleValue):
-            return IntValue(len(argument.values))
-        elif isinstance(argument, DictValue):
-            return IntValue(len(argument.values))
-        elif isinstance(argument, SchemaValue):
-            return IntValue(len(argument.values))
-        elif isinstance(argument, TableValue):
-            return IntValue(len(argument.rows))
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        iterable: PetlValue = environment.get("iterable", application.token, error)
+        if isinstance(iterable, ListValue):
+            return IntValue(len(iterable.values))
+        elif isinstance(iterable, TupleValue):
+            return IntValue(len(iterable.values))
+        elif isinstance(iterable, DictValue):
+            return IntValue(len(iterable.values))
+        elif isinstance(iterable, TableValue):
+            return IntValue(len(iterable.rows))
         else:
-            error(f"Length function requires iterable type, not {argument.petl_type.to_string()}", token)
+            error(f"Length function requires iterable type, not {iterable.petl_type.to_string()}", application.token)
             return NoneValue()
-
-    def to_value(self) -> LambdaValue:
-        parameters = [("collection", AnyType())]
-        return self._to_value(parameters)
 
 
 class Type(Builtin):
     def __init__(self):
         self.name = "type"
-        self.lambda_type = LambdaType([AnyType()], StringType())
+        self.func_type = FuncType([AnyType()], StringType())
+        self.parameters = [("value", AnyType())]
 
-    def evaluate(self, token: Token, argument_values: List[PetlValue], environment: InterpreterEnvironment, error) -> PetlValue:
-        return StringValue(argument_values[0].petl_type.to_string())
-
-    def to_value(self) -> LambdaValue:
-        parameters = [("type_value", AnyType())]
-        return self._to_value(parameters)
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        return StringValue(environment.get("value", application.token, error).petl_type.to_string())
 
 
 class ToStr(Builtin):
     def __init__(self):
         self.name = "toStr"
-        self.lambda_type = LambdaType([IntType()], StringType())
+        self.func_type = FuncType([IntType()], StringType())
+        self.parameters = [("i", IntType())]
 
-    def evaluate(self, token: Token, argument_values: List[PetlValue], environment: InterpreterEnvironment, error) -> PetlValue:
-        return StringValue(str(argument_values[0].value))
-
-    def to_value(self) -> LambdaValue:
-        parameters = [("i", IntType())]
-        return self._to_value(parameters)
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        value: PetlValue = environment.get("i", application.token, error)
+        if isinstance(value, IntValue):
+            return StringValue(str(value.value))
+        return NoneValue()
 
 
 class ToInt(Builtin):
     def __init__(self):
         self.name = "toInt"
-        self.lambda_type = LambdaType([StringType()], IntType())
+        self.func_type = FuncType([StringType()], IntType())
+        self.parameters = [("s", StringType())]
 
-    def evaluate(self, token: Token, argument_values: List[PetlValue], environment: InterpreterEnvironment, error) -> PetlValue:
-        return IntValue(int(argument_values[0].value.replace('\"', '')))
-
-    def to_value(self) -> LambdaValue:
-        parameters = [("s", StringType())]
-        return self._to_value(parameters)
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        value: PetlValue = environment.get("s", application.token, error)
+        if isinstance(value, StringValue):
+            return IntValue(int(value.value))
+        return NoneValue()
 
 
 class CreateTable(Builtin):

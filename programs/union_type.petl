@@ -1,0 +1,10 @@
+let f = |x: int| -> union[int, char, bool] {
+    match x {
+        case 1 | 2 | 3 => x,
+        case 4..10 => 'a',
+        case _ => false
+    }
+};
+let a: union[int, char, bool] = f(11);
+let b: bool = a;
+println(b)

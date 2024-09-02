@@ -118,7 +118,8 @@ class Lexer(PetlPhase):
         if self.token_text in Keyword:
             self.tokens.append(Token(Token.TokenType.KEYWORD, file_position, self.token_text))
         elif self.token_is_value():
-            self.tokens.append(Token(Token.TokenType.VALUE, file_position, self.token_text))
+            token_text: str = self.token_text.replace('\"', '').replace('\'', '')
+            self.tokens.append(Token(Token.TokenType.VALUE, file_position, token_text))
         elif self.token_text.isidentifier():
             self.tokens.append(Token(Token.TokenType.IDENT, file_position, self.token_text))
         elif self.token_text:

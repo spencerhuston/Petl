@@ -31,31 +31,37 @@ class UnknownType(PetlType):
 
 
 @dataclass
-class IntType(PetlType):
+class LiteralType(PetlType, ABC):
+    def to_string(self) -> str:
+        return "literal"
+
+
+@dataclass
+class IntType(LiteralType):
     def to_string(self) -> str:
         return "int"
 
 
 @dataclass
-class BoolType(PetlType):
+class BoolType(LiteralType):
     def to_string(self) -> str:
         return "bool"
 
 
 @dataclass
-class CharType(PetlType):
+class CharType(LiteralType):
     def to_string(self) -> str:
         return "char"
 
 
 @dataclass
-class StringType(PetlType):
+class StringType(LiteralType):
     def to_string(self) -> str:
         return "string"
 
 
 @dataclass
-class NoneType(PetlType):
+class NoneType(LiteralType):
     def to_string(self) -> str:
         return "none"
 
@@ -70,7 +76,8 @@ class UnionType(PetlType):
 
 @dataclass
 class IterableType(PetlType, ABC):
-    pass
+    def to_string(self) -> str:
+        return "iterable"
 
 
 @dataclass
@@ -99,7 +106,7 @@ class DictType(IterableType):
 
 
 @dataclass
-class SchemaType(IterableType):
+class SchemaType(PetlType):
     column_types: List[PetlType] = field(default_factory=list)
 
     def to_string(self) -> str:
@@ -115,7 +122,7 @@ class TableType(IterableType):
 
 
 @dataclass
-class LambdaType(PetlType):
+class FuncType(PetlType):
     parameter_types: List[PetlType] = field(default_factory=list)
     return_type: PetlType = UnknownType()
 
