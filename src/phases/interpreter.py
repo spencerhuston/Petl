@@ -1,9 +1,9 @@
 import traceback
-from copy import copy
+from copy import deepcopy
 from typing import Set
 
 from src.builtins.petl_builtins import Builtin
-from src.phases.environment import InterpreterEnvironment
+from src.phases.environment import InterpreterEnvironment, copy_environment
 from src.phases.petl_phase import PetlPhase
 from src.phases.type_resolver import types_conform
 from src.semantic_defintions.petl_expression import *
@@ -121,7 +121,7 @@ class Interpreter(PetlPhase):
             self.error(f"Cannot unpack, requires tuple value", let.token)
             return NoneValue()
 
-        after_let_environment = copy(environment)
+        after_let_environment = copy_environment(environment)
         for unpacked_value in unpacked_values:
             after_let_environment.add(unpacked_value[0], unpacked_value[1])
 
@@ -132,7 +132,7 @@ class Interpreter(PetlPhase):
 
     def evaluate_alias(self, alias: Alias, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         if alias.after_alias_expression:
-            after_alias_environment = copy(environment)
+            after_alias_environment = copy_environment(environment)
             after_alias_environment.add_alias(alias.identifier, alias.alias_type)
             return self.evaluate(alias.after_alias_expression, after_alias_environment, expected_type)
         else:
@@ -141,7 +141,7 @@ class Interpreter(PetlPhase):
     def evaluate_lambda_definition(self, lambda_expression: Lambda, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         if types_conform(lambda_expression.token, lambda_expression.petl_type, expected_type, self.error):
             parameters: List[Tuple[str, PetlType]] = list(map(lambda p: (p.identifier, p.parameter_type), lambda_expression.parameters))
-            return FuncValue(lambda_expression.petl_type, "", parameters, copy(lambda_expression.body), copy(environment))
+            return FuncValue(lambda_expression.petl_type, "", parameters, deepcopy(lambda_expression.body))
         else:
             return NoneValue()
 
@@ -165,7 +165,7 @@ class Interpreter(PetlPhase):
             self.error(f"Invalid argument count for function", application.token)
             return NoneValue()
 
-        function_environment: InterpreterEnvironment = copy(environment)
+        function_environment: InterpreterEnvironment = copy_environment(environment)
         argument_values: List[PetlValue] = []
         for argument, parameter in list(map(lambda a, p: (a, p), application.arguments, identifier.parameters)):
             argument_value: PetlValue = self.evaluate(argument, environment, parameter[1])
@@ -249,7 +249,7 @@ class Interpreter(PetlPhase):
             type_pattern: TypePattern = case.pattern
             token: Token = case.case_expression.token.file_position.to_string()
             if types_conform(token, match_value.petl_type, type_pattern.case_type, self.logger, no_error=True):
-                case_environment: InterpreterEnvironment = copy(environment)
+                case_environment: InterpreterEnvironment = (environment)
                 case_environment.add(type_pattern.identifier, match_value)
                 predicate_value: PetlValue = BoolValue(True)
                 if type_pattern.predicate:
@@ -364,13 +364,13 @@ class Interpreter(PetlPhase):
     def evaluate_collection_operator(self, left: PetlValue, right: PetlValue, operator: Operator) -> Optional[PetlValue]:
         if operator.operator_type == Operator.OperatorType.COLLECTION_CONCAT:
             if isinstance(left, ListValue) and isinstance(right, ListValue):
-                return ListValue(left.petl_type, copy(left.values) + copy(right.values))
+                return ListValue(left.petl_type, deepcopy(left.values) + deepcopy(right.values))
             elif isinstance(left, TupleValue) and isinstance(right, TupleValue):
-                left_values: List[PetlValue] = copy(left.values)
-                right_values: List[PetlValue] = copy(right.values)
+                left_values: List[PetlValue] = deepcopy(left.values)
+                right_values: List[PetlValue] = deepcopy(right.values)
                 if isinstance(left.petl_type, TupleType) and isinstance(right.petl_type, TupleValue):
-                    left_types: List[PetlType] = copy(left.petl_type.tuple_types)
-                    right_types: List[PetlType] = copy(right.petl_type.tuple_types)
+                    left_types: List[PetlType] = deepcopy(left.petl_type.tuple_types)
+                    right_types: List[PetlType] = deepcopy(right.petl_type.tuple_types)
                     return TupleValue(TupleType(left_types + right_types), left_values + right_values)
             elif isinstance(left, DictValue) and isinstance(right, DictValue):
                 pass
@@ -435,7 +435,7 @@ class Interpreter(PetlPhase):
             return NoneValue()
 
         for iterable_value in iterable_values:
-            for_body_environment: InterpreterEnvironment = copy(environment)
+            for_body_environment: InterpreterEnvironment = deepcopy(environment)
             for_body_environment.add(for_expression.reference, iterable_value)
             self.evaluate(for_expression.body, for_body_environment, AnyType())
 

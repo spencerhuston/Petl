@@ -1,3 +1,2 @@
-let a = [1,2,3];
-let addOne = |x: int| -> int { x + 1 };
-println(a |> map(addOne))
+let a = [1, 2, 3];
+println(a |> map(|x: int| -> int { x + 1 }))

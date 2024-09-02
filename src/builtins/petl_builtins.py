@@ -1,4 +1,4 @@
-from src.phases.environment import InterpreterEnvironment
+from src.phases.environment import InterpreterEnvironment, copy_environment
 from src.semantic_defintions.petl_expression import UnknownExpression, Application
 from src.semantic_defintions.petl_value import *
 
@@ -13,9 +13,7 @@ class Builtin(ABC):
         pass
 
     def to_value(self) -> FuncValue:
-        body: Expression = UnknownExpression()
-        environment = InterpreterEnvironment()
-        return FuncValue(self.func_type, self, self.parameters, body, environment)
+        return FuncValue(self.func_type, self, self.parameters, UnknownExpression())
 
 
 def get_builtin(name: str) -> Builtin:
@@ -57,7 +55,7 @@ class Print(Builtin):
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         value: PetlValue = environment.get("value", application.token, error)
-        print(value.to_string().encode().decode('unicode_escape'), end="")
+        print(value.to_string().replace('\'', '').replace('\"', '').encode().decode('unicode_escape'), end="")
         return NoneValue()
 
 
@@ -69,7 +67,7 @@ class PrintLn(Builtin):
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         value: PetlValue = environment.get("value", application.token, error)
-        print(value.to_string().encode().decode('unicode_escape'))
+        print(value.to_string().replace('\'', '').replace('\"', '').encode().decode('unicode_escape'))
         return NoneValue()
 
 
@@ -83,7 +81,32 @@ class Map(Builtin):
         ]
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
-        pass
+        iterable_value: PetlValue = environment.get("iterable", application.token, error)
+        mapping_value: PetlValue = environment.get("mapping_function", application.token, error)
+        if isinstance(mapping_value.petl_type, FuncType) and isinstance(mapping_value, FuncValue):
+            element_type: PetlType = mapping_value.petl_type.return_type
+            mapping_function_value: FuncValue = mapping_value
+            if isinstance(iterable_value, ListValue):
+                iterable_values = iterable_value.values
+            elif isinstance(iterable_value, TupleValue):
+                iterable_values = iterable_value.values
+            elif isinstance(iterable_value, DictValue):
+                iterable_values = iterable_value.values
+            elif isinstance(iterable_value, TableValue):
+                iterable_values = iterable_value.rows
+            else:
+                error(f"Map function requires iterable type, not {iterable_value.petl_type.to_string()}", application.token)
+                return NoneValue()
+
+            def evaluate_element(value: PetlValue, function_value: FuncValue) -> PetlValue:
+                body_environment: InterpreterEnvironment = copy_environment(environment)
+                argument_identifier: str = function_value.parameters[0][0]
+                body_environment.add(argument_identifier, value)
+                return interpreter.evaluate(function_value.body, body_environment, element_type)
+
+            element_values: List[PetlValue] = list(map(lambda v: evaluate_element(v, mapping_function_value), iterable_values))
+            return ListValue(element_type, element_values)
+        return NoneValue()
 
 
 class Filter(Builtin):
@@ -152,17 +175,17 @@ class Len(Builtin):
         self.parameters = [("iterable", IterableType())]
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
-        iterable: PetlValue = environment.get("iterable", application.token, error)
-        if isinstance(iterable, ListValue):
-            return IntValue(len(iterable.values))
-        elif isinstance(iterable, TupleValue):
-            return IntValue(len(iterable.values))
-        elif isinstance(iterable, DictValue):
-            return IntValue(len(iterable.values))
-        elif isinstance(iterable, TableValue):
-            return IntValue(len(iterable.rows))
+        iterable_value: PetlValue = environment.get("iterable", application.token, error)
+        if isinstance(iterable_value, ListValue):
+            return IntValue(len(iterable_value.values))
+        elif isinstance(iterable_value, TupleValue):
+            return IntValue(len(iterable_value.values))
+        elif isinstance(iterable_value, DictValue):
+            return IntValue(len(iterable_value.values))
+        elif isinstance(iterable_value, TableValue):
+            return IntValue(len(iterable_value.rows))
         else:
-            error(f"Length function requires iterable type, not {iterable.petl_type.to_string()}", application.token)
+            error(f"Length function requires iterable type, not {iterable_value.petl_type.to_string()}", application.token)
             return NoneValue()
 
 

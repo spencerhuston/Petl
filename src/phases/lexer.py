@@ -1,6 +1,6 @@
 import functools
 import traceback
-from copy import copy
+from copy import deepcopy
 from typing import List, Optional
 
 from src.phases.petl_phase import PetlPhase
@@ -37,7 +37,7 @@ class Lexer(PetlPhase):
         return lines[line_number] if line_number < len(lines) else ""
 
     def create_file_position(self, extra=False, delim=False) -> FilePosition:
-        file_position: FilePosition = copy(self.file_position)
+        file_position: FilePosition = deepcopy(self.file_position)
         file_position.line_text = self.get_line_text(file_position.line)
         column: int = file_position.column - ((1 if extra else 0) + (1 if delim else len(self.token_text)))
         file_position.column = 0 if column < 0 else column
@@ -118,8 +118,7 @@ class Lexer(PetlPhase):
         if self.token_text in Keyword:
             self.tokens.append(Token(Token.TokenType.KEYWORD, file_position, self.token_text))
         elif self.token_is_value():
-            token_text: str = self.token_text.replace('\"', '').replace('\'', '')
-            self.tokens.append(Token(Token.TokenType.VALUE, file_position, token_text))
+            self.tokens.append(Token(Token.TokenType.VALUE, file_position, self.token_text))
         elif self.token_text.isidentifier():
             self.tokens.append(Token(Token.TokenType.IDENT, file_position, self.token_text))
         elif self.token_text:

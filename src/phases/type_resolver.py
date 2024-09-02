@@ -50,6 +50,36 @@ def _collection_types_conform(token: Token, expression_type_list: List[PetlType]
     return list(map(lambda t: _types_conform(token, t[0], t[1]), zipped_types))
 
 
+def _iterable_types_conform(token: Token, expression_type: PetlType, expected_type: PetlType) -> PetlType:
+    if isinstance(expression_type, ListType) and isinstance(expected_type, ListType):
+        return ListType(_types_conform(token, expression_type.list_type, expected_type.list_type))
+    elif isinstance(expression_type, ListType) and isinstance(expected_type, IterableType):
+        return expression_type
+    elif isinstance(expression_type, IterableType) and isinstance(expected_type, ListType):
+        return expected_type
+    elif isinstance(expression_type, TupleType) and isinstance(expected_type, TupleType) and expression_type.tuple_types and expected_type.tuple_types:
+        return TupleType(_collection_types_conform(token, expression_type.tuple_types, expected_type.tuple_types))
+    elif isinstance(expression_type, TupleType) and isinstance(expected_type, IterableType):
+        return expression_type
+    elif isinstance(expression_type, IterableType) and isinstance(expected_type, TupleType):
+        return expected_type
+    elif isinstance(expression_type, DictType) and isinstance(expected_type, DictType):
+        return DictType(
+            _types_conform(token, expression_type.key_type, expected_type.key_type),
+            _types_conform(token, expression_type.value_type, expected_type.value_type)
+        )
+    elif isinstance(expression_type, DictType) and isinstance(expected_type, IterableType):
+        return expression_type
+    elif isinstance(expression_type, IterableType) and isinstance(expected_type, DictType):
+        return expected_type
+    elif isinstance(expression_type, TableType) and isinstance(expected_type, TableType):
+        return expression_type
+    elif isinstance(expression_type, TableType) and isinstance(expected_type, IterableType):
+        return expression_type
+    elif isinstance(expression_type, IterableType) and isinstance(expected_type, TableType):
+        return expected_type
+
+
 def _types_conform(token: Token, expression_type: PetlType, expected_type: PetlType) -> PetlType:
     if not isinstance(expression_type, UnknownType) and isinstance(expected_type, UnknownType):
         return _make_well_formed(expression_type, token)
@@ -66,17 +96,7 @@ def _types_conform(token: Token, expression_type: PetlType, expected_type: PetlT
     elif not isinstance(expression_type, UnionType) and isinstance(expected_type, UnionType) and expression_type in expected_type.union_types:
         return _make_well_formed(expression_type, token)
     elif isinstance(expression_type, IterableType) and isinstance(expected_type, IterableType):
-        if isinstance(expression_type, ListType) and isinstance(expected_type, ListType):
-            return ListType(_types_conform(token, expression_type.list_type, expected_type.list_type))
-        elif isinstance(expression_type, TupleType) and isinstance(expected_type, TupleType) and expression_type.tuple_types and expected_type.tuple_types:
-            return TupleType(_collection_types_conform(token, expression_type.tuple_types, expected_type.tuple_types))
-        elif isinstance(expression_type, DictType) and isinstance(expected_type, DictType):
-            return DictType(
-                _types_conform(token, expression_type.key_type, expected_type.key_type),
-                _types_conform(token, expression_type.value_type, expected_type.value_type)
-            )
-        elif isinstance(expression_type, TableType) and isinstance(expected_type, TableType):
-            return expression_type
+        return _iterable_types_conform(token, expression_type, expected_type)
     elif isinstance(expression_type, SchemaType) and isinstance(expected_type, SchemaType):
         return expression_type
     elif isinstance(expression_type, FuncType) and isinstance(expected_type, FuncType):

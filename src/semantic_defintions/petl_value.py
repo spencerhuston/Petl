@@ -23,9 +23,9 @@ def values_equal(value1: PetlValue, value2: PetlValue) -> bool:
     elif isinstance(value1, BoolValue) and isinstance(value2, BoolValue):
         return value1.value == value2.value
     elif isinstance(value1, CharValue) and isinstance(value2, CharValue):
-        return value1.value == value2.value
+        return value1.value.replace('\'', '') == value2.value.replace('\'', '')
     elif isinstance(value1, StringValue) and isinstance(value2, StringValue):
-        return value1.value == value2.value
+        return value1.value.replace('\"', '') == value2.value.replace('\"', '')
     elif isinstance(value1, NoneValue) and isinstance(value2, NoneValue):
         return True
     elif isinstance(value1, ListValue) and isinstance(value2, ListValue):
@@ -140,12 +140,11 @@ class TableValue(PetlValue):
 
 
 class FuncValue(PetlValue):
-    def __init__(self, petl_type: PetlType, builtin, parameters: List[Tuple[str, PetlType]], body: Expression, environment):
+    def __init__(self, petl_type: PetlType, builtin, parameters: List[Tuple[str, PetlType]], body: Expression):
         PetlValue.__init__(self, petl_type)
         self.builtin = builtin
         self.parameters = parameters
         self.body = body
-        self.environment = environment
 
     def to_string(self) -> str:
         return "not-supported"
