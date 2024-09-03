@@ -5,30 +5,40 @@ from src.utils.petl_enum import BaseEnum
 
 
 class Keyword(str, BaseEnum):
-    LET = "let",
-    ALIAS = "alias",
+    # literal types
     INT = "int",
     BOOL = "bool",
     CHAR = "char",
     STRING = "string",
     NONE = "none",
+    # end literal types
+    # complex types
+    ALIAS = "alias",
     UNION = "union",
     LIST = "list",
     DICT = "dict",
     TUPLE = "tuple",
     SCHEMA = "schema",
     TABLE = "table",
+    # end complex types
+    # literal values
     TRUE = "true",
     FALSE = "false",
-    AND = "and",
-    OR = "or",
-    NOT = "not",
+    # end literal values
+    # structural expressions
+    LET = "let",
     IF = "if",
     ELSE = "else",
     FOR = "for",
     IN = "in",
     MATCH = "match",
     CASE = "case",
+    # logical
+    AND = "and",
+    OR = "or",
+    NOT = "not",
+    # end logical
+    # builtins
     READLN = "readln",
     PRINT = "print",
     PRINTLN = "println",

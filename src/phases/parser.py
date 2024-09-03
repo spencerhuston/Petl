@@ -1,6 +1,7 @@
 from typing import Set
 
-from src.builtins.petl_builtins import get_builtin, Builtin
+from src.builtins.petl_builtin_definitions import Builtin
+from src.builtins.petl_builtins import get_builtin
 from src.phases.petl_phase import PetlPhase
 from src.semantic_defintions.petl_expression import *
 from src.semantic_defintions.petl_types import *

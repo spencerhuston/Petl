@@ -2,7 +2,7 @@ import traceback
 from copy import deepcopy
 from typing import Set
 
-from src.builtins.petl_builtins import Builtin
+from src.builtins.petl_builtin_definitions import Builtin
 from src.phases.environment import InterpreterEnvironment, copy_environment
 from src.phases.petl_phase import PetlPhase
 from src.phases.type_resolver import types_conform
