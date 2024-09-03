@@ -50,33 +50,45 @@ def _collection_types_conform(token: Token, expression_type_list: List[PetlType]
     return list(map(lambda t: _types_conform(token, t[0], t[1]), zipped_types))
 
 
+def is_iterable_type_only(t: PetlType) -> bool:
+    return not isinstance(t, ListType) and \
+           not isinstance(t, TupleType) and \
+           not isinstance(t, DictType) and \
+           not isinstance(t, TableType) and \
+           isinstance(t, IterableType)
+
+
 def _iterable_types_conform(token: Token, expression_type: PetlType, expected_type: PetlType) -> PetlType:
     if isinstance(expression_type, ListType) and isinstance(expected_type, ListType):
         return ListType(_types_conform(token, expression_type.list_type, expected_type.list_type))
-    elif isinstance(expression_type, ListType) and isinstance(expected_type, IterableType):
+    elif isinstance(expression_type, ListType) and is_iterable_type_only(expected_type):
         return expression_type
-    elif isinstance(expression_type, IterableType) and isinstance(expected_type, ListType):
+    elif is_iterable_type_only(expression_type) and isinstance(expected_type, ListType):
         return expected_type
     elif isinstance(expression_type, TupleType) and isinstance(expected_type, TupleType) and expression_type.tuple_types and expected_type.tuple_types:
         return TupleType(_collection_types_conform(token, expression_type.tuple_types, expected_type.tuple_types))
-    elif isinstance(expression_type, TupleType) and isinstance(expected_type, IterableType):
+    elif isinstance(expression_type, TupleType) and isinstance(expected_type, TupleType) and expression_type.tuple_types and not expected_type.tuple_types:
         return expression_type
-    elif isinstance(expression_type, IterableType) and isinstance(expected_type, TupleType):
+    elif isinstance(expression_type, TupleType) and isinstance(expected_type, TupleType) and not expression_type.tuple_types and expected_type.tuple_types:
+        return expected_type
+    elif isinstance(expression_type, TupleType) and is_iterable_type_only(expected_type):
+        return expression_type
+    elif is_iterable_type_only(expression_type) and isinstance(expected_type, TupleType):
         return expected_type
     elif isinstance(expression_type, DictType) and isinstance(expected_type, DictType):
         return DictType(
             _types_conform(token, expression_type.key_type, expected_type.key_type),
             _types_conform(token, expression_type.value_type, expected_type.value_type)
         )
-    elif isinstance(expression_type, DictType) and isinstance(expected_type, IterableType):
+    elif isinstance(expression_type, DictType) and is_iterable_type_only(expected_type):
         return expression_type
-    elif isinstance(expression_type, IterableType) and isinstance(expected_type, DictType):
+    elif is_iterable_type_only(expression_type) and isinstance(expected_type, DictType):
         return expected_type
     elif isinstance(expression_type, TableType) and isinstance(expected_type, TableType):
         return expression_type
-    elif isinstance(expression_type, TableType) and isinstance(expected_type, IterableType):
+    elif isinstance(expression_type, TableType) and is_iterable_type_only(expected_type):
         return expression_type
-    elif isinstance(expression_type, IterableType) and isinstance(expected_type, TableType):
+    elif is_iterable_type_only(expression_type) and isinstance(expected_type, TableType):
         return expected_type
 
 
@@ -97,8 +109,12 @@ def _types_conform(token: Token, expression_type: PetlType, expected_type: PetlT
         return _make_well_formed(expression_type, token)
     elif isinstance(expression_type, IterableType) and isinstance(expected_type, IterableType):
         return _iterable_types_conform(token, expression_type, expected_type)
-    elif isinstance(expression_type, SchemaType) and isinstance(expected_type, SchemaType):
+    elif isinstance(expression_type, SchemaType) and isinstance(expected_type, SchemaType) and expression_type.column_types and expected_type.column_types:
+        return SchemaType(_collection_types_conform(token, expression_type.column_types, expected_type.column_types))
+    elif isinstance(expression_type, SchemaType) and isinstance(expected_type, SchemaType) and expression_type.column_types and not expected_type.column_types:
         return expression_type
+    elif isinstance(expression_type, SchemaType) and isinstance(expected_type, SchemaType) and not expression_type.column_types and expected_type.column_types:
+        return expected_type
     elif isinstance(expression_type, FuncType) and isinstance(expected_type, FuncType):
         well_formed_parameter_types: List[PetlType] = _collection_types_conform(token,
                                                                                 expression_type.parameter_types,

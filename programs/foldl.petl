@@ -1,0 +1,3 @@
+let a = 1..10;
+let f = |x1: int, x2: int| -> int { x1 * x2 };
+println(foldl(a, 1, f))

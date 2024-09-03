@@ -1,6 +1,8 @@
+from copy import deepcopy
 from typing import Any, Optional
 
 from src.phases.environment import InterpreterEnvironment, copy_environment
+from src.phases.type_resolver import types_conform
 from src.semantic_defintions.petl_expression import UnknownExpression, Application
 from src.semantic_defintions.petl_value import *
 from src.tokens.petl_keyword import Keyword
@@ -159,12 +161,67 @@ class Zip(Builtin):
         return NoneValue()
 
 
+def evaluate_fold(application: Application, environment: InterpreterEnvironment, interpreter, error, reverse: bool) -> PetlValue:
+    iterable_value: PetlValue = environment.get("iterable", application.token, error)
+    initial_value: PetlValue = environment.get("initial_value", application.token, error)
+    function_value: PetlValue = environment.get("fold_function", application.token, error)
+    if isinstance(function_value.petl_type, FuncType) and isinstance(iterable_value, ListValue):
+        function_type: FuncType = function_value.petl_type
+        param1_type: PetlType = function_type.parameter_types[0]
+        param2_type: PetlType = function_type.parameter_types[1]
+
+        def fold_types_conform(init: PetlType, p1: PetlType, p2: PetlType, rt: PetlType) -> bool:
+            return types_conform(application.token, init, p1, error) is not None and \
+                    types_conform(application.token, p1, p2, error) is not None and \
+                    types_conform(application.token, p2, rt, error) is not None
+
+        if fold_types_conform(initial_value.petl_type, param1_type, param2_type, function_type.return_type):
+            element_type: PetlType = param1_type
+
+            if isinstance(function_value, FuncValue):
+                fold_function_value: FuncValue = function_value
+
+                def evaluate_element(value1: PetlValue, value2: PetlValue, fv: FuncValue) -> PetlValue:
+                    body_environment: InterpreterEnvironment = copy_environment(environment)
+                    body_environment.add(fv.parameters[0][0], value1)
+                    body_environment.add(fv.parameters[1][0], value2)
+                    return interpreter.evaluate(fv.body, body_environment, element_type)
+
+                values: List[PetlValue] = deepcopy(iterable_value.values)
+                if reverse:
+                    values.reverse()
+                values.insert(0, initial_value)
+
+                fold_value: PetlValue = functools.reduce(lambda v1, v2: evaluate_element(v1, v2, fold_function_value), values)
+                fold_value.petl_type = element_type
+                return fold_value
+    return NoneValue()
+
+
 class Foldl(Builtin):
-    pass
+    def __init__(self):
+        parameters = [
+            ("iterable", ListType(AnyType())),
+            ("initial_value", AnyType()),
+            ("fold_function", FuncType([AnyType(), AnyType()], AnyType()))
+        ]
+        Builtin.__init__(self, Keyword.FOLDL.value, parameters, AnyType())
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        return evaluate_fold(application, environment, interpreter, error, reverse=False)
 
 
 class Foldr(Builtin):
-    pass
+    def __init__(self):
+        parameters = [
+            ("iterable", ListType(AnyType())),
+            ("initial_value", AnyType()),
+            ("fold_function", FuncType([AnyType(), AnyType()], AnyType()))
+        ]
+        Builtin.__init__(self, Keyword.FOLDR.value, parameters, AnyType())
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        return evaluate_fold(application, environment, interpreter, error, reverse=True)
 
 
 class Slice(Builtin):
@@ -279,13 +336,27 @@ class ToInt(Builtin):
 class CreateTable(Builtin):
     def __init__(self):
         parameters = [
-            ("path", StringType()),
-            ("headers", BoolType())
+            ("schema", SchemaType()),
+            ("rows", ListType(TupleType()))
         ]
         Builtin.__init__(self, Keyword.CREATETABLE.value, parameters, TableType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
-        pass
+        schema_value: PetlValue = environment.get("schema", application.token, error)
+        rows_value: PetlValue = environment.get("rows", application.token, error)
+        if isinstance(schema_value, SchemaValue) and isinstance(rows_value, ListValue):
+            schema_values: List[Tuple[PetlValue, PetlType]] = schema_value.values
+            rows: List[PetlValue] = rows_value.values
+            for row in rows:
+                if isinstance(row, TupleValue):
+                    tuple_value: TupleValue = row
+                    zipped_tuple_schema_values = list(map(lambda tv, sv: (tv, sv), tuple_value.values, schema_values))
+                    for value, column in zipped_tuple_schema_values:
+                        if not types_conform(application.token, value.petl_type, column[1], error):
+                            return NoneValue()
+            if isinstance(schema_value.petl_type, SchemaType):
+                return TableValue(TableType(SchemaType(schema_value.petl_type.column_types)), schema_value, rows)
+        return NoneValue()
 
 
 class ReadCsv(Builtin):

@@ -13,12 +13,12 @@ _builtins: Dict[str, Builtin] = {
     # Functional
     Keyword.MAP.value: Map(),
     Keyword.FILTER.value: Filter(),
-    Keyword.ZIP.value: Zip(),
-    # "foldl": Foldl(),
-    # "foldr": Foldr(),
+    Keyword.FOLDL.value: Foldl(),
+    Keyword.FOLDR.value: Foldr(),
     # end Functional
     # ----------------------------------------
     # List/Dict
+    Keyword.ZIP.value: Zip(),
     # "insert": Insert(),
     # "remove": Remove(),
     # "replace": Replace(),
@@ -54,7 +54,7 @@ _builtins: Dict[str, Builtin] = {
     # end Integer
     # -----------------------------------------
     # Table
-    # "createTable": CreateTable(),
+    Keyword.CREATETABLE.value: CreateTable(),
     # "readCsv": ReadCsv(),
     # "writeCsv": WriteCsv(),
     # "join": Join(),

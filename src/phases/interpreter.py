@@ -1,3 +1,4 @@
+import functools
 import traceback
 from copy import deepcopy
 from typing import Set
@@ -162,7 +163,8 @@ class Interpreter(PetlPhase):
 
     def evaluate_function_application(self, application: Application, identifier: FuncValue, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         if len(application.arguments) != len(identifier.parameters):
-            self.error(f"Invalid argument count for function", application.token)
+            func_types_str: str = ", ".join(map(lambda p: p[1].to_string(), identifier.parameters))
+            self.error(f"Invalid argument count for function, requires: {func_types_str}", application.token)
             return NoneValue()
 
         function_environment: InterpreterEnvironment = copy_environment(environment)
