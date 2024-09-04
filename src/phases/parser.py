@@ -284,14 +284,14 @@ class Parser(PetlPhase):
             if token.token_value.startswith('\''):
                 self.advance()
                 if len(token.token_value) == 3:
-                    return LitExpression(CharType(), token, CharLiteral(token.token_value))
+                    return LitExpression(CharType(), token, CharLiteral(token.token_value.replace('\'', '')))
                 elif token.token_value.startswith("\'\\") and len(token.token_value) == 4:
-                    return LitExpression(CharType(), token, CharLiteral(token.token_value))
+                    return LitExpression(CharType(), token, CharLiteral(token.token_value.replace('\'', '')))
                 else:
-                    return LitExpression(StringType(), token, StringLiteral(token.token_value.replace('\'', '\"')))
+                    return LitExpression(StringType(), token, StringLiteral(token.token_value.replace('\'', '')))
             elif token.token_value.startswith('\"'):
                 self.advance()
-                return LitExpression(StringType(), token, StringLiteral(token.token_value))
+                return LitExpression(StringType(), token, StringLiteral(token.token_value.replace('\"', '')))
             else:
                 integer_literal: Expression = LitExpression(IntType(), token, IntLiteral(int(token.token_value)))
                 self.advance()

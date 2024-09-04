@@ -3,7 +3,7 @@ import traceback
 from copy import deepcopy
 from typing import Set
 
-from src.builtins.petl_builtin_definitions import Builtin
+from src.builtins.petl_builtin_definitions import Builtin, extract_iterable_values
 from src.phases.environment import InterpreterEnvironment, copy_environment
 from src.phases.petl_phase import PetlPhase
 from src.phases.type_resolver import types_conform
@@ -142,7 +142,7 @@ class Interpreter(PetlPhase):
     def evaluate_lambda_definition(self, lambda_expression: Lambda, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         if types_conform(lambda_expression.token, lambda_expression.petl_type, expected_type, self.error):
             parameters: List[Tuple[str, PetlType]] = list(map(lambda p: (p.identifier, p.parameter_type), lambda_expression.parameters))
-            return FuncValue(lambda_expression.petl_type, "", parameters, deepcopy(lambda_expression.body))
+            return FuncValue(lambda_expression.petl_type, None, parameters, deepcopy(lambda_expression.body), copy_environment(environment))
         else:
             return NoneValue()
 
@@ -167,15 +167,15 @@ class Interpreter(PetlPhase):
             self.error(f"Invalid argument count for function, requires: {func_types_str}", application.token)
             return NoneValue()
 
-        function_environment: InterpreterEnvironment = copy_environment(environment)
-        argument_values: List[PetlValue] = []
-        for argument, parameter in list(map(lambda a, p: (a, p), application.arguments, identifier.parameters)):
-            argument_value: PetlValue = self.evaluate(argument, environment, parameter[1])
-            function_environment.add(parameter[0], argument_value)
-            argument_values.append(argument_value)
-
         function_return_value: PetlValue = NoneValue()
         if isinstance(identifier.petl_type, FuncType):
+            function_environment: InterpreterEnvironment = copy_environment(environment) if identifier.builtin else copy_environment(identifier.environment)
+            argument_values: List[PetlValue] = []
+            for argument, parameter in list(map(lambda a, p: (a, p), application.arguments, identifier.parameters)):
+                argument_value: PetlValue = self.evaluate(argument, environment, parameter[1])
+                function_environment.add(parameter[0], argument_value)
+                argument_values.append(argument_value)
+
             self.stack_trace.append(application.token.file_position)
             if identifier.builtin:
                 function_return_value = identifier.builtin.evaluate(application, function_environment, self, self.error)
@@ -419,21 +419,9 @@ class Interpreter(PetlPhase):
         return NoneValue()
 
     def evaluate_for(self, for_expression: For, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
-        def get_iterable_values(iterable: PetlValue) -> Optional[List[PetlValue]]:
-            if isinstance(iterable, ListValue):
-                return iterable.values
-            elif isinstance(iterable, TupleValue):
-                return iterable.values
-            elif isinstance(iterable, DictValue):
-                return list(map(lambda v: v[0], iterable.values))
-            elif isinstance(iterable, TableValue):
-                return iterable.rows
-            return None
-
         iterable: PetlValue = self.evaluate(for_expression.iterable, environment, UnknownType())
-        iterable_values: Optional[List[PetlValue]] = get_iterable_values(iterable)
+        iterable_values: Optional[List[PetlValue]] = extract_iterable_values("for", iterable, for_expression.token, self.error)
         if not iterable_values:
-            self.error(f"Provided type is not iterable", for_expression.token)
             return NoneValue()
 
         for iterable_value in iterable_values:

@@ -51,7 +51,8 @@ def _collection_types_conform(token: Token, expression_type_list: List[PetlType]
 
 
 def is_iterable_type_only(t: PetlType) -> bool:
-    return not isinstance(t, ListType) and \
+    return not isinstance(t, StringType) and \
+           not isinstance(t, ListType) and \
            not isinstance(t, TupleType) and \
            not isinstance(t, DictType) and \
            not isinstance(t, TableType) and \
@@ -59,7 +60,13 @@ def is_iterable_type_only(t: PetlType) -> bool:
 
 
 def _iterable_types_conform(token: Token, expression_type: PetlType, expected_type: PetlType) -> PetlType:
-    if isinstance(expression_type, ListType) and isinstance(expected_type, ListType):
+    if isinstance(expression_type, StringType) and isinstance(expected_type, StringType):
+        return StringType()
+    elif isinstance(expression_type, StringType) and is_iterable_type_only(expected_type):
+        return StringType()
+    elif is_iterable_type_only(expression_type) and isinstance(expected_type, StringType):
+        return StringType()
+    elif isinstance(expression_type, ListType) and isinstance(expected_type, ListType):
         return ListType(_types_conform(token, expression_type.list_type, expected_type.list_type))
     elif isinstance(expression_type, ListType) and is_iterable_type_only(expected_type):
         return expression_type
@@ -90,6 +97,8 @@ def _iterable_types_conform(token: Token, expression_type: PetlType, expected_ty
         return expression_type
     elif is_iterable_type_only(expression_type) and isinstance(expected_type, TableType):
         return expected_type
+    else:
+        return UnknownType()
 
 
 def _types_conform(token: Token, expression_type: PetlType, expected_type: PetlType) -> PetlType:

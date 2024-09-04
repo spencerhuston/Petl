@@ -55,12 +55,6 @@ class CharType(LiteralType):
 
 
 @dataclass
-class StringType(LiteralType):
-    def to_string(self) -> str:
-        return "string"
-
-
-@dataclass
 class NoneType(LiteralType):
     def to_string(self) -> str:
         return "none"
@@ -78,6 +72,12 @@ class UnionType(PetlType):
 class IterableType(PetlType, ABC):
     def to_string(self) -> str:
         return "iterable"
+
+
+@dataclass
+class StringType(LiteralType, IterableType):
+    def to_string(self) -> str:
+        return "string"
 
 
 @dataclass

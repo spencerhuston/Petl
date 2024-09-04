@@ -1,0 +1,6 @@
+let t = readCsv(
+    "test",
+    false,
+    ${name: string, age: int}
+);
+t

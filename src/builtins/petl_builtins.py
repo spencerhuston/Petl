@@ -55,7 +55,7 @@ _builtins: Dict[str, Builtin] = {
     # -----------------------------------------
     # Table
     Keyword.CREATETABLE.value: CreateTable(),
-    # "readCsv": ReadCsv(),
+    Keyword.READCSV.value: ReadCsv(),
     # "writeCsv": WriteCsv(),
     # "join": Join(),
     # "with": With(),

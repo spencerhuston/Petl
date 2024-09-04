@@ -1,3 +1,46 @@
-let a = 5;
-let f = || -> int { a };
-println(f())
+#let a = 5;
+#let f = || -> int -> int {
+#    let b = 2;
+#    |x: int| -> int { b + x }
+#};
+#println(f()(a));
+
+
+let isDigit = |c: char| -> bool {
+    match c {
+        case '0' => true,
+        case '1' => true,
+        case '2' => true,
+        case '3' => true,
+        case '4' => true,
+        case '5' => true,
+        case '6' => true,
+        case '7' => true,
+        case '8' => true,
+        case '9' => true,
+        case _ => false
+    }
+};
+
+let getIncome = |entry: tuple[string, string]| -> string {
+    entry(1)
+};
+
+let incomeStringToInt = |incomeString: string| -> int {
+    incomeString |> filter(isDigit) |> toInt
+};
+
+let createIncomeFilter = |incomeLimit: int| -> int -> bool {
+    |income: int| -> bool {
+        income < incomeLimit
+    }
+};
+
+let salaryDict = [
+    "Alice": "$50,000",
+    "Bob": "$100,000",
+    "Mark": "$35,000"
+];
+
+# println(filter(map(map(salaryDict, getIncome), incomeStringToInt), createIncomeFilter(75000)))
+println(salaryDict |> map(getIncome) |> map(incomeStringToInt) |> filter(createIncomeFilter(75000)))

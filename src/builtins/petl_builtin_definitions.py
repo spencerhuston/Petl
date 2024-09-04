@@ -1,3 +1,4 @@
+import csv
 from copy import deepcopy
 from typing import Any, Optional
 
@@ -20,11 +21,13 @@ class Builtin(ABC):
         pass
 
     def to_value(self) -> FuncValue:
-        return FuncValue(self.func_type, self, self.parameters, UnknownExpression())
+        return FuncValue(self.func_type, self, self.parameters, UnknownExpression(), InterpreterEnvironment())
 
 
 def extract_iterable_values(name: str, iterable_value: PetlValue, token: Token, error) -> Optional[List[Any]]:
-    if isinstance(iterable_value, ListValue) and isinstance(iterable_value.petl_type, ListType):
+    if isinstance(iterable_value, StringValue) and isinstance(iterable_value.petl_type, StringType):
+        return [CharValue(char_value) for char_value in iterable_value.value]
+    elif isinstance(iterable_value, ListValue) and isinstance(iterable_value.petl_type, ListType):
         return iterable_value.values
     elif isinstance(iterable_value, TupleValue) and isinstance(iterable_value.petl_type, TupleType):
         return iterable_value.values
@@ -33,21 +36,34 @@ def extract_iterable_values(name: str, iterable_value: PetlValue, token: Token, 
     elif isinstance(iterable_value, TableValue) and isinstance(iterable_value.petl_type, TableType):
         return iterable_value.rows
     else:
-        error(f"{name} function requires iterable type, not {iterable_value.petl_type.to_string()}", token)
+        error(f"\'{name}\' requires iterable type, not {iterable_value.petl_type.to_string()}", token)
         return None
 
 
 def extract_element_type(iterable_value: PetlValue) -> PetlType:
-    if isinstance(iterable_value.petl_type, ListType):
+    if isinstance(iterable_value.petl_type, StringType):
+        return CharType()
+    elif isinstance(iterable_value.petl_type, ListType):
         return iterable_value.petl_type.list_type
     elif isinstance(iterable_value.petl_type, TupleType):
         return UnionType(iterable_value.petl_type.tuple_types)
     elif isinstance(iterable_value.petl_type, DictType):
-        return iterable_value.petl_type
+        return TupleType([iterable_value.petl_type.key_type, iterable_value.petl_type.key_type])
     elif isinstance(iterable_value.petl_type, TableType):
         return UnionType(iterable_value.petl_type.schema_type.column_types)
     else:
         NoneType()
+
+
+def from_string_value(value: StringValue) -> PetlValue:
+    if not value:
+        return NoneValue()
+    elif value.value.isnumeric():
+        return IntValue(int(value.value))
+    elif value.value == "true" or value.value == "false":
+        return BoolValue(True if value.value == "true" else False)
+    else:
+        return value
 
 
 class ReadLn(Builtin):
@@ -64,7 +80,7 @@ class Print(Builtin):
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         value: PetlValue = environment.get("value", application.token, error)
-        print(value.to_string().replace('\'', '').replace('\"', '').encode().decode('unicode_escape'), end="")
+        print(value.to_string().encode().decode('unicode_escape'), end="")
         return NoneValue()
 
 
@@ -74,7 +90,7 @@ class PrintLn(Builtin):
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         value: PetlValue = environment.get("value", application.token, error)
-        print(value.to_string().replace('\'', '').replace('\"', '').encode().decode('unicode_escape'))
+        print(value.to_string().encode().decode('unicode_escape'))
         return NoneValue()
 
 
@@ -90,18 +106,31 @@ class Map(Builtin):
         iterable_value: PetlValue = environment.get("iterable", application.token, error)
         mapping_value: PetlValue = environment.get("mapping_function", application.token, error)
         if isinstance(mapping_value.petl_type, FuncType) and isinstance(mapping_value, FuncValue):
-            element_type: PetlType = mapping_value.petl_type.return_type
             mapping_function_value: FuncValue = mapping_value
             iterable_values = extract_iterable_values(self.name, iterable_value, application.token, error)
             if iterable_values:
+                element_type: PetlType = mapping_value.petl_type.return_type
+
                 def evaluate_element(value: PetlValue, function_value: FuncValue) -> PetlValue:
                     body_environment: InterpreterEnvironment = copy_environment(environment)
                     argument_identifier: str = function_value.parameters[0][0]
-                    body_environment.add(argument_identifier, value)
+                    if isinstance(value, tuple):
+                        tuple_type: TupleType = TupleType([value[0].petl_type, value[1].petl_type])
+                        tuple_value: TupleValue = TupleValue(tuple_type, [value[0], value[1]])
+                        body_environment.add(argument_identifier, tuple_value)
+                    else:
+                        body_environment.add(argument_identifier, value)
                     return interpreter.evaluate(function_value.body, body_environment, element_type)
 
                 element_values: List[PetlValue] = list(map(lambda v: evaluate_element(v, mapping_function_value), iterable_values))
-                return ListValue(element_type, element_values)
+                if isinstance(iterable_value.petl_type, StringType):
+                    def extract_char_value(c1: CharValue) -> str:
+                        return c1.value
+
+                    element_str_values: List[str] = list(map(lambda c: extract_char_value(c), element_values))
+                    return StringValue(functools.reduce(lambda c1, c2: c1 + c2, element_str_values))
+                else:
+                    return ListValue(ListType(element_type), element_values)
         return NoneValue()
 
 
@@ -109,7 +138,7 @@ class Filter(Builtin):
     def __init__(self):
         parameters = [
             ("iterable", IterableType()),
-            ("mapping_function", FuncType([AnyType()], BoolType()))
+            ("filter_function", FuncType([AnyType()], BoolType()))
         ]
         Builtin.__init__(self, Keyword.FILTER.value, parameters, ListType(AnyType()))
 
@@ -117,22 +146,30 @@ class Filter(Builtin):
         iterable_value: PetlValue = environment.get("iterable", application.token, error)
         filter_value: PetlValue = environment.get("filter_function", application.token, error)
         if isinstance(filter_value.petl_type, FuncType) and isinstance(filter_value, FuncValue):
-            element_type: PetlType = filter_value.petl_type.return_type
             mapping_function_value: FuncValue = filter_value
             iterable_values = extract_iterable_values(self.name, iterable_value, application.token, error)
             if iterable_values:
+                element_type: PetlType = extract_element_type(iterable_value)
+
                 def evaluate_element(value: PetlValue, function_value: FuncValue) -> bool:
-                    body_environment: InterpreterEnvironment = copy_environment(environment)
+                    body_environment: InterpreterEnvironment = copy_environment(mapping_function_value.environment)
                     argument_identifier: str = function_value.parameters[0][0]
                     body_environment.add(argument_identifier, value)
-                    result: PetlValue = interpreter.evaluate(function_value.body, body_environment, element_type)
+                    result: PetlValue = interpreter.evaluate(function_value.body, body_environment, BoolType())
                     if isinstance(result, BoolValue):
                         return result.value
                     else:
                         return False
 
                 element_values: List[PetlValue] = list(filter(lambda v: evaluate_element(v, mapping_function_value), iterable_values))
-                return ListValue(element_type, element_values)
+                if isinstance(iterable_value.petl_type, StringType):
+                    def extract_char_value(c1: CharValue) -> str:
+                        return c1.value
+
+                    element_str_values: List[str] = list(map(lambda c: extract_char_value(c), element_values))
+                    return StringValue(functools.reduce(lambda c1, c2: c1 + c2, element_str_values))
+                else:
+                    return ListValue(element_type, element_values)
         return NoneValue()
 
 
@@ -171,12 +208,19 @@ def evaluate_fold(application: Application, environment: InterpreterEnvironment,
         param2_type: PetlType = function_type.parameter_types[1]
 
         def fold_types_conform(init: PetlType, p1: PetlType, p2: PetlType, rt: PetlType) -> bool:
-            return types_conform(application.token, init, p1, error) is not None and \
-                    types_conform(application.token, p1, p2, error) is not None and \
-                    types_conform(application.token, p2, rt, error) is not None
+            def text_types_conform() -> bool:
+                return isinstance(init, CharType) and \
+                       isinstance(p1, CharType) and \
+                       isinstance(p2, CharType) and \
+                       isinstance(rt, StringType)
+
+            return text_types_conform() or \
+                   (types_conform(application.token, init, p1, error) is not None and
+                    types_conform(application.token, p1, p2, error) is not None and
+                    types_conform(application.token, p2, rt, error) is not None)
 
         if fold_types_conform(initial_value.petl_type, param1_type, param2_type, function_type.return_type):
-            element_type: PetlType = param1_type
+            element_type: PetlType = function_type.return_type
 
             if isinstance(function_value, FuncValue):
                 fold_function_value: FuncValue = function_value
@@ -290,7 +334,9 @@ class Len(Builtin):
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         iterable_value: PetlValue = environment.get("iterable", application.token, error)
-        if isinstance(iterable_value, ListValue):
+        if isinstance(iterable_value, StringValue):
+            return IntValue(len(iterable_value.value))
+        elif isinstance(iterable_value, ListValue):
             return IntValue(len(iterable_value.values))
         elif isinstance(iterable_value, TupleValue):
             return IntValue(len(iterable_value.values))
@@ -360,8 +406,49 @@ class CreateTable(Builtin):
 
 
 class ReadCsv(Builtin):
-    pass
+    def __init__(self):
+        parameters = [
+            ("path", StringType()),
+            ("header", BoolType()),
+            ("schema", SchemaType())
+        ]
+        Builtin.__init__(self, Keyword.READCSV.value, parameters, TableType())
 
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        path_value: PetlValue = environment.get("path", application.token, error)
+        header_value: PetlValue = environment.get("header", application.token, error)
+        schema_value: PetlValue = environment.get("schema", application.token, error)
+
+        if isinstance(path_value, StringValue) and isinstance(header_value, BoolValue) and isinstance(schema_value, SchemaValue):
+            path_value: StringValue = path_value
+            header_value: BoolValue = header_value
+            schema_value: SchemaValue = schema_value
+
+            def header_matches_schema(header_row: List[str], schema_value: SchemaValue) -> bool:
+                return all(map(lambda h, sv: h == sv[0], header_row, schema_value.values))
+
+            # def row_matches_schema(row: List[str], schema_value: SchemaValue) -> bool:
+            #     for value in row:
+            #         if types_conform()
+
+            with open(path_value.value + ".csv", mode ='r') as csv_file:
+                csv_file_rows: List[List[str]] = list(csv.reader(csv_file))
+                if isinstance(schema_value.petl_type, SchemaType):
+                    rows: ListValue = ListValue(ListType(TupleType(schema_value.petl_type.column_types)), [])
+                    if csv_file_rows:
+                        if header_value.value:
+                            header_row: List[str] = csv_file_rows[0]
+                            if not header_matches_schema(header_row, schema_value):
+                                error(f"Provided schema does not match CSV header: {header_row}", application.token)
+                                return NoneValue()
+
+                        for row in csv_file_rows:
+                            pass
+
+
+                #else return empty table value
+
+        return NoneValue()
 
 class WriteCsv(Builtin):
     pass

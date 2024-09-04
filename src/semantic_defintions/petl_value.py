@@ -23,9 +23,9 @@ def values_equal(value1: PetlValue, value2: PetlValue) -> bool:
     elif isinstance(value1, BoolValue) and isinstance(value2, BoolValue):
         return value1.value == value2.value
     elif isinstance(value1, CharValue) and isinstance(value2, CharValue):
-        return value1.value.replace('\'', '') == value2.value.replace('\'', '')
+        return value1.value == value2.value
     elif isinstance(value1, StringValue) and isinstance(value2, StringValue):
-        return value1.value.replace('\"', '') == value2.value.replace('\"', '')
+        return value1.value == value2.value
     elif isinstance(value1, NoneValue) and isinstance(value2, NoneValue):
         return True
     elif isinstance(value1, ListValue) and isinstance(value2, ListValue):
@@ -62,7 +62,7 @@ class CharValue(PetlValue):
         self.value: str = value
 
     def to_string(self) -> str:
-        return self.value.replace('\'', '')
+        return self.value
 
 
 class StringValue(PetlValue):
@@ -71,7 +71,7 @@ class StringValue(PetlValue):
         self.value: str = value
 
     def to_string(self) -> str:
-        return self.value.replace('\"', '')
+        return self.value
 
 
 class NoneValue(PetlValue):
@@ -140,11 +140,15 @@ class TableValue(PetlValue):
 
 
 class FuncValue(PetlValue):
-    def __init__(self, petl_type: PetlType, builtin, parameters: List[Tuple[str, PetlType]], body: Expression):
+    def __init__(self, petl_type: PetlType, builtin, parameters: List[Tuple[str, PetlType]], body: Expression, environment):
         PetlValue.__init__(self, petl_type)
         self.builtin = builtin
         self.parameters = parameters
         self.body = body
+        self.environment = environment
 
     def to_string(self) -> str:
-        return "not-supported"
+        name: str = f"builtin:{self.builtin.name}" if self.builtin else ""
+        return_type: str = self.petl_type.return_type if isinstance(self.petl_type, FuncType) else "?"
+        parameters: str = ", ".join(list(map(lambda p: p[0] + ": " + p[1].to_string(), self.parameters)))
+        return f"{name}({parameters}) -> {return_type}"
