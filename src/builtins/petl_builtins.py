@@ -41,7 +41,6 @@ _builtins: Dict[str, Builtin] = {
     Keyword.LEN.value: Len(),
     Keyword.TYPE.value: Type(),
     Keyword.TOSTR.value: ToStr(),
-    # "toCharList": toCharList(),
     # end String
     # ----------------------------------------
     # Integer

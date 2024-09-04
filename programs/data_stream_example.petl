@@ -1,0 +1,41 @@
+let isDigit = |c: char| -> bool {
+    match c {
+        case '0' => true,
+        case '1' => true,
+        case '2' => true,
+        case '3' => true,
+        case '4' => true,
+        case '5' => true,
+        case '6' => true,
+        case '7' => true,
+        case '8' => true,
+        case '9' => true,
+        case _ => false
+    }
+};
+
+let getSalary = |entry: tuple[string, string]| -> string {
+    entry(1)
+};
+
+let salaryStringToInt = |salaryString: string| -> int {
+    salaryString |> filter(isDigit) |> toInt
+};
+
+let createSalaryFilter = |salaryLimit: int| -> int -> bool {
+    |salary: int| -> bool {
+        salary < salaryLimit
+    }
+};
+
+let filterSalaries = |salaries: dict[string: string], salaryLimit: int| -> list[int] {
+    salaries |> map(getSalary) |> map(salaryStringToInt) |> filter(createSalaryFilter(salaryLimit))
+};
+
+let salaryDict = [
+    "Alice": "$50,000",
+    "Bob": "$100,000",
+    "Mark": "$35,000"
+];
+
+println(filterSalaries(salaryDict, 75000))
