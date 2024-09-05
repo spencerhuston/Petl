@@ -12,7 +12,6 @@ class Keyword(str, BaseEnum):
     STRING = "string",
     NONE = "none",
     # end literal types
-    # complex types
     ALIAS = "alias",
     UNION = "union",
     LIST = "list",
@@ -20,11 +19,9 @@ class Keyword(str, BaseEnum):
     TUPLE = "tuple",
     SCHEMA = "schema",
     TABLE = "table",
-    # end complex types
     # literal values
     TRUE = "true",
     FALSE = "false",
-    # end literal values
     # structural expressions
     LET = "let",
     IF = "if",
@@ -37,22 +34,50 @@ class Keyword(str, BaseEnum):
     AND = "and",
     OR = "or",
     NOT = "not",
-    # end logical
-    # builtins
+    # -----builtins-----
+    # IO
     READLN = "readln",
     PRINT = "print",
     PRINTLN = "println",
+    # Functional
     MAP = "map",
     FILTER = "filter",
-    ZIP = "zip",
     FOLDL = "foldl",
     FOLDR = "foldr",
-    SLICE = "slice",
-    SUBSTR = "substr",
+    # Iterable
+    ZIP = "zip",
     LEN = "len",
-    TYPE = "type",
+    ISEMPTY = "isEmpty",
+    # List
+    INSERT = "insert",
+    REMOVE = "remove",
+    REPLACE = "replace",
+    FRONT = "front",
+    BACK = "back",
+    HEAD = "head",
+    TAIL = "tail",
+    SLICE = "slice",
+    CONTAINS = "contains",
+    FIND = "find",
+    FILL = "fill",
+    REVERSE = "reverse",
+    SET = "set",
+    INTERSECT = "intersect",
+    # String
+    SUBSTR = "substr",
     TOSTR = "toStr",
+    TOUPPER = "toUpper",
+    TOLOWER = "toLower",
+    STARTSWITH = "startsWith",
+    ENDSWITH = "endsWith",
+    # Integer
     TOINT = "toInt",
+    SUM = "sum",
+    PRODUCT = "product",
+    MAX = "max",
+    MIN = "min",
+    SORT = "sort",
+    # Table
     CREATETABLE = "createTable",
     READCSV = "readCsv",
     WRITECSV = "writeCsv",
@@ -64,6 +89,60 @@ class Keyword(str, BaseEnum):
     COLUMN = "column",
     COLLECT = "collect",
     COUNT = "count"
+    # Miscellaneous
+    TYPE = "type",
+    RAND = "rand"
+
+    def is_builtin_function(self) -> bool:
+        return self == self.READLN or \
+                self == self.PRINT or \
+                self == self.PRINTLN or \
+                self == self.MAP or \
+                self == self.FILTER or \
+                self == self.FOLDL or \
+                self == self.FOLDR or \
+                self == self.ZIP or \
+                self == self.LEN or \
+                self == self.ISEMPTY or \
+                self == self.INSERT or \
+                self == self.REMOVE or \
+                self == self.REPLACE or \
+                self == self.FRONT or \
+                self == self.BACK or \
+                self == self.HEAD or \
+                self == self.TAIL or \
+                self == self.SLICE or \
+                self == self.CONTAINS or \
+                self == self.FIND or \
+                self == self.FILL or \
+                self == self.REVERSE or \
+                self == self.SET or \
+                self == self.INTERSECT or \
+                self == self.SUBSTR or \
+                self == self.TOSTR or \
+                self == self.TOUPPER or \
+                self == self.TOLOWER or \
+                self == self.STARTSWITH or \
+                self == self.ENDSWITH or \
+                self == self.TOINT or \
+                self == self.SUM or \
+                self == self.PRODUCT or \
+                self == self.MAX or \
+                self == self.MIN or \
+                self == self.SORT or \
+                self == self.CREATETABLE or \
+                self == self.READCSV or \
+                self == self.WRITECSV or \
+                self == self.JOIN or \
+                self == self.WITH or \
+                self == self.WHERE or \
+                self == self.SELECT or \
+                self == self.DROP or \
+                self == self.COLUMN or \
+                self == self.COLLECT or \
+                self == self.COUNT or \
+                self == self.TYPE or \
+                self == self.RAND
 
 
 def keyword_to_operator(keyword: Keyword) -> Optional[Operator]:
@@ -75,31 +154,3 @@ def keyword_to_operator(keyword: Keyword) -> Optional[Operator]:
         return Operator(Operator.OperatorType.OR)
     else:
         return None
-
-
-def is_builtin_function(value: str) -> bool:
-    return value == Keyword.READLN or \
-           value == Keyword.PRINT or \
-           value == Keyword.PRINTLN or \
-           value == Keyword.MAP or \
-           value == Keyword.FILTER or \
-           value == Keyword.ZIP or \
-           value == Keyword.FOLDL or \
-           value == Keyword.FOLDR or \
-           value == Keyword.SLICE or \
-           value == Keyword.SUBSTR or \
-           value == Keyword.LEN or \
-           value == Keyword.TYPE or \
-           value == Keyword.TOSTR or \
-           value == Keyword.TOINT or \
-           value == Keyword.CREATETABLE or \
-           value == Keyword.READCSV or \
-           value == Keyword.WRITECSV or \
-           value == Keyword.JOIN or \
-           value == Keyword.WITH or \
-           value == Keyword.WHERE or \
-           value == Keyword.SELECT or \
-           value == Keyword.DROP or \
-           value == Keyword.COLUMN or \
-           value == Keyword.COLLECT or \
-           value == Keyword.COUNT

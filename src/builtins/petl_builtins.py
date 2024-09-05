@@ -1,6 +1,13 @@
 from typing import Dict
 
-from src.builtins.petl_builtin_definitions import *
+from src.builtins.iterable_petl_builtins import *
+from src.builtins.functional_petl_builtins import *
+from src.builtins.int_petl_builtins import *
+from src.builtins.io_petl_builtins import *
+from src.builtins.list_petl_builtins import *
+from src.builtins.misc_petl_builtins import *
+from src.builtins.string_petl_builtins import *
+from src.builtins.table_petl_builtins import *
 from src.tokens.petl_keyword import Keyword
 
 _builtins: Dict[str, Builtin] = {
@@ -17,59 +24,64 @@ _builtins: Dict[str, Builtin] = {
     Keyword.FOLDR.value: Foldr(),
     # end Functional
     # ----------------------------------------
-    # List/Dict
+    # Iterable
     Keyword.ZIP.value: Zip(),
-    # "insert": Insert(),
-    # "remove": Remove(),
-    # "replace": Replace(),
-    # "front": Front(),
-    # "back": Back(),
-    # "head": Head(),
-    # "tail": Tail(),
-    # "isEmpty": IsEmpty(),
-    # "contains": Contains(),
-    # "find": Find(),
-    # "fill": Fill(),
-    # "reverse": Reverse(),
-    # "set": Set(),
-    # "intersect": Intersect(),
-    # end List/Dict
+    Keyword.LEN.value: Len(),
+    Keyword.ISEMPTY.value: IsEmpty(),
+    # end Iterable
+    # ----------------------------------------
+    # List
+    Keyword.INSERT.value: Insert(),
+    Keyword.REMOVE.value: Remove(),
+    Keyword.REPLACE.value: Replace(),
+    Keyword.FRONT.value: Front(),
+    Keyword.BACK.value: Back(),
+    Keyword.HEAD.value: Head(),
+    Keyword.TAIL.value: Tail(),
+    Keyword.SLICE.value: Slice(),
+    Keyword.CONTAINS.value: Contains(),
+    Keyword.FIND.value: Find(),
+    Keyword.FILL.value: Fill(),
+    Keyword.REVERSE.value: Reverse(),
+    Keyword.SET.value: Set(),
+    Keyword.INTERSECT.value: Intersect(),
+    # end List
     # ----------------------------------------
     # String
-    Keyword.SLICE.value: Slice(),
     Keyword.SUBSTR.value: Substr(),
-    Keyword.LEN.value: Len(),
-    Keyword.TYPE.value: Type(),
     Keyword.TOSTR.value: ToStr(),
+    Keyword.TOUPPER.value: ToUpper(),
+    Keyword.TOLOWER.value: ToLower(),
+    Keyword.STARTSWITH.value: StartsWith(),
+    Keyword.ENDSWITH.value: EndsWith(),
     # end String
     # ----------------------------------------
     # Integer
     Keyword.TOINT.value: ToInt(),
-    # "sum": Sum(),
-    # "product": Product(),
-    # "max": Max(),
-    # "min": Min(),
-    # "sort": Sort(),
+    Keyword.SUM.value: Sum(),
+    Keyword.PRODUCT.value: Product(),
+    Keyword.MAX.value: Max(),
+    Keyword.MIN.value: Min(),
+    Keyword.SORT.value: Sort(),
     # end Integer
     # -----------------------------------------
     # Table
     Keyword.CREATETABLE.value: CreateTable(),
     Keyword.READCSV.value: ReadCsv(),
-    # "writeCsv": WriteCsv(),
-    # "join": Join(),
-    # "with": With(),
-    # "where": Where(),
-    # "select": Select(),
-    # "drop": Drop(),
-    # "column": Column(),
-    # "collect": Collect(),
-    # "count": Count()
+    Keyword.WRITECSV.value: WriteCsv(),
+    Keyword.JOIN.value: Join(),
+    Keyword.WITH.value: With(),
+    Keyword.WHERE.value: Where(),
+    Keyword.SELECT.value: Select(),
+    Keyword.DROP.value: Drop(),
+    Keyword.COLUMN.value: Column(),
+    Keyword.COLLECT.value: Collect(),
+    Keyword.COUNT.value: Count(),
     # end Table
     # ----------------------------------------
     # Other
-    # "halt": Halt(),
-    # "equals": Equals(),
-    # "rand": Rand()
+    Keyword.TYPE.value: Type(),
+    Keyword.RAND.value: Rand()
     # end Other
 }
 

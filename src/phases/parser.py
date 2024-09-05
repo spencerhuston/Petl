@@ -6,7 +6,7 @@ from src.phases.petl_phase import PetlPhase
 from src.semantic_defintions.petl_expression import *
 from src.semantic_defintions.petl_types import *
 from src.tokens.delimiter import Delimiter
-from src.tokens.petl_keyword import Keyword, is_builtin_function
+from src.tokens.petl_keyword import Keyword
 from src.tokens.petl_token import Token
 
 
@@ -252,7 +252,9 @@ class Parser(PetlPhase):
 
     def parse_atom(self) -> Optional[Expression]:
         token = self.current_token()
-        if token.token_type == Token.TokenType.KEYWORD and is_builtin_function(token.token_value):
+        if token.token_type == Token.TokenType.KEYWORD and \
+                isinstance(token.token_value, Keyword) and \
+                token.token_value.is_builtin_function():
             self.advance()
             builtin_reference: Builtin = get_builtin(token.token_value)
             self.builtins.add(builtin_reference)
