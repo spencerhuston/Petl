@@ -1,0 +1,9 @@
+let a = "Hello World";
+let b = "He";
+let c = "ld";
+let d = "tdsoljf";
+
+println(a |> startsWith(b));
+println(a |> endsWith(c));
+println(a |> startsWith(d));
+println(a |> endsWith(d))

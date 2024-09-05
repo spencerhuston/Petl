@@ -455,7 +455,17 @@ class Interpreter(PetlPhase):
             if start_value < 0 or end_value < 0:
                 self.error(f"Range bounds cannot be negative", range_definition.token)
             elif types_conform(range_definition.token, ListType(IntType()), expected_type, self.error):
-                return ListValue(ListType(IntType()), list(map(lambda l: IntValue(l), range(start_value, end_value + 1))))
+                values: List[PetlValue] = []
+                if start_value == end_value:
+                    values.append(IntValue(start_value))
+                else:
+                    value_range: List[int] = []
+                    if start_value < end_value:
+                        value_range: List[int] = list(range(start_value, end_value + 1))
+                    elif start_value > end_value:
+                        value_range: List[int] = list(reversed(range(end_value, start_value + 1)))
+                    values = list(map(lambda l: IntValue(l), value_range))
+                return ListValue(ListType(IntType()), values)
         return NoneValue()
 
     def evaluate_tuple_definition(self, tuple_definition: TupleDefinition, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:

@@ -1,0 +1,3 @@
+let a = 1..5;
+println(a |> sum());
+println(a |> product())

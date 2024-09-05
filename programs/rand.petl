@@ -1,0 +1,1 @@
+println(rand(0, 100))

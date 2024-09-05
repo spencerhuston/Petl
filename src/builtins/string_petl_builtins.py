@@ -43,17 +43,59 @@ class ToStr(Builtin):
         return StringValue(environment.get("v", application.token, error).to_string())
 
 
-class ToUpper:
-    pass
+class ToUpper(Builtin):
+    def __init__(self):
+        parameters = [("s", StringType())]
+        Builtin.__init__(self, Keyword.TOUPPER.value, parameters, StringType())
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        s_value: PetlValue = environment.get("s", application.token, error)
+        if isinstance(s_value, StringValue):
+            string: str = s_value.value
+            return StringValue(string.upper())
+        return NoneValue()
 
 
-class ToLower:
-    pass
+class ToLower(Builtin):
+    def __init__(self):
+        parameters = [("s", StringType())]
+        Builtin.__init__(self, Keyword.TOLOWER.value, parameters, StringType())
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        s_value: PetlValue = environment.get("s", application.token, error)
+        if isinstance(s_value, StringValue):
+            string: str = s_value.value
+            return StringValue(string.lower())
+        return NoneValue()
 
 
-class StartsWith:
-    pass
+class StartsWith(Builtin):
+    def __init__(self):
+        parameters = [
+            ("s1", StringType()),
+            ("s2", StringType()),
+        ]
+        Builtin.__init__(self, Keyword.STARTSWITH.value, parameters, BoolType())
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        s1_value: PetlValue = environment.get("s1", application.token, error)
+        s2_value: PetlValue = environment.get("s2", application.token, error)
+        if isinstance(s1_value, StringValue) and isinstance(s2_value, StringValue):
+            return BoolValue(s1_value.value.startswith(s2_value.value))
+        return BoolValue(False)
 
 
-class EndsWith:
-    pass
+class EndsWith(Builtin):
+    def __init__(self):
+        parameters = [
+            ("s1", StringType()),
+            ("s2", StringType()),
+        ]
+        Builtin.__init__(self, Keyword.ENDSWITH.value, parameters, BoolType())
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        s1_value: PetlValue = environment.get("s1", application.token, error)
+        s2_value: PetlValue = environment.get("s2", application.token, error)
+        if isinstance(s1_value, StringValue) and isinstance(s2_value, StringValue):
+            return BoolValue(s1_value.value.endswith(s2_value.value))
+        return BoolValue(False)

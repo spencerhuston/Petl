@@ -1,0 +1,5 @@
+let a = 0..5;
+println(a |> front());
+println(a |> back());
+println(a |> head());
+println(a |> tail())

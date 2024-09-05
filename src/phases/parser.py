@@ -213,9 +213,9 @@ class Parser(PetlPhase):
             operator = Operator(Operator.OperatorType.MINUS)
 
         right: Expression = self.parse_tight()
-        if operator and operator.OperatorType == Operator.OperatorType.NOT:
+        if operator and operator.operator_type == Operator.OperatorType.NOT:
             return Primitive(BoolType(), token, operator, left=LitExpression(BoolType(), token, BoolLiteral(False)), right=right)
-        elif operator and operator.OperatorType == Operator.OperatorType.MINUS:
+        elif operator and operator.operator_type == Operator.OperatorType.MINUS:
             return Primitive(IntType(), token, operator, left=LitExpression(IntType(), token, IntLiteral(0)), right=right)
         else:
             return right

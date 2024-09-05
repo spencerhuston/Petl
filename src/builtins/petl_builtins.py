@@ -1,9 +1,9 @@
 from typing import Dict
 
-from src.builtins.iterable_petl_builtins import *
 from src.builtins.functional_petl_builtins import *
 from src.builtins.int_petl_builtins import *
 from src.builtins.io_petl_builtins import *
+from src.builtins.iterable_petl_builtins import *
 from src.builtins.list_petl_builtins import *
 from src.builtins.misc_petl_builtins import *
 from src.builtins.string_petl_builtins import *
