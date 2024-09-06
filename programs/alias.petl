@@ -10,5 +10,5 @@ for v in t {
     println(v(0));
     println(v(1));
     println(v(2));
-    println('\n')
+    print('\n')
 }

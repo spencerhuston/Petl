@@ -51,12 +51,12 @@ def extract_element_type(iterable_value: PetlValue) -> PetlType:
         NoneType()
 
 
-def from_string_value(value: StringValue) -> PetlValue:
+def from_string_value(value: str) -> PetlValue:
     if not value:
         return NoneValue()
-    elif value.value.isnumeric():
-        return IntValue(int(value.value))
-    elif value.value == "true" or value.value == "false":
-        return BoolValue(True if value.value == "true" else False)
+    elif value.isnumeric():
+        return IntValue(int(value))
+    elif value == "true" or value == "false":
+        return BoolValue(True if value == "true" else False)
     else:
-        return value
+        return StringValue(value)

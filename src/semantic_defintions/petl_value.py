@@ -136,7 +136,32 @@ class TableValue(PetlValue):
         self.rows = rows
 
     def to_string(self) -> str:
-        return "not-supported"
+        def row_to_strings(row: List[str]) -> List[str]:
+            if isinstance(row, TupleValue):
+                return list(map(lambda v: v.to_string(), row.values))
+            return []
+
+        header_types_strs: List[str] = list(map(lambda sv: sv[1].to_string(), self.schema.values))
+        header_names_strs: List[str] = list(map(lambda sv: sv[0].to_string(), self.schema.values))
+        row_value_strs: List[List[str]] = list(map(lambda row: row_to_strings(row), self.rows))
+
+        def get_longest_column_str_length(column: int) -> int:
+            string_lengths: List[int] = [len(header_types_strs[column]), len(header_names_strs[column])]
+            for row in row_value_strs:
+                string_lengths.append(len(row[column]))
+            return max(string_lengths)
+
+        column_lengths: List[int] = list(map(lambda c: get_longest_column_str_length(c), range(0, len(header_names_strs))))
+
+        def row_to_string(row: List[str]) -> str:
+            return "| " + " | ".join(list(map(lambda i: row[i].ljust(column_lengths[i]), range(0, len(row))))) + " |\n"
+
+        header_types_str: str = row_to_string(header_types_strs)
+        banner = " " * (len(header_types_str) - 1) + "\n"
+        table_value_str: str = f"\033[4m{banner}\033[1m{header_types_str}{row_to_string(header_names_strs)}\033[0m"
+        for row in row_value_strs:
+            table_value_str += f"\033[4m{row_to_string(row)}\033[0m"
+        return table_value_str
 
 
 class FuncValue(PetlValue):

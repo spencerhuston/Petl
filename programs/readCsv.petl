@@ -1,6 +1,6 @@
 let t = readCsv(
     "test",
-    false,
-    ${name: string, age: int}
+    true,
+    ${name: string, age: int, salary: string}
 );
-t
+println(t)

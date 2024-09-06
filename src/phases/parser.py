@@ -454,6 +454,7 @@ class Parser(PetlPhase):
 
     def parse_lambda(self) -> Optional[Lambda]:
         token = self.current_token()
+        # TODO: Add lambda${count} name
         parameters: List[Parameter] = []
         parameter_types: List[PetlType] = []
 

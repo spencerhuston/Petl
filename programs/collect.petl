@@ -8,4 +8,6 @@ let t = createTable(
     ("Bob", 45, "$100000"),
     ("Mark", 23, "$45000")]
 );
-println(t)
+for row in collect(t) {
+    println(row)
+}

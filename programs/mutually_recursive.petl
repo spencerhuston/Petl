@@ -1,0 +1,3 @@
+let a = |x: int| -> int { b(x) };
+let b = |x: int| -> int { a(x) };
+println(a(0))

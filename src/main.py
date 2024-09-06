@@ -1,10 +1,11 @@
 import functools
 import sys
 import traceback
+from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
 
 from src.phases.environment import InterpreterEnvironment
-from src.phases.interpreter import Interpreter, load_builtins
+from src.phases.tree_walk_interpreter import TreeWalkInterpreter, load_builtins
 from src.phases.lexer import Lexer
 from src.phases.parser import Parser
 from src.semantic_defintions.petl_expression import Expression, UnknownExpression
@@ -35,16 +36,20 @@ def read_petl_file(file_path: str, logger: Log) -> Optional[str]:
 
 
 def execute_petl_script(petl_raw_str: str, debug: bool) -> bool:
+    start: datetime = datetime.now()
     lexer: Lexer = Lexer(debug)
     tokens: Optional[List[Token]] = lexer.scan(petl_raw_str)
     if tokens and not lexer.logger.errors_occurred():
         parser: Parser = Parser(debug)
         root: Expression = parser.parse(tokens)
         if root and not parser.logger.errors_occurred() and not isinstance(root, UnknownExpression):
-            interpreter: Interpreter = Interpreter(debug)
+            interpreter: TreeWalkInterpreter = TreeWalkInterpreter(debug)
             environment: InterpreterEnvironment = load_builtins(parser.builtins)
             result_value: PetlValue = interpreter.interpret(root, environment)
             logger.debug(f"DEBUG: {result_value.to_string()}")
+            end: datetime = datetime.now()
+            delta = end - start
+            print(delta.total_seconds())
     else:
         return False
 

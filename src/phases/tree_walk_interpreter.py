@@ -23,7 +23,7 @@ class InterpreterException(Exception):
     pass
 
 
-class Interpreter(PetlPhase):
+class TreeWalkInterpreter(PetlPhase):
     def __init__(self, debug=False):
         self.logger.__init__(debug)
         self.environment = InterpreterEnvironment()

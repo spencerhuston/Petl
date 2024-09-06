@@ -1,4 +1,4 @@
-name,age,income
+name,age,salary
 Alice,27,$50000
-Bob,,$100000
+Bob,45,$100000
 Mark,23,$35000
