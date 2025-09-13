@@ -139,11 +139,15 @@ class TreeWalkInterpreter(PetlPhase):
             return NoneValue()
 
     def evaluate_lambda_definition(self, lambda_expression: Lambda, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
-        if types_conform(lambda_expression.token, lambda_expression.petl_type, expected_type, self.error):
-            parameters: List[Tuple[str, PetlType]] = list(map(lambda p: (p.identifier, p.parameter_type), lambda_expression.parameters))
-            return FuncValue(lambda_expression.petl_type, None, parameters, deepcopy(lambda_expression.body), copy_environment(environment))
-        else:
-            return NoneValue()
+        lambda_type = types_conform(lambda_expression.token, lambda_expression.petl_type, expected_type, self.error)
+        if lambda_type and isinstance(lambda_type, FuncType):
+            lambda_return_type = lambda_type.return_type
+            if lambda_return_type and types_conform(lambda_expression.body.token, lambda_return_type, lambda_expression.body.petl_type, self.error):
+                parameters: List[Tuple[str, PetlType]] = list(map(lambda p: (p.identifier, p.parameter_type), lambda_expression.parameters))
+                typed_lambda_body = deepcopy(lambda_expression.body)
+                typed_lambda_body.petl_type = lambda_return_type
+                return FuncValue(lambda_expression.petl_type, None, parameters, typed_lambda_body, copy_environment(environment))
+        return NoneValue()
 
     def evaluate_application(self, application: Application, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         identifier: PetlValue = self.evaluate(application.identifier, environment, UnknownType())

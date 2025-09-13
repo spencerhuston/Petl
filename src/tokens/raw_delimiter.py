@@ -22,6 +22,5 @@ class RawDelimiter(str, BaseEnum):
     BRACE_LEFT = "{",
     BRACE_RIGHT = "}",
     COMMNA = ",",
-    CATCHALL = "_",
     SCHEMA = "$"
     EXCLAMATION = "!"

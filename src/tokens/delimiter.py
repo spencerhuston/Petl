@@ -31,7 +31,6 @@ class Delimiter(str, BaseEnum):
     BRACE_LEFT = "{",
     BRACE_RIGHT = "}",
     COMMNA = ",",
-    CATCHALL = "_",
     CASE_EXP = "=>",
     BIRD = "|>",
     SCHEMA = "$"

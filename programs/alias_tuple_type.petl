@@ -1,0 +1,8 @@
+alias ta = tuple[string, string];
+alias ta2 = tuple[string, int];
+
+let fmt = |row: ta| -> ta2 {
+    (row(0), toInt(row(1)))
+};
+let a: ta = ("test", "100");
+println(fmt(a))
