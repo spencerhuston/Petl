@@ -174,6 +174,6 @@ class FuncValue(PetlValue):
 
     def to_string(self) -> str:
         name: str = f"builtin:{self.builtin.name}" if self.builtin else ""
-        return_type: str = self.petl_type.return_type if isinstance(self.petl_type, FuncType) else "?"
+        return_type: str = self.petl_type.return_type.to_string() if isinstance(self.petl_type, FuncType) else "?"
         parameters: str = ", ".join(list(map(lambda p: p[0] + ": " + p[1].to_string(), self.parameters)))
         return f"{name}({parameters}) -> {return_type}"
