@@ -60,7 +60,7 @@ class ReadCsv(Builtin):
             def row_matches_schema(row: List[PetlValue], schema_value: SchemaValue) -> bool:
                 return all(map(lambda value, column: types_conform(application.token, value.petl_type, column[1], error), row, schema_value.values))
 
-            with open(path_value.value + ".csv", mode ='r') as csv_file:
+            with open(path_value.value + ".csv", mode='r') as csv_file:
                 csv_file_rows: List[List[str]] = list(csv.reader(csv_file))
                 if isinstance(schema_value.petl_type, SchemaType):
                     row_type: TupleType = TupleType(schema_value.petl_type.column_types)

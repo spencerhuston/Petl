@@ -1,6 +1,0 @@
-let t = readCsv(
-    "test",
-    true,
-    ${name: string, age: int, salary: string}
-);
-println(t)

@@ -1,0 +1,5 @@
+let d = ['a': 1, 'b': 2];
+for key in d {
+    let i = d(key);
+    println(i)
+}

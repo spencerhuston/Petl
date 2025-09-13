@@ -373,7 +373,7 @@ class TreeWalkInterpreter(PetlPhase):
             elif isinstance(left, TupleValue) and isinstance(right, TupleValue):
                 left_values: List[PetlValue] = deepcopy(left.values)
                 right_values: List[PetlValue] = deepcopy(right.values)
-                if isinstance(left.petl_type, TupleType) and isinstance(right.petl_type, TupleValue):
+                if isinstance(left.petl_type, TupleType) and isinstance(right.petl_type, TupleType):
                     left_types: List[PetlType] = deepcopy(left.petl_type.tuple_types)
                     right_types: List[PetlType] = deepcopy(right.petl_type.tuple_types)
                     return TupleValue(TupleType(left_types + right_types), left_values + right_values)

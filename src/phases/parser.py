@@ -246,6 +246,10 @@ class Parser(PetlPhase):
                         identifier=outer_application,
                         arguments=[inner_application]
                     )
+
+            app_type = inner_application.petl_type
+            if isinstance(app_type, FuncType):
+                inner_application.petl_type = app_type.return_type
             return inner_application
         else:
             return UnknownExpression()
@@ -489,7 +493,7 @@ class Parser(PetlPhase):
         else:
             if self.match(Delimiter.PAREN_LEFT, optional=True):
                 arguments: List[Expression] = self.parse_arguments()
-                application: Expression = Application(UnknownType(), token, identifier, arguments)
+                application: Expression = Application(identifier.petl_type, token, identifier, arguments)
 
                 while self.match(Delimiter.PAREN_LEFT, optional=True):
                     outer_arguments: List[Expression] = self.parse_arguments()

@@ -1,0 +1,2 @@
+let a = |b: int| -> int { b };
+print(a(4))

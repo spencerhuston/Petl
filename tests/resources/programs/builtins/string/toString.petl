@@ -1,0 +1,2 @@
+println(toStr(500));
+println(toStr(true))

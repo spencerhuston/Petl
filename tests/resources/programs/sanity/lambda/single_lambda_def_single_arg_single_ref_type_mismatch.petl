@@ -1,0 +1,2 @@
+let a = |b: int| -> char { b };
+print(a(4))

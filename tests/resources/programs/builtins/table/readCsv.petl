@@ -1,0 +1,6 @@
+let t = readCsv(
+    "./resources/csvs/test",
+    true,
+    ${name: string, age: int, salary: string}
+);
+println(t)

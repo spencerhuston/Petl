@@ -16,8 +16,8 @@ class Substr(Builtin):
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         string_value: PetlValue = environment.get("string_value", application.token, error)
-        start_value: PetlValue = environment.get("string_value", application.token, error)
-        end_value: PetlValue = environment.get("string_value", application.token, error)
+        start_value: PetlValue = environment.get("start", application.token, error)
+        end_value: PetlValue = environment.get("end", application.token, error)
 
         if isinstance(string_value, StringValue) and isinstance(start_value, IntValue) and isinstance(end_value, IntValue):
             string: str = string_value.value
@@ -26,11 +26,11 @@ class Substr(Builtin):
 
             if start < 0 or end < 0 or \
                     start >= len(string) or end >= len(string) or \
-                    start_value > end_value:
+                    start > end:
                 error(f"Invalid substr range value(s)", application.token)
                 return NoneValue()
 
-            return StringValue(string[start_value:end_value])
+            return StringValue(string[start:end])
         return NoneValue()
 
 

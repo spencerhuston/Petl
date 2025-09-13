@@ -1,4 +1,0 @@
-let a = 25..50;
-println(a)
-println(a |> max());
-println(a |> min())

@@ -1,7 +1,9 @@
 import functools
 import sys
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime
+from os import getcwd
+from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 from src.phases.environment import InterpreterEnvironment
@@ -26,16 +28,20 @@ def parse_arguments():
 
 def read_petl_file(file_path: str, logger: Log) -> Optional[str]:
     petl_file_str: Optional[str] = None
-    if file_path.endswith(".petl"):
-        with open(file_path, "r") as petl_file:
-            petl_file_str = petl_file.read()
-            logger.debug_block("RAW SCRIPT", petl_file_str)
-    else:
-        logger.error(f"Petl script {file_path} requires extension \x1b[3m.petl\x1b[0m")
+    try:
+        if file_path.endswith(".petl"):
+            full_path = Path(f"{getcwd()}\\{file_path}")
+            with open(full_path, "r") as petl_file:
+                petl_file_str = petl_file.read()
+                logger.debug_block("RAW SCRIPT", petl_file_str)
+        else:
+            logger.error(f"Petl script {file_path} requires extension \x1b[3m.petl\x1b[0m")
+    except Exception as file_exception:
+        logger.error(f"File exception: {file_exception}")
     return petl_file_str
 
 
-def execute_petl_script(petl_raw_str: str, debug: bool) -> bool:
+def execute_petl_script(petl_raw_str: str, debug: bool, logger: Log) -> bool:
     start: datetime = datetime.now()
     lexer: Lexer = Lexer(debug)
     tokens: Optional[List[Token]] = lexer.scan(petl_raw_str)
@@ -49,12 +55,12 @@ def execute_petl_script(petl_raw_str: str, debug: bool) -> bool:
             logger.debug(f"DEBUG: {result_value.to_string()}")
             end: datetime = datetime.now()
             delta = end - start
-            print(delta.total_seconds())
+            logger.debug(str(delta.total_seconds()))
     else:
         return False
 
 
-def read_repl_input(history: List[str], history_index: int) -> Optional[str]:
+def read_repl_input(history: List[str], history_index: int, logger: Log) -> Optional[str]:
     GREEN: str = "\033[1;33m"
     RESET: str = "\033[00m"
 
@@ -107,7 +113,7 @@ def run_petl_repl(logger: Log):
     history_index: int = 0
 
     while True:
-        repl_input: Optional[str] = read_repl_input(history, history_index)
+        repl_input: Optional[str] = read_repl_input(history, history_index, logger)
         if not repl_input:
             break
         elif repl_input == "@clear":
@@ -127,7 +133,7 @@ def run_petl_repl(logger: Log):
             interpreter_input = ""
 
 
-if __name__ == "__main__":
+def main():
     arguments: Dict[str, Any] = parse_arguments()
     debug: bool = arguments["debug"]
 
@@ -136,8 +142,12 @@ if __name__ == "__main__":
         if arguments["file"]:
             petl_raw_str = read_petl_file(arguments["file"], logger)
             if petl_raw_str:
-                execute_petl_script(petl_raw_str, debug)
+                execute_petl_script(petl_raw_str, debug, logger)
         else:
             run_petl_repl(logger)
     except Exception as main_exception:
         logger.error(f"Unhandled exception occurred: {main_exception}, {traceback.format_exc()}")
+
+
+if __name__ == "__main__":
+    main()
