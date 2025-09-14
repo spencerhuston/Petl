@@ -1,7 +1,7 @@
-from tests.programs.test_petl_program import get_petl_program_stdout
+from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
 
-directory_prefix = "sanity/general"
+directory_prefix = "resources/programs/sanity/general"
 
 
 def test_alias_tuple_type(mocker, capsys):
@@ -46,3 +46,7 @@ def test_single_let_range_definition(mocker, capsys):
 
 def test_type_mismatch_integer_literal_char_literal(mocker, capsys):
     assert not get_petl_program_stdout(f"{directory_prefix}/type_mismatch_integer_literal_char_literal.petl", mocker, capsys) == """"""
+
+
+def test_collection_parse_no_comma_error(mocker, capsys):
+    assert "Expected ), got (" in get_petl_program_stdout(f"{directory_prefix}/collection_parse_no_comma_error.petl", mocker, capsys)

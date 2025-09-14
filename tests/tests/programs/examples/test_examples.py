@@ -1,6 +1,6 @@
-from tests.programs.test_petl_program import get_petl_program_stdout
+from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
-directory_prefix = "examples"
+directory_prefix = "resources/programs/examples"
 
 
 def test_bigger_csv(mocker, capsys):

@@ -30,7 +30,7 @@ class Delimiter(str, BaseEnum):
     BRACKET_RIGHT = "]",
     BRACE_LEFT = "{",
     BRACE_RIGHT = "}",
-    COMMNA = ",",
+    COMMA = ",",
     CASE_EXP = "=>",
     BIRD = "|>",
     SCHEMA = "$"

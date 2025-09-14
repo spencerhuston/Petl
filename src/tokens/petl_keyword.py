@@ -83,9 +83,9 @@ class Keyword(str, BaseEnum):
     WRITECSV = "writeCsv",
     JOIN = "join",
     WITH = "with",
-    WHERE = "where",
     SELECT = "select",
     DROP = "drop",
+    COLUMNS = "columns",
     COLUMN = "column",
     COLLECT = "collect",
     COUNT = "count"
@@ -135,9 +135,9 @@ class Keyword(str, BaseEnum):
                 self == self.WRITECSV or \
                 self == self.JOIN or \
                 self == self.WITH or \
-                self == self.WHERE or \
                 self == self.SELECT or \
                 self == self.DROP or \
+                self == self.COLUMNS or \
                 self == self.COLUMN or \
                 self == self.COLLECT or \
                 self == self.COUNT or \

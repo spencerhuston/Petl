@@ -11,10 +11,12 @@ class PetlType(ABC):
 
 
 def _type_list_to_string(main_type: str, type_list: List[PetlType]) -> str:
-    type_list_str = functools.reduce(
-        lambda a, b: a + ", " + b,
-        [petl_type.to_string() for petl_type in type_list]
-    )
+    type_list_str = ""
+    if type_list:
+        type_list_str = functools.reduce(
+            lambda a, b: a + ", " + b,
+            [petl_type.to_string() for petl_type in type_list],
+        )
     return f"{main_type}[{type_list_str}]"
 
 

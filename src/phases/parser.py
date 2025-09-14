@@ -127,7 +127,7 @@ class Parser(PetlPhase):
 
         let_identifiers: List[str] = [let_identifier[0]]
         let_types: List[PetlType] = [let_identifier[1]]
-        while self.match(Delimiter.COMMNA, optional=True):
+        while self.match(Delimiter.COMMA, optional=True):
             additional_identifier = self.parse_let_identifier()
             if not additional_identifier:
                 return None
@@ -348,16 +348,16 @@ class Parser(PetlPhase):
             return ListDefinition(ListType(UnknownType()), token, values=[])
 
         first_element: Expression = self.parse_simple_expression()
-        if self.match(Delimiter.COMMNA, optional=True):
+        if self.match(Delimiter.COMMA, optional=True):
             elements: List[Expression] = [first_element, self.parse_simple_expression()]
-            while self.match(Delimiter.COMMNA, optional=True):
+            while self.match(Delimiter.COMMA, optional=True):
                 elements.append(self.parse_simple_expression())
             self.match(Delimiter.BRACKET_RIGHT)
             return ListDefinition(ListType(elements[0].petl_type), token, values=elements)
         elif self.match(Delimiter.DENOTE, optional=True):
             first_value: Expression = self.parse_simple_expression()
             mapping: List[Tuple[Expression, Expression]] = [(first_element, first_value)]
-            while self.match(Delimiter.COMMNA, optional=True):
+            while self.match(Delimiter.COMMA, optional=True):
                 key: Expression = self.parse_simple_expression()
                 self.match(Delimiter.DENOTE)
                 value: Expression = self.parse_simple_expression()
@@ -377,7 +377,7 @@ class Parser(PetlPhase):
         first_element: Expression = self.parse_simple_expression()
         tuple_types: List[PetlType] = [first_element.petl_type]
         tuple_elements: List[Expression] = [first_element]
-        while self.match(Delimiter.COMMNA, optional=True):
+        while self.match(Delimiter.COMMA, optional=True):
             tuple_element: Expression = self.parse_simple_expression()
             tuple_types.append(tuple_element.petl_type)
             tuple_elements.append(tuple_element)
@@ -394,7 +394,7 @@ class Parser(PetlPhase):
         mapping: List[Tuple[str, PetlType]] = []
 
         column_types: List[PetlType] = []
-        while self.match(Delimiter.COMMNA, optional=True) or not self.match(Delimiter.BRACE_RIGHT, optional=True):
+        while self.match(Delimiter.COMMA, optional=True) or not self.match(Delimiter.BRACE_RIGHT, optional=True):
             identifier: str = self.match_ident()
             self.match(Delimiter.DENOTE)
             column_type: PetlType = self.parse_type()
@@ -443,7 +443,7 @@ class Parser(PetlPhase):
         value: Expression = self.parse_atom()
         self.match(Delimiter.BRACE_LEFT)
         cases: List[Case] = [self.parse_case()]
-        while self.match(Delimiter.COMMNA, optional=True):
+        while self.match(Delimiter.COMMA, optional=True):
             cases.append(self.parse_case())
         self.match(Delimiter.BRACE_RIGHT)
         match_type: PetlType = cases[0].case_expression.petl_type
@@ -463,7 +463,7 @@ class Parser(PetlPhase):
         parameter_types: List[PetlType] = []
 
         if not self.match(Delimiter.PIPE, optional=True):
-            while self.match(Delimiter.COMMNA, optional=True) or not self.match(Delimiter.PIPE, optional=True):
+            while self.match(Delimiter.COMMA, optional=True) or not self.match(Delimiter.PIPE, optional=True):
                 parameter: Parameter = self.parse_parameter()
                 parameters.append(parameter)
                 parameter_types.append(parameter.parameter_type)
@@ -480,7 +480,7 @@ class Parser(PetlPhase):
         arguments: List[Expression] = []
         if not self.match(Delimiter.PAREN_RIGHT, optional=True):
             arguments.append(self.parse_simple_expression())
-            while self.match(Delimiter.COMMNA, optional=True) or not self.match(Delimiter.PAREN_RIGHT, optional=True):
+            while self.match(Delimiter.COMMA, optional=True) or not self.match(Delimiter.PAREN_RIGHT, optional=False):
                 arguments.append(self.parse_simple_expression())
         return arguments
 
@@ -519,7 +519,7 @@ class Parser(PetlPhase):
             self.match(Delimiter.BRACKET_LEFT)
             union_types: List[PetlType] = [self.parse_type()]
 
-            while self.match(Delimiter.COMMNA, optional=True):
+            while self.match(Delimiter.COMMA, optional=True):
                 union_types.append(self.parse_type())
 
             self.match(Delimiter.BRACKET_RIGHT)
@@ -540,7 +540,7 @@ class Parser(PetlPhase):
             self.match(Delimiter.BRACKET_LEFT)
             tuple_types: List[PetlType] = [self.parse_type()]
 
-            while self.match(Delimiter.COMMNA, optional=True):
+            while self.match(Delimiter.COMMA, optional=True):
                 tuple_types.append(self.parse_type())
             self.match(Delimiter.BRACKET_RIGHT, optional=True)
             first_type = TupleType(tuple_types)
@@ -552,7 +552,7 @@ class Parser(PetlPhase):
             parameter_types: List[PetlType] = []
             if not self.match(Delimiter.PAREN_RIGHT, optional=True):
                 parameter_types.append(self.parse_type())
-                while self.match(Delimiter.COMMNA, optional=True):
+                while self.match(Delimiter.COMMA, optional=True):
                     parameter_types.append(self.parse_type())
                 self.match(Delimiter.PAREN_RIGHT)
             self.match(Delimiter.RETURN)

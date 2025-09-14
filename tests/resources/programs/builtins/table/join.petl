@@ -1,0 +1,23 @@
+let t1 = createTable(
+    ${
+        name: string,
+        age: int,
+        salary: string
+    },
+    [("Alice", 27, "$60000"),
+    ("Bob", 45, "$100000"),
+    ("Mark", 23, "$45000")]
+);
+
+let t2 = createTable(
+    ${
+        name: string,
+        state: string
+    },
+    [("Bob", "Idaho"),
+     ("Jack", "California"),
+     ("Alice", "Texas"),
+     ("Henry", "Indiana")]
+);
+
+println(collect(join(t1, t2, ["name"], "left.name == right.name and left.age in 30..45")))

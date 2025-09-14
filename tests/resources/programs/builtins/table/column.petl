@@ -1,0 +1,11 @@
+let t = createTable(
+    ${
+        name: string,
+        age: int,
+        salary: string
+    },
+    [("Alice", 27, "$60000"),
+    ("Bob", 45, "$100000"),
+    ("Mark", 23, "$45000")]
+);
+println(column(t, "name"))

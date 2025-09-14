@@ -1,6 +1,7 @@
-from tests.programs.test_petl_program import get_petl_program_stdout
+from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
-directory_prefix = "builtins/string"
+
+directory_prefix = "resources/programs/builtins/string"
 
 
 def test_starts_ends_with(mocker, capsys):

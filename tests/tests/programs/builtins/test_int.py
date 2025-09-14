@@ -1,7 +1,7 @@
-from tests.programs.test_petl_program import get_petl_program_stdout
+from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
 
-directory_prefix = "builtins/int"
+directory_prefix = "resources/programs/builtins/int"
 
 
 def test_min_max(mocker, capsys):

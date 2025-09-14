@@ -1,0 +1,9 @@
+let t = createTable(
+    ${
+        name: string,
+        state: string
+    },
+    [("Bob", "Idaho")
+     ("Jack", "California")]
+);
+println(collect(t))
