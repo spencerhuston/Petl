@@ -1,8 +1,8 @@
 from src.builtins.petl_builtin_definitions import Builtin
-from src.phases.environment import InterpreterEnvironment
-from src.semantic_defintions.petl_expression import Application
-from src.semantic_defintions.petl_value import *
-from src.tokens.petl_keyword import Keyword
+from src.phases.interpreter.definitions.value import *
+from src.phases.interpreter.environment import InterpreterEnvironment
+from src.phases.lexer.definitions.keyword import Keyword
+from src.phases.parser.defintions.expression import Application
 
 
 class ReadLn(Builtin):

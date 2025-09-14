@@ -5,12 +5,12 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from src.builtins.petl_builtin_definitions import Builtin, from_string_value
-from src.phases.environment import InterpreterEnvironment
-from src.phases.type_resolver import types_conform
-from src.semantic_defintions.petl_expression import Application
-from src.semantic_defintions.petl_value import *
-from src.tokens.petl_keyword import Keyword
-from src.utils.query.query_executor import execute_query
+from src.phases.interpreter.definitions.value import *
+from src.phases.interpreter.environment import InterpreterEnvironment
+from src.phases.interpreter.type_resolution import types_conform
+from src.phases.lexer.definitions.keyword import Keyword
+from src.phases.parser.defintions.expression import Application
+from src.query.executor import execute_query
 
 
 # Join and Select helper functions #

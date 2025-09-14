@@ -6,13 +6,13 @@ from os import getcwd
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-from src.phases.environment import InterpreterEnvironment
-from src.phases.tree_walk_interpreter import TreeWalkInterpreter, load_builtins
-from src.phases.lexer import Lexer
-from src.phases.parser import Parser
-from src.semantic_defintions.petl_expression import Expression, UnknownExpression
-from src.semantic_defintions.petl_value import PetlValue
-from src.tokens.petl_token import Token
+from src.phases.interpreter.definitions.value import PetlValue
+from src.phases.interpreter.environment import InterpreterEnvironment
+from src.phases.interpreter.interpreter import TreeWalkInterpreter, load_builtins
+from src.phases.lexer.lexer import Lexer
+from src.phases.lexer.definitions.token import Token
+from src.phases.parser.parser import Parser
+from src.phases.parser.defintions.expression import Expression, UnknownExpression
 from src.utils.log import Log
 
 

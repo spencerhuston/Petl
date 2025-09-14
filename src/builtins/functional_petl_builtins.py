@@ -1,12 +1,12 @@
 from copy import deepcopy
 
 from src.builtins.petl_builtin_definitions import extract_iterable_values, Builtin
-from src.phases.environment import copy_environment, InterpreterEnvironment
-from src.phases.type_resolver import types_conform
-from src.semantic_defintions.petl_expression import Application
-from src.semantic_defintions.petl_value import *
-from src.tokens.petl_keyword import Keyword
-from src.tokens.petl_token import Token
+from src.phases.interpreter.definitions.value import *
+from src.phases.interpreter.environment import copy_environment, InterpreterEnvironment
+from src.phases.interpreter.type_resolution import types_conform
+from src.phases.lexer.definitions.keyword import Keyword
+from src.phases.lexer.definitions.token import Token
+from src.phases.parser.defintions.expression import Application
 
 
 def evaluate_element(values: List[PetlValue], function_value: FuncValue, element_type: PetlType, environment, interpreter) -> PetlValue:
