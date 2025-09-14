@@ -2,7 +2,8 @@
 
 ---
 ### If-else statements
-Syntax
+
+#### Syntax
 ```
 if (<condition>) { <statement> } [else { <statement> }]
 ```
@@ -32,7 +33,7 @@ Returns ```[1, 1, 3, 2]```
 ---
 ## For-loops
 
-Syntax
+#### Syntax
 ```
 for <iterator name> in <iterable statement> {
     <statement>
@@ -40,7 +41,7 @@ for <iterator name> in <iterable statement> {
 ```
 
 Petl ```for```-loops are side-effect only, meaning they have no return value 
-(implicitly return ```none```). Note that the iterator can only be constructed by the 
+(implicitly return ```none```). **Note** that the iterator can only be constructed by the 
 ```<iterable statement>```, which must return an [iterable-type](./collections.md).
 
 #### Examples

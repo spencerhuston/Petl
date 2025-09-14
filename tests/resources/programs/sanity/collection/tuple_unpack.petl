@@ -1,0 +1,4 @@
+let i, a, b = (0, 'a', true);
+println(i);
+println(a);
+println(b)

@@ -42,3 +42,7 @@ def test_single_let_list_of_integer_literals(mocker, capsys):
 
 def test_type_mismatch_tuple_def(mocker, capsys):
     assert not get_petl_program_stdout(f"{directory_prefix}/type_mismatch_tuple_def.petl", mocker, capsys) == """1"""
+
+
+def test_tuple_unpack(mocker, capsys):
+    assert get_petl_program_stdout(f"{directory_prefix}/tuple_unpack.petl", mocker, capsys) == """0\na\ntrue"""
