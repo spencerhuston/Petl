@@ -24,11 +24,11 @@ small sets of data, or for prototyping larger dataset processing via subsets.
   - [Flow Control](./petl/basics/flow_control.md)
   - [Collections](./petl/basics/collections.md)
   - [Lambdas](./petl/basics/lambdas.md)
-- Advanced
-  - [Pattern Matching](./petl/advanced/pattern_matching.md)
-  - [Tables and Schemas](./petl/advanced/tables_schemas.md)
-  - [PQL](./petl/advanced/queries.md)
-  - [Other](./petl/advanced/other.md)
+- Core
+  - [Pattern Matching](petl/core/pattern_matching.md)
+  - [Tables and Schemas](petl/core/tables_schemas.md)
+  - [PQL](petl/core/queries.md)
+  - [Other](petl/core/other.md)
     * ```union```-types
     * Ranges
     * Type-aliasing

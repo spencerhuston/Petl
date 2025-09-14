@@ -4,12 +4,12 @@ To run the REPL, run Petl with no ```--file``` input.<br>
 For a list of commands during usage, input ```@help```.<br>
 
 #### Commands:
-- @help - Displays all REPL commands
-- @quit - Exit the REPL
-- @prev - Show previous input in history
-- @next - Show next input in history
-- @clear - Clear all input history
-- @history - Display all input history
+- ```@help``` - Displays all REPL commands
+- ```@quit``` - Exit the REPL
+- ```@prev``` - Show previous input in history
+- ```@next``` - Show next input in history
+- ```@clear``` - Clear all input history
+- ```@history``` - Display all input history
 
 ---
 
@@ -22,5 +22,5 @@ Example
 ```
 # this variable does xyz
 let a = 5;
-println(a) # outputting to stdout
+println(a) # out-putting to stdout
 ```

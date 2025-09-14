@@ -10,7 +10,9 @@ another lambda or builtin function directly as a value. Parameters are optional 
 a type-hint. Likewise the return type is required in the declaration.
 
 Lambdas also capture their current global scope, allowing them to act as closures and in turn
-providing functionality of something akin to currying and/or partial application.
+providing functionality of something akin to currying and/or partial application. **Note**,
+due to the method in which scope is acquired, mutual recursion between lambdas is _not_
+supported.
 
 #### Syntax
 ```
