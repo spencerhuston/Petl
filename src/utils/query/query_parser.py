@@ -87,7 +87,7 @@ class QueryParser:
             self.advance()
             right: QueryExpression = self.parse_utight_with_min(temp_min)
             operator_type: QueryType = QueryUnknownType() # TODO: get operator type here
-            left = QueryPrimitive(operator_type, token, operator, left, right)
+            left = QueryPrimitive(operator_type, operator, left, right)
         return left
 
     def parse_utight(self) -> Optional[QueryExpression]:
@@ -100,9 +100,9 @@ class QueryParser:
 
         right: QueryExpression = self.parse_tight()
         if operator and operator.operator_type == QueryOperator.QueryOperatorType.NOT:
-            return QueryPrimitive(QueryBoolType(), token, operator, left=QueryLitExpression(QueryBoolType(), token, QueryBoolLiteral(False)), right=right)
+            return QueryPrimitive(QueryBoolType(), operator, left=QueryLitExpression(QueryBoolType(), QueryBoolLiteral(False)), right=right)
         elif operator and operator.operator_type == QueryOperator.QueryOperatorType.MINUS:
-            return QueryPrimitive(QueryIntType(), token, operator, left=QueryLitExpression(QueryIntType(), token, QueryIntLiteral(0)), right=right)
+            return QueryPrimitive(QueryIntType(), operator, left=QueryLitExpression(QueryIntType(), QueryIntLiteral(0)), right=right)
         else:
             return right
 
@@ -127,7 +127,7 @@ class QueryParser:
         elif token:
             identifier = self.match_ident(optional=True)
             if identifier:
-                reference: QueryExpression = QueryReference(QueryUnknownType(), token, identifier=token.token_value)
+                reference: QueryExpression = QueryReference(QueryUnknownType(), identifier=token.token_value)
                 return reference
             else:
                 return self.parse_literal()
@@ -137,28 +137,28 @@ class QueryParser:
     def parse_literal(self) -> Optional[QueryExpression]:
         token = self.current_token()
         if self.match(QueryKeyword.TRUE):
-            return QueryLitExpression(QueryBoolType(), token, QueryBoolLiteral(True))
+            return QueryLitExpression(QueryBoolType(), QueryBoolLiteral(True))
         elif self.match(QueryKeyword.FALSE):
-            return QueryLitExpression(QueryBoolType(), token, QueryBoolLiteral(False))
+            return QueryLitExpression(QueryBoolType(), QueryBoolLiteral(False))
         elif token.token_type == QueryToken.QueryTokenType.VALUE:
             if token.token_value.startswith('\''):
                 self.advance()
                 if len(token.token_value) == 3:
-                    return QueryLitExpression(QueryCharType(), token, QueryCharLiteral(token.token_value.replace('\'', '')))
+                    return QueryLitExpression(QueryCharType(), QueryCharLiteral(token.token_value.replace('\'', '')))
                 elif token.token_value.startswith("\'\\") and len(token.token_value) == 4:
-                    return QueryLitExpression(QueryCharType(), token, QueryCharLiteral(token.token_value.replace('\'', '')))
+                    return QueryLitExpression(QueryCharType(), QueryCharLiteral(token.token_value.replace('\'', '')))
                 else:
-                    return QueryLitExpression(QueryStringType(), token, QueryStringLiteral(token.token_value.replace('\'', '')))
+                    return QueryLitExpression(QueryStringType(), QueryStringLiteral(token.token_value.replace('\'', '')))
             elif token.token_value.startswith('\"'):
                 self.advance()
-                return QueryLitExpression(QueryStringType(), token, QueryStringLiteral(token.token_value.replace('\"', '')))
+                return QueryLitExpression(QueryStringType(), QueryStringLiteral(token.token_value.replace('\"', '')))
             else:
-                integer_literal: QueryExpression = QueryLitExpression(QueryIntType(), token, QueryIntLiteral(int(token.token_value)))
+                integer_literal: QueryExpression = QueryLitExpression(QueryIntType(), QueryIntLiteral(int(token.token_value)))
                 self.advance()
                 if self.match(QueryDelimiter.RANGE, optional=True):
                     range_start: QueryLiteral = self.get_exp_literal(integer_literal)
                     range_end: QueryLiteral = self.get_exp_literal(self.parse_literal())
-                    return QueryRangeDefinition(QueryIntType(), token, range_start, range_end)
+                    return QueryRangeDefinition(QueryIntType(), range_start, range_end)
                 else:
                     return integer_literal
         else:

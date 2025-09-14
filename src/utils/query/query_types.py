@@ -9,12 +9,6 @@ class QueryType(ABC):
 
 
 @dataclass
-class QueryAnyType(QueryType):
-    def to_string(self) -> str:
-        return "any"
-
-
-@dataclass
 class QueryUnknownType(QueryType):
     def to_string(self) -> str:
         return "unknown"
@@ -48,3 +42,9 @@ class QueryCharType(QueryLiteralType):
 class QueryStringType(QueryLiteralType):
     def to_string(self) -> str:
         return "string"
+
+
+@dataclass
+class QueryRangeType(QueryType):
+    def to_string(self) -> str:
+        return f"range"

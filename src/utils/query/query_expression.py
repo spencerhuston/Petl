@@ -4,14 +4,12 @@ from pprint import pformat
 from typing import Union
 
 from src.utils.query.query_operator import QueryOperator
-from src.utils.query.query_token import QueryToken
 from src.utils.query.query_types import QueryType, QueryUnknownType
 
 
 @dataclass
 class QueryExpression(ABC):
     query_type: QueryType = QueryUnknownType()
-    token: QueryToken = QueryToken()
 
     def to_string(self):
         return pformat(self)

@@ -154,13 +154,14 @@ class Join(Builtin):
                 and isinstance(columns_value, ListValue) and isinstance(where_value, StringValue):
             joined_rows = []
             for left_row in left_table_value.rows:
-                variables = add_variables_to_query_environment("left", left_table_value.schema, left_row)
+                left_variables = add_variables_to_query_environment("left", left_table_value.schema, left_row)
                 for right_row in right_table_value.rows:
-                    variables += add_variables_to_query_environment("right", right_table_value.schema, right_row)
+                    variables = [*left_variables, *add_variables_to_query_environment("right", right_table_value.schema, right_row)]
                     if execute_query(where_value.value, variables, application.token, error):
                         if isinstance(left_row, TupleValue) and isinstance(right_row, TupleValue):
                             joined_rows.append((*left_row.values, *right_row.values))
 
+            
         return NoneValue()
 
 

@@ -43,7 +43,7 @@ class QueryOperator:
                self.operator_type == QueryOperator.QueryOperatorType.AND or \
                self.operator_type == QueryOperator.QueryOperatorType.OR
 
-    def is_collection(self) -> bool:
+    def is_contains(self) -> bool:
         return self.operator_type == QueryOperator.QueryOperatorType.IN
 
     def get_precedence(self) -> int:
@@ -62,4 +62,4 @@ class QueryOperator:
             return 1
 
     def is_binary(self, min: int) -> bool:
-        return (self.is_arithmetic() or self.is_boolean() or self.is_collection()) and (self.get_precedence() >= min)
+        return (self.is_arithmetic() or self.is_boolean() or self.is_contains()) and (self.get_precedence() >= min)

@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict
 
 from src.semantic_defintions.petl_types import PetlType, NoneType
 from src.semantic_defintions.petl_value import PetlValue, NoneValue
@@ -29,8 +29,8 @@ class InterpreterEnvironment:
             error(f"Alias \'{alias}\' does not exist in this scope", token)
             return NoneType()
 
-    def get_mappings(self) -> Tuple[Dict[str, PetlValue], Dict[str, PetlType]]:
-        return dict(self.map), dict(self.aliases)
+    # def get_mappings(self) -> Tuple[Dict[str, PetlValue], Dict[str, PetlType]]:
+    #     return dict(self.map), dict(self.aliases)
 
 
 def copy_environment(environment: InterpreterEnvironment) -> InterpreterEnvironment:
@@ -38,4 +38,3 @@ def copy_environment(environment: InterpreterEnvironment) -> InterpreterEnvironm
     new_environment.map = dict(environment.map)
     new_environment.aliases = dict(environment.aliases)
     return new_environment
-
