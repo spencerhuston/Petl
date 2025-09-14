@@ -55,3 +55,7 @@ def test_with(mocker, capsys):
 
 def test_join(mocker, capsys):
     assert get_petl_program_stdout(f"{directory_prefix}/join.petl", mocker, capsys) == """[(Alice, 27), (Bob, 45)]"""
+
+
+def test_select(mocker, capsys):
+    assert get_petl_program_stdout(f"{directory_prefix}/select.petl", mocker, capsys) == """[(Alice, 27), (Bob, 45)]"""

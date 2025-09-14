@@ -6,11 +6,19 @@ from src.utils.query.query_token import QueryRawDelimiter, QueryToken, QueryKeyw
 class QueryLexer:
     tokens = []
     text = ""
-    token_text = ""
 
     inside_quotes: bool = False
     inside_comment: bool = False
     skip: bool = False
+
+    def __init__(self):
+        self.tokens = []
+        self.text = ""
+        self.token_text = ""
+
+        self.inside_quotes = False
+        self.inside_comment = False
+        self.skip = False
 
     def is_valid_character(self, character: str) -> bool:
         return self.inside_quotes or \

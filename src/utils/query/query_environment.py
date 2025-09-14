@@ -6,6 +6,9 @@ from src.utils.query.query_value import QueryValue
 class QueryEnvironment:
     map: Dict[str, QueryValue] = {}
 
+    def __init__(self):
+        self.map = {}
+
     def add(self, identifier: str, value: QueryValue):
         self.map[identifier] = value
 

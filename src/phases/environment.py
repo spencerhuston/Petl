@@ -9,6 +9,10 @@ class InterpreterEnvironment:
     map: Dict[str, PetlValue] = {}
     aliases: Dict[str, PetlType] = {}
 
+    def __init__(self):
+        self.map = {}
+        self.aliases = {}
+
     def add(self, identifier: str, value: PetlValue):
         self.map[identifier] = value
 
