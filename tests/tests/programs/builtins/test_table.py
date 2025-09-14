@@ -51,3 +51,7 @@ def test_write_csv(mocker, capsys):
 def test_with(mocker, capsys):
     read_csv_result = get_petl_program_stdout(f"{directory_prefix}/with.petl", mocker, capsys)
     assert "Bob" in read_csv_result and "45" in read_csv_result and "$100000" in read_csv_result
+
+
+def test_join(mocker, capsys):
+    assert get_petl_program_stdout(f"{directory_prefix}/join.petl", mocker, capsys) == """[(Alice, 27), (Bob, 45)]"""

@@ -2,6 +2,7 @@ import csv
 import os
 from copy import deepcopy
 from pathlib import Path
+from typing import Dict
 
 from src.builtins.petl_builtin_definitions import Builtin, from_string_value
 from src.phases.environment import InterpreterEnvironment
@@ -145,23 +146,59 @@ class Join(Builtin):
         columns_value: PetlValue = environment.get("columns", application.token, error)
         where_value: PetlValue = environment.get("where", application.token, error)
 
-        def add_variables_to_query_environment(table_name: str, schema: SchemaValue, row) -> List[Tuple[str, PetlValue]]:
-            names = list(map(lambda v: v[0].value, schema.values))
+        def get_selected_indices(table_name: str, table_columns: List[Tuple[StringValue, PetlType]], selected_columns: List[str]) -> Dict[int, Tuple[str, PetlType]]:
+            valid_columns: Dict[int, Tuple[str, PetlType]] = {}
+            for index, table_column in enumerate(table_columns):
+                table_column_name = f"{table_name}.{table_column[0].value}"
+                if table_column_name in selected_columns:
+                    valid_columns[index] = (table_column_name, table_column[1])
+            return valid_columns
+
+        def add_variable_to_query_environment(table_name: str, table_columns: List[Tuple[StringValue, PetlType]], row: PetlValue) -> List[Tuple[str, PetlValue]]:
+            variables = []
             if isinstance(row, TupleValue):
-                return list(map(lambda variable: (f"{table_name}.{variable[0]}", variable[1]), zip(names, row.values)))
+                for (column_name, column_type), columns_value in zip(table_columns, row.values):
+                    variables.append((f"{table_name}.{column_name.value}", columns_value))
+            return variables
+
+        def get_selected_values(indices: Dict[int, Tuple[str, PetlType]], row: List[PetlValue]) -> List[PetlValue]:
+            selected_values: List[PetlValue] = []
+            for index, value in enumerate(row):
+                if index in indices:
+                    selected_values.append(value)
+            return selected_values
+
+        def get_column_types(table_column_indices: Dict[int, Tuple[str, PetlType]]) -> List[PetlType]:
+            return list(map(lambda k: table_column_indices[k][1], table_column_indices))
 
         if isinstance(left_table_value, TableValue) and isinstance(right_table_value, TableValue) \
                 and isinstance(columns_value, ListValue) and isinstance(where_value, StringValue):
-            joined_rows = []
-            for left_row in left_table_value.rows:
-                left_variables = add_variables_to_query_environment("left", left_table_value.schema, left_row)
-                for right_row in right_table_value.rows:
-                    variables = [*left_variables, *add_variables_to_query_environment("right", right_table_value.schema, right_row)]
-                    if execute_query(where_value.value, variables, application.token, error):
-                        if isinstance(left_row, TupleValue) and isinstance(right_row, TupleValue):
-                            joined_rows.append((*left_row.values, *right_row.values))
+            selected_columns = list(map(lambda c: c.value, columns_value.values))
+            left_table_column_indices = get_selected_indices("left", left_table_value.schema.values, selected_columns)
+            right_table_column_indices = get_selected_indices("right", right_table_value.schema.values, selected_columns)
+            columns_types = get_column_types(left_table_column_indices) + get_column_types(right_table_column_indices)
 
-            
+            joined_rows: List[TupleValue] = []
+            for left_row in left_table_value.rows:
+                left_variables = add_variable_to_query_environment("left", left_table_value.schema.values, left_row)
+                for right_row in right_table_value.rows:
+                    all_variables = left_variables + add_variable_to_query_environment("right", right_table_value.schema.values, right_row)
+                    if execute_query(where_value.value, all_variables, application.token, error):
+                        if isinstance(left_row, TupleValue) and isinstance(right_row, TupleValue):
+                            joined_row_values = [*get_selected_values(left_table_column_indices, left_row.values),
+                                                 *get_selected_values(right_table_column_indices, right_row.values)]
+                            joined_rows.append(TupleValue(TupleType(columns_types), joined_row_values))
+
+            def get_columns(table_column_indices: Dict[int, Tuple[str, PetlType]]) -> List[Tuple[StringValue, PetlType]]:
+                return list(map(lambda k: (StringValue(table_column_indices[k][0]), table_column_indices[k][1]), table_column_indices))
+
+            st = SchemaType(columns_types)
+            schema = SchemaValue(st, get_columns(left_table_column_indices) + get_columns(right_table_column_indices))
+
+            tbt = TableType(st)
+            joined_table = TableValue(tbt, schema, joined_rows)
+            return joined_table
+
         return NoneValue()
 
 
@@ -212,16 +249,15 @@ class Select(Builtin):
         parameters = [
             ("table", TableType()),
             ("columns", ListType(StringType())),
-            ("condition", FuncType([], BoolType()))
+            ("where", StringType())
         ]
-        Builtin.__init__(self, Keyword.WRITECSV.value, parameters, NoneType())
+        Builtin.__init__(self, Keyword.SELECT.value, parameters, TableType())
 
-    # TODO
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
-        table_value: PetlValue = environment.get("table", application.token, error)
+        left_table_value: PetlValue = environment.get("left_table", application.token, error)
+        right_table_value: PetlValue = environment.get("right_table", application.token, error)
         columns_value: PetlValue = environment.get("columns", application.token, error)
-        condition_value: PetlValue = environment.get("condition", application.token, error)
-        return NoneValue()
+        where_value: PetlValue = environment.get("where", application.token, error)
 
 
 class Drop(Builtin):

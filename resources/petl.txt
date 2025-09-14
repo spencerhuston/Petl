@@ -40,7 +40,7 @@ name,age,salary,state
 Alice,27,$50000,Texas
 Bob,45,$100000,Idaho
 Mark,23,$35000,none
-Jack,none,noneCalifornia
+Jack,none,none,California
 
 t1 |> join(t2, ["name", "salary"], "left.name == right.name")
 
