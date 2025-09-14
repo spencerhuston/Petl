@@ -4,7 +4,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Dict, Optional
 
-from src.builtins.petl_builtin_definitions import Builtin, from_string_value
+from src.builtins.builtin_definitions import Builtin, from_string_value
 from src.phases.interpreter.definitions.value import *
 from src.phases.interpreter.environment import InterpreterEnvironment
 from src.phases.interpreter.type_resolution import types_conform

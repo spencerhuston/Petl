@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from src.builtins.petl_builtin_definitions import Builtin, extract_element_type
+from src.builtins.builtin_definitions import Builtin, extract_element_type
 from src.phases.interpreter.definitions.value import *
 from src.phases.interpreter.environment import InterpreterEnvironment
 from src.phases.interpreter.type_resolution import types_conform

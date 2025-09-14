@@ -79,7 +79,6 @@ class QueryParser:
             return QueryUnknownExpression()
 
     def parse_utight_with_min(self, min: int) -> Optional[QueryExpression]:
-        token = self.current_token()
         left: QueryExpression = self.parse_utight()
         while self.is_binary_operator(min):
             operator: QueryOperator = self.current_token().to_operator()
@@ -91,7 +90,6 @@ class QueryParser:
         return left
 
     def parse_utight(self) -> Optional[QueryExpression]:
-        token = self.current_token()
         operator: Optional[QueryOperator] = None
         if self.match(QueryKeyword.NOT, optional=True):
             operator = QueryOperator(QueryOperator.QueryOperatorType.NOT)

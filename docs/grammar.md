@@ -1,4 +1,6 @@
-<type> ::= 'int' | 'bool' | 'char' | 'string' | 'null'
+## Petl Grammar
+```
+<type> ::= 'int' | 'bool' | 'char' | 'string' | 'none'
     | <type> '->' <type>
     | '('[<type>[','<type>]*]')' '->' '('[<type>[','<type>]*]')'
     | 'list''['<type>']'
@@ -7,19 +9,19 @@
     | 'schema'
     | 'union''['<type>[','<type>]*']'
     | 'table'
-    | <ident>
+    | <ident (alias)>
 
-<literal> ::= <int> | <bool> | <char> | <string> | <null> | <range>
+<literal> ::= <int> | <bool> | <char> | <string> | <none> | <range>
 <int> ::= [integer]
 <bool> ::= 'true' | 'false'
 <char> ::= '''[character]'''
 <string> ::= '"'[character]*'"'
-<null> ::= 'null'
+<none> ::= 'none'
 <range> ::= <int>'..'<int>
 
 <atom> ::= <literal>
     | '('<smp>')'
-    | <ident>['.'<ident>]
+    | <ident>
 
 <param> ::= <ident>[':' <type>]
 <lambda> ::= '|'[<param>[','<param>]*]'|' '->' <type> '{'<exp>'}'
@@ -44,15 +46,46 @@
 
 <alias> ::= 'alias' <ident> '=' <type>
 
+<schema> ::= '$''{'<ident>':'<type>[','<ident>':'<type>]*'}'
+
 <smp> ::= <utight>[<op><utight>]
     | 'if' '('<smp>')' '{' <exp> '}' ['else' '{' <exp> '}']
-    | 'for' <ident> in <smp> '{' <exp> '}'
+    | 'for' <ident> 'in' <smp> '{' <exp> '}'
     | <collection>['++' <tight>]
     | '('<smp>[','<smp>]')'
-    | '$''{'<ident>':'<type>[','<ident>':'<type>]*'}'
+    | <schema>
     | <match>
     | <lambda>
     | <alias>
 
 <exp> ::= <smp>[';'<_exp>]
-    | 'let' <ident> [':' <type>] '=' <smp>';'<exp>
+    | 'let' <ident>[':'<type>][<ident>[':'<type>]]* '=' <smp>';'<exp>
+```
+
+---
+## PQL Grammar
+```
+<literal> ::= <int> | <bool> | <char> | <string> | <none> | <range>
+<int> ::= [integer]
+<bool> ::= 'true' | 'false'
+<char> ::= '''[character]'''
+<string> ::= '"'[character]*'"'
+<none> ::= 'none'
+<range> ::= <int>'..'<int>
+
+<atom> ::= <literal>
+    | '('<smp>')'
+    | <ident>
+
+<tight> ::= <atom>
+    | '('<smp>')'
+
+<arithOp> ::= '+' | '-' | '*' | '/' | '%' |
+<boolOp> ::= '<' | '>' | '<=' | '>=' | '==' | 'not' | 'and' | 'or'
+<op> ::= <arithOp> | <boolOp> | 'in'
+
+<utight> ::= [<op>]<tight>
+
+<smp> ::= <utight>[<op><utight>]
+    | '('<smp>[','<smp>]')'
+```

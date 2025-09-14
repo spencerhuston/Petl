@@ -1,7 +1,7 @@
 from typing import Set
 
-from src.builtins.petl_builtin_definitions import Builtin
-from src.builtins.petl_builtins import get_builtin
+from src.builtins.builtin_definitions import Builtin
+from src.builtins.builtins import get_builtin
 from src.phases.interpreter.definitions.types import *
 from src.phases.lexer.definitions.delimiter import Delimiter
 from src.phases.lexer.definitions.keyword import Keyword

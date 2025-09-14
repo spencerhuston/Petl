@@ -2,7 +2,7 @@ import traceback
 from copy import deepcopy
 from typing import Set
 
-from src.builtins.petl_builtin_definitions import Builtin, extract_iterable_values
+from src.builtins.builtin_definitions import Builtin, extract_iterable_values
 from src.phases.interpreter.definitions.value import *
 from src.phases.interpreter.environment import InterpreterEnvironment, copy_environment
 from src.phases.interpreter.type_resolution import types_conform

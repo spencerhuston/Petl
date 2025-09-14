@@ -1,2 +1,0 @@
-# Petl
- Python ETL Language

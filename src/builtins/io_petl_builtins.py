@@ -1,4 +1,4 @@
-from src.builtins.petl_builtin_definitions import Builtin
+from src.builtins.builtin_definitions import Builtin
 from src.phases.interpreter.definitions.value import *
 from src.phases.interpreter.environment import InterpreterEnvironment
 from src.phases.lexer.definitions.keyword import Keyword
