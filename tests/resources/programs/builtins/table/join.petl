@@ -20,4 +20,4 @@ let t2 = createTable(
      ("Henry", "Indiana")]
 );
 
-println(collect(join(t1, t2, ["name"], "left.name == right.name and left.age in 30..45")))
+println(collect(join(t1, t2, ["name"], "left.name == right.name and left.age in 30~45")))

@@ -5,7 +5,7 @@ from src.utils.petl_enum import BaseEnum
 from src.utils.query.query_operator import QueryOperator
 
 
-class RawDelimiter(str, BaseEnum):
+class QueryRawDelimiter(str, BaseEnum):
     DENOTE = ":",
     ASSIGN = "=",
     PLUS = "+",
@@ -17,11 +17,12 @@ class RawDelimiter(str, BaseEnum):
     LESS_THAN = "<",
     PAREN_LEFT = "(",
     PAREN_RIGHT = ")",
-    EXCLAMATION = "!"
+    EXCLAMATION = "!",
+    TILDE = "~"
 
 
-class Delimiter(str, BaseEnum):
-    RANGE = "..",
+class QueryDelimiter(str, BaseEnum):
+    RANGE = "~",
     PLUS = "+",
     MINUS = "-",
     MULTIPLY = "*",
@@ -34,37 +35,37 @@ class Delimiter(str, BaseEnum):
     EQUAL = "==",
     NOT_EQUAL = "!=",
     PAREN_LEFT = "(",
-    PAREN_RIGHT= ")"
+    PAREN_RIGHT = ")"
 
 
-def delimiter_to_operator(delim: Delimiter) -> Optional[QueryOperator]:
-    if delim == Delimiter.PLUS:
+def delimiter_to_operator(delim: QueryDelimiter) -> Optional[QueryOperator]:
+    if delim == QueryDelimiter.PLUS:
         return QueryOperator(QueryOperator.QueryOperatorType.PLUS)
-    elif delim == Delimiter.MINUS:
+    elif delim == QueryDelimiter.MINUS:
         return QueryOperator(QueryOperator.QueryOperatorType.MINUS)
-    elif delim == Delimiter.MULTIPLY:
+    elif delim == QueryDelimiter.MULTIPLY:
         return QueryOperator(QueryOperator.QueryOperatorType.MULTIPLY)
-    elif delim == Delimiter.DIVIDE:
+    elif delim == QueryDelimiter.DIVIDE:
         return QueryOperator(QueryOperator.QueryOperatorType.DIVIDE)
-    elif delim == Delimiter.MODULUS:
+    elif delim == QueryDelimiter.MODULUS:
         return QueryOperator(QueryOperator.QueryOperatorType.MODULUS)
-    elif delim == Delimiter.GREATER_THAN:
+    elif delim == QueryDelimiter.GREATER_THAN:
         return QueryOperator(QueryOperator.QueryOperatorType.GREATER_THAN)
-    elif delim == Delimiter.LESS_THAN:
+    elif delim == QueryDelimiter.LESS_THAN:
         return QueryOperator(QueryOperator.QueryOperatorType.LESS_THAN)
-    elif delim == Delimiter.GREATER_THAN_EQ:
+    elif delim == QueryDelimiter.GREATER_THAN_EQ:
         return QueryOperator(QueryOperator.QueryOperatorType.GREATER_THAN_EQUAL_TO)
-    elif delim == Delimiter.LESS_THAN_EQ:
+    elif delim == QueryDelimiter.LESS_THAN_EQ:
         return QueryOperator(QueryOperator.QueryOperatorType.LESS_THAN_EQUAL_TO)
-    elif delim == Delimiter.EQUAL:
+    elif delim == QueryDelimiter.EQUAL:
         return QueryOperator(QueryOperator.QueryOperatorType.EQUAL)
-    elif delim == Delimiter.NOT_EQUAL:
+    elif delim == QueryDelimiter.NOT_EQUAL:
         return QueryOperator(QueryOperator.QueryOperatorType.NOT_EQUAL)
     else:
         return None
 
 
-class Keyword(str, BaseEnum):
+class QueryKeyword(str, BaseEnum):
     TRUE = "true",
     FALSE = "false",
     AND = "and",
@@ -73,14 +74,14 @@ class Keyword(str, BaseEnum):
     IN = "in"
 
 
-def keyword_to_operator(keyword: Keyword) -> Optional[QueryOperator]:
-    if keyword == Keyword.NOT:
+def keyword_to_operator(keyword: QueryKeyword) -> Optional[QueryOperator]:
+    if keyword == QueryKeyword.NOT:
         return QueryOperator(QueryOperator.QueryOperatorType.NOT)
-    elif keyword == Keyword.AND:
+    elif keyword == QueryKeyword.AND:
         return QueryOperator(QueryOperator.QueryOperatorType.AND)
-    elif keyword == Keyword.OR:
+    elif keyword == QueryKeyword.OR:
         return QueryOperator(QueryOperator.QueryOperatorType.OR)
-    elif keyword == Keyword.IN:
+    elif keyword == QueryKeyword.IN:
         return QueryOperator(QueryOperator.QueryOperatorType.IN)
     else:
         return None
@@ -94,19 +95,19 @@ class QueryToken:
         VALUE = 3,
         IDENT = 4
 
-    token_value: Union[str, Delimiter, Keyword] = ""
+    token_value: Union[str, QueryDelimiter, QueryKeyword] = ""
 
     def __init__(self, token_type=QueryTokenType.UNKNOWN, token_value=""):
         self.token_type = token_type
 
         if self.token_type is self.QueryTokenType.KEYWORD:
-            self.token_value = Keyword(token_value)
+            self.token_value = QueryKeyword(token_value)
         elif self.token_type is self.QueryTokenType.DELIMITER:
-            self.token_value = Delimiter(token_value)
+            self.token_value = QueryDelimiter(token_value)
         else:
             self.token_value = token_value
 
-    def get_value(self) -> Union[str, Keyword, Delimiter]:
+    def get_value(self) -> Union[str, QueryKeyword, QueryDelimiter]:
         return self.token_value
 
     def to_operator(self) -> Optional[QueryOperator]:

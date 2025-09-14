@@ -1,7 +1,7 @@
 let f = |x: int| -> union[int, char, bool] {
     match x {
         case 1 | 2 | 3 => x,
-        case 4..10 => 'a',
+        case 4~10 => 'a',
         case _ => false
     }
 };

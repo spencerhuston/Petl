@@ -10,7 +10,7 @@ class Delimiter(str, BaseEnum):
     ASSIGN = "=",
     NEWLINE_SLASH = "\\",
     STMT_END = ";",
-    RANGE = "..",
+    RANGE = "~",
     PLUS = "+",
     MINUS = "-",
     MULTIPLY = "*",

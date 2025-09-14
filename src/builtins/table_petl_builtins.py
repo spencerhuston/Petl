@@ -9,7 +9,7 @@ from src.phases.type_resolver import types_conform
 from src.semantic_defintions.petl_expression import Application
 from src.semantic_defintions.petl_value import *
 from src.tokens.petl_keyword import Keyword
-from src.utils.query.query import execute_query
+from src.utils.query.query_executor import execute_query
 
 
 class CreateTable(Builtin):

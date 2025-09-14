@@ -6,7 +6,6 @@ class RawDelimiter(str, BaseEnum):
     ASSIGN = "=",
     NEWLINE_SLASH = "\\",
     STMT_END = ";",
-    PERIOD = ".",
     PLUS = "+",
     MINUS = "-",
     MULTIPLY = "*",
@@ -23,4 +22,5 @@ class RawDelimiter(str, BaseEnum):
     BRACE_RIGHT = "}",
     COMMNA = ",",
     SCHEMA = "$",
-    EXCLAMATION = "!"
+    EXCLAMATION = "!",
+    TILDE = "~"

@@ -1,3 +1,3 @@
-let a = 0..9;
+let a = 0~9;
 println(a);
 println(a |> reverse())

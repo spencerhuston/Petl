@@ -1,5 +1,5 @@
-let a = 0..5;
-let b = 10..15;
+let a = 0~5;
+let b = 10~15;
 
 println(a |> contains(4));
 println(b |> contains(4))

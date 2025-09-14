@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import List
 
-from src.utils.query.query_token import RawDelimiter, QueryToken, Keyword, Delimiter
+from src.utils.query.query_token import QueryRawDelimiter, QueryToken, QueryKeyword, QueryDelimiter
 
 
 class QueryLexer:
@@ -20,7 +20,7 @@ class QueryLexer:
                character == '_' or \
                character == '\'' or \
                character == '\"' or \
-               character in RawDelimiter
+               character in QueryRawDelimiter
 
     def handle_extraneous(self, character: str):
         continue_scan: bool = True
@@ -33,7 +33,7 @@ class QueryLexer:
         return continue_scan
 
     def handle_character(self, index: int, character: str):
-        if character in RawDelimiter and not self.inside_quotes:
+        if character in QueryRawDelimiter and not self.inside_quotes:
             self.push_non_delim_token()
             delim_text = character
             if self.peek_raw_delim(index):
@@ -61,10 +61,10 @@ class QueryLexer:
                (self.token_text.startswith('\'') and self.token_text.endswith('\''))
 
     def peek_raw_delim(self, index: int) -> bool:
-        return index < len(self.text) - 1 and self.text[index + 1] in RawDelimiter and not self.inside_quotes
+        return index < len(self.text) - 1 and self.text[index + 1] in QueryRawDelimiter and not self.inside_quotes
 
     def push_non_delim_token(self):
-        if self.token_text in Keyword:
+        if self.token_text in QueryKeyword:
             self.tokens.append(QueryToken(QueryToken.QueryTokenType.KEYWORD, self.token_text))
         elif self.token_is_value():
             self.tokens.append(QueryToken(QueryToken.QueryTokenType.VALUE, self.token_text))
@@ -75,15 +75,14 @@ class QueryLexer:
         self.token_text = ""
 
     def push_delim_tokens(self, delim_text: str):
-        if delim_text in Delimiter:
+        if delim_text in QueryDelimiter:
             self.tokens.append(QueryToken(QueryToken.QueryTokenType.DELIMITER, delim_text))
         else:
             self.tokens.append(QueryToken(QueryToken.QueryTokenType.DELIMITER, delim_text[0]))
             self.tokens.append(QueryToken(QueryToken.QueryTokenType.DELIMITER, delim_text[1]))
 
-    def scan(self, text: str) -> Optional[List[QueryToken]]:
+    def scan(self, text: str) -> List[QueryToken]:
         self.text = text
-        tokens: Optional[List[QueryToken]] = None
         for index in range(0, len(text)):
             character = text[index]
             if not self.is_valid_character(character):
@@ -91,8 +90,6 @@ class QueryLexer:
             if self.handle_extraneous(character):
                 continue
             self.handle_character(index, character)
-
         # Push leftover token text
         self.push_non_delim_token()
-
-        return tokens
+        return self.tokens
