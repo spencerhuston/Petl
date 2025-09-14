@@ -7,7 +7,7 @@ via:
 - ranges - If the value exists in an integer list
 - wildcard - Anything matches
 
-**Notes**: 
+**Notes**:
 1. If no valid case is matched, an error will be thrown. Include a wildcard, ```_```, 
 at the bottom as a catch-all
 2. Cases are evaluated top to bottom. Therefore, if more than one case is valid, the first

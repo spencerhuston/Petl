@@ -150,7 +150,7 @@ class Slice(Builtin):
                 error(f"Invalid slice range value(s)", application.token)
                 return NoneValue()
 
-            return ListValue(element_type, list_values)
+            return ListValue(element_type, list_values[start:end])
         return NoneValue()
 
 
@@ -160,7 +160,7 @@ class Contains(Builtin):
             ("list", ListType(AnyType())),
             ("value", AnyType())
         ]
-        Builtin.__init__(self, Keyword.CONTAINS.value, parameters, ListType(AnyType()))
+        Builtin.__init__(self, Keyword.CONTAINS.value, parameters, BoolType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         list_value: PetlValue = environment.get("list", application.token, error)
@@ -178,7 +178,7 @@ class Find(Builtin):
             ("list", ListType(AnyType())),
             ("value", AnyType())
         ]
-        Builtin.__init__(self, Keyword.FIND.value, parameters, ListType(AnyType()))
+        Builtin.__init__(self, Keyword.FIND.value, parameters, IntType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         list_value: PetlValue = environment.get("list", application.token, error)

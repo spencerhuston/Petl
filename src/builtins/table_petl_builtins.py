@@ -338,7 +338,7 @@ class Columns(Builtin):
             ("table", TableType()),
             ("names", ListType(StringType()))
         ]
-        Builtin.__init__(self, Keyword.COLUMNS.value, parameters, ListType(TupleType()))
+        Builtin.__init__(self, Keyword.COLUMNS.value, parameters, TableType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         table_value: PetlValue = environment.get("table", application.token, error)
