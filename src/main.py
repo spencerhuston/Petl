@@ -6,7 +6,7 @@ from os import getcwd
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-from src.phases.interpreter.definitions.value import PetlValue
+from src.phases.interpreter.definitions.value import PetlValue, NoneValue
 from src.phases.interpreter.environment import InterpreterEnvironment
 from src.phases.interpreter.interpreter import TreeWalkInterpreter, load_builtins
 from src.phases.lexer.definitions.token_petl import Token
@@ -41,23 +41,36 @@ def read_petl_file(file_path: str, logger: Log) -> Optional[str]:
     return petl_file_str
 
 
-def execute_petl_script(petl_raw_str: str, debug: bool, logger: Log) -> bool:
+def execute_petl_script(petl_raw_str: str,
+                        debug: bool,
+                        logger: Log,
+                        environment: Optional[InterpreterEnvironment] = None) -> Optional[PetlValue]:
     start: datetime = datetime.now()
+
     lexer: Lexer = Lexer(debug)
     tokens: Optional[List[Token]] = lexer.scan(petl_raw_str)
+
+    result_value: Optional[PetlValue] = None
+
     if tokens and not lexer.logger.errors_occurred():
         parser: Parser = Parser(debug)
         root: Expression = parser.parse(tokens)
+
         if root and not parser.logger.errors_occurred() and not isinstance(root, UnknownExpression):
             interpreter: TreeWalkInterpreter = TreeWalkInterpreter(debug)
-            environment: InterpreterEnvironment = load_builtins(parser.builtins)
-            result_value: PetlValue = interpreter.interpret(root, environment)
+
+            if not environment:
+                environment = InterpreterEnvironment()
+            environment = load_builtins(parser.builtins, environment)
+
+            result_value = interpreter.interpret(root, environment)
+
             logger.debug(f"DEBUG: {result_value.to_string()}")
             end: datetime = datetime.now()
             delta = end - start
             logger.debug(str(delta.total_seconds()))
-    else:
-        return False
+
+    return result_value
 
 
 def read_repl_input(history: List[str], history_index: int, logger: Log) -> Optional[str]:
@@ -111,6 +124,7 @@ def run_petl_repl(logger: Log):
     interpreter_input: str = ""
     history: List[str] = []
     history_index: int = 0
+    environment: InterpreterEnvironment = InterpreterEnvironment()
 
     while True:
         repl_input: Optional[str] = read_repl_input(history, history_index, logger)
@@ -129,7 +143,9 @@ def run_petl_repl(logger: Log):
             interpreter_input += repl_input
             history.append(interpreter_input)
             history_index = len(history)
-            execute_petl_script(interpreter_input, logger.debug_enabled())
+            result_value: Optional[PetlValue] = execute_petl_script(interpreter_input, logger.get_debug_enabled(), logger, environment)
+            if result_value and not isinstance(result_value, NoneValue):
+                logger.info(result_value.to_string())
             interpreter_input = ""
 
 

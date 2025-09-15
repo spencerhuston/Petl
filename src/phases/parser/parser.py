@@ -95,7 +95,8 @@ class Parser(PetlPhase):
         self.tokens_length = len(tokens)
         root: Optional[Expression] = self.parse_expression()
 
-        self.logger.debug_block("PARSED EXPRESSION", root.to_string())
+        if root:
+            self.logger.debug_block("PARSED EXPRESSION", root.to_string())
 
         return root
 

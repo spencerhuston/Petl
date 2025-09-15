@@ -4,7 +4,7 @@ from typing import List
 
 
 class Log:
-    __debug: bool = False
+    __debug_enabled: bool = False
 
     __title_separator: str = "=" * 20
 
@@ -22,7 +22,7 @@ class Log:
     __errors: List[str] = []
 
     def __init__(self, debug=False):
-        self.__debug = debug
+        self.__debug_enabled = debug
         self.__warnings = []
         self.__errors = []
 
@@ -30,7 +30,7 @@ class Log:
         return f"{color}{text}{self.__reset}"
 
     def __print(self, text: str, level: LogLevel):
-        if level == self.LogLevel.DEBUG and self.__debug:
+        if level == self.LogLevel.DEBUG and self.__debug_enabled:
             print(text)
         elif level == self.LogLevel.INFO:
             print(text)
@@ -43,8 +43,8 @@ class Log:
         self.__print(text, self.LogLevel.INFO)
         logging.info(text)
 
-    def debug_enabled(self) -> bool:
-        return self.__debug
+    def get_debug_enabled(self) -> bool:
+        return self.__debug_enabled
 
     def debug(self, text: str):
         self.__print(text, self.LogLevel.DEBUG)

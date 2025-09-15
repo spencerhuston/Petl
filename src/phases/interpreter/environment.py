@@ -33,9 +33,6 @@ class InterpreterEnvironment:
             error(f"Alias \'{alias}\' does not exist in this scope", token)
             return NoneType()
 
-    # def get_mappings(self) -> Tuple[Dict[str, PetlValue], Dict[str, PetlType]]:
-    #     return dict(self.map), dict(self.aliases)
-
 
 def copy_environment(environment: InterpreterEnvironment) -> InterpreterEnvironment:
     new_environment: InterpreterEnvironment = InterpreterEnvironment()

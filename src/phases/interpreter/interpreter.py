@@ -11,8 +11,7 @@ from src.phases.phase import PetlPhase
 from src.utils.file_position import FilePosition
 
 
-def load_builtins(builtins: Set[Builtin]) -> InterpreterEnvironment:
-    environment: InterpreterEnvironment = InterpreterEnvironment()
+def load_builtins(builtins: Set[Builtin], environment: InterpreterEnvironment) -> InterpreterEnvironment:
     if builtins:
         for builtin in builtins:
             environment.add(builtin.name, builtin.to_value())
@@ -26,7 +25,6 @@ class InterpreterException(Exception):
 class TreeWalkInterpreter(PetlPhase):
     def __init__(self, debug=False):
         self.logger.__init__(debug)
-        self.environment = InterpreterEnvironment()
         self.stack_trace: List[FilePosition] = []
         self.descent_counter = 0
 
@@ -56,7 +54,7 @@ class TreeWalkInterpreter(PetlPhase):
     def interpret(self, root: Expression, environment: InterpreterEnvironment) -> PetlValue:
         try:
             return self.evaluate(root, environment, AnyType())
-        except InterpreterException as ie:
+        except InterpreterException as _:
             return NoneValue()
         except Exception as e:
             self.logger.error(f"Unhandled exception while interpreting: {e}, {traceback.format_exc()}")
@@ -130,7 +128,7 @@ class TreeWalkInterpreter(PetlPhase):
             self.error(f"Cannot unpack, requires tuple value", let.token)
             return NoneValue()
 
-        after_let_environment = copy_environment(environment)
+        after_let_environment = environment
         for unpacked_value in unpacked_values:
             after_let_environment.add(unpacked_value[0], unpacked_value[1])
 
@@ -141,7 +139,7 @@ class TreeWalkInterpreter(PetlPhase):
 
     def evaluate_alias(self, alias: Alias, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
         if alias.after_alias_expression:
-            after_alias_environment = copy_environment(environment)
+            after_alias_environment = environment
             after_alias_environment.add_alias(alias.identifier, alias.alias_type)
             return self.evaluate(alias.after_alias_expression, after_alias_environment, expected_type)
         else:
