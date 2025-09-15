@@ -52,7 +52,6 @@
     | 'if' '('<smp>')' '{' <exp> '}' ['else' '{' <exp> '}']
     | 'for' <ident> 'in' <smp> '{' <exp> '}'
     | <collection>['++' <tight>]
-    | '('<smp>[','<smp>]')'
     | <schema>
     | <match>
     | <lambda>

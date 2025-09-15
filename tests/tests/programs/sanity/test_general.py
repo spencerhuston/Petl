@@ -49,4 +49,4 @@ def test_type_mismatch_integer_literal_char_literal(mocker, capsys):
 
 
 def test_collection_parse_no_comma_error(mocker, capsys):
-    assert "Expected ), got (" in get_petl_program_stdout(f"{directory_prefix}/collection_parse_no_comma_error.petl", mocker, capsys)
+    assert "Argument count must be 1 for tuple access" in get_petl_program_stdout(f"{directory_prefix}/collection_parse_no_comma_error.petl", mocker, capsys)

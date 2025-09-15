@@ -30,7 +30,7 @@ def read_petl_file(file_path: str, logger: Log) -> Optional[str]:
     petl_file_str: Optional[str] = None
     try:
         if file_path.endswith(".petl"):
-            full_path = Path(f"{getcwd()}\\{file_path}")
+            full_path = Path(getcwd()) / file_path
             with open(full_path, "r") as petl_file:
                 petl_file_str = petl_file.read()
                 logger.debug_block("RAW SCRIPT", petl_file_str)

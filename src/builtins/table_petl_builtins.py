@@ -244,11 +244,19 @@ class With(Builtin):
                     application.token)
                 return NoneValue()
 
+
+# | string        | int | int    | int              | string      |
+# | name          | age | salary | years_experience | department  |
+# | Alice Johnson | 28  | 75000  | 5                | Engineering |
+# | Bob Smith     | 35  | 95000  | 12               | Marketing   |
+# | Carol Davis   | 42  | 110000 | 18               | Engineering |
+# | David Wilson  | 29  | 68000  | 3                | Sales       |
+# | Eva Brown     | 38  | 88000  | 15               | Marketing   |
+
             new_column_type = values_value.values[0].petl_type
-            if isinstance(table_value.schema.petl_type, SchemaType):
-                table_value.schema.petl_type.column_types.append(new_column_type)
             if isinstance(table_value.petl_type, TableType):
                 table_value.petl_type.schema_type.column_types.append(new_column_type)
+                table_value.schema.values.append((name_value, new_column_type))
 
             for value, row in zip(values_value.values, table_value.rows):
                 if isinstance(row.petl_type, TupleType):

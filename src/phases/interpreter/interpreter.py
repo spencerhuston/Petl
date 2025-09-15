@@ -28,6 +28,7 @@ class TreeWalkInterpreter(PetlPhase):
         self.logger.__init__(debug)
         self.environment = InterpreterEnvironment()
         self.stack_trace: List[FilePosition] = []
+        self.descent_counter = 0
 
     def error(self, text: str, token: Optional[Token] = None):
         if not self.stack_trace or (self.stack_trace and self.stack_trace[-1] != token.file_position):
@@ -62,6 +63,12 @@ class TreeWalkInterpreter(PetlPhase):
             return NoneValue()
 
     def evaluate(self, expression: Expression, environment: InterpreterEnvironment, expected_type: PetlType) -> PetlValue:
+        self.descent_counter += 1
+
+        if self.descent_counter > 1000:
+            self.error(f"Maximum expression depth exceeded, possible infinite recursion", expression.token)
+            return NoneValue()
+
         evaluated_value: PetlValue = NoneValue()
         if isinstance(expression, LitExpression):
             evaluated_value = self.evaluate_literal(expression, expected_type)
@@ -95,6 +102,8 @@ class TreeWalkInterpreter(PetlPhase):
             evaluated_value = self.evaluate_schema_definition(expression, expected_type)
         else:
             self.error(f"Invalid expression found", expression.token)
+
+        self.descent_counter -= 1
         return evaluated_value
 
     def evaluate_literal(self, literal_expression: LitExpression, expected_type: PetlType) -> PetlValue:

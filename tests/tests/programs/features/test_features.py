@@ -15,6 +15,10 @@ def test_plus_operator(mocker, capsys):
     assert get_petl_program_stdout(f"{directory_prefix}/plus_operator.petl", mocker, capsys) == """8"""
 
 
+def test_multiple_prim_ops(mocker, capsys):
+    assert get_petl_program_stdout(f"{directory_prefix}/multiple_prim_ops.petl", mocker, capsys) == """8\n2"""
+
+
 def test_stack_trace_test(mocker, capsys):
     assert "Type mismatch" in get_petl_program_stdout(f"{directory_prefix}/stack_trace_test.petl", mocker, capsys)
 

@@ -154,3 +154,4 @@ cython_debug/
 #.idea/
 /.idea
 *.iml
+Petl.iml

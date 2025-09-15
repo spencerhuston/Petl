@@ -2,7 +2,7 @@
 
 ---
 
-```map(c: iterable, f: (any) -> any) -> list[any]```
+```map(c: iterable, f: (any) -> any) -> list[any]```<br>
 Returns a list where function ```f``` is applied to each element of list ```l```
 Will always return a ```list``` with elements of the return-type of ```f```
 

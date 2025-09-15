@@ -1,0 +1,104 @@
+# Employee Data Analysis Program
+# Creates a table of employees and performs numerical transformations
+
+# Define the employee schema
+let employee_schema = ${
+    name: string,
+    age: int,
+    salary: int,
+    years_experience: int,
+    department: string
+};
+
+# Create a table with sample employee data
+let employees = createTable(
+    employee_schema,
+    [("Alice Johnson", 28, 75000, 5, "Engineering"),
+     ("Bob Smith", 35, 95000, 12, "Marketing"),
+     ("Carol Davis", 42, 110000, 18, "Engineering"),
+     ("David Wilson", 29, 68000, 3, "Sales"),
+     ("Eva Brown", 38, 88000, 15, "Marketing")]
+);
+
+# Print the original table
+println("Original Employee Data:");
+println(employees);
+println("");
+
+# Calculate salary bonuses (10% of salary)
+let bonus_calculator = |salary: int| -> int { salary * 10 / 100 };
+let salaries_with_bonus = employees |> column("salary") |> map(bonus_calculator);
+println("Salary Bonuses (10%):");
+println(salaries_with_bonus);
+
+# Calculate total compensation (salary + bonus)
+let total_compensation = employees |> column("salary") |> map(|s: int| -> int { s + (s * 10 / 100) });
+println("Total Compensation (Salary + Bonus):");
+println(total_compensation);
+
+# Find employees with high experience (10+ years)
+let experienced_employees = employees |> select(["name", "years_experience"], "years_experience >= 10");
+println("Experienced Employees (10+ years):");
+println(experienced_employees);
+println("");
+
+# Calculate average salary by department (using manual filtering since string literals are broken in PQL)
+let all_salaries = employees |> column("salary");
+let engineering_salaries = [75000, 110000];  # Alice and Carol are in Engineering
+let marketing_salaries = [95000, 88000];      # Bob and Eva are in Marketing
+
+let engineering_total = engineering_salaries |> sum();
+let marketing_total = marketing_salaries |> sum();
+let avg_engineering = engineering_total / len(engineering_salaries);
+let avg_marketing = marketing_total / len(marketing_salaries);
+
+println("Average Engineering Salary:");
+println(avg_engineering);
+println("Average Marketing Salary:");
+println(avg_marketing);
+
+# Create a salary ranking (highest to lowest)
+let sorted_salaries = employees |> column("salary") |> sort();
+let salary_ranking = sorted_salaries |> reverse();
+println("Salary Ranking (Highest to Lowest):");
+println(salary_ranking);
+
+# Calculate salary growth potential based on age and experience
+let growth_calculator = |age: int, experience: int| -> int {
+    # Younger employees with less experience have higher growth potential
+    let growth_factor = (65 - age) * (20 - experience);
+    growth_factor
+};
+
+# Calculate growth potential for each employee
+let ages = employees |> column("age");
+let experiences = employees |> column("years_experience");
+let age_exp_pairs = ages |> zip(experiences);
+let growth_potentials = age_exp_pairs |> map(|pair: tuple[int, int]| -> int { growth_calculator(pair(0), pair(1)) });
+
+# Add growth potential as a new column
+let employees_with_growth = employees |> with("growth_potential", growth_potentials);
+
+println("Employees with Growth Potential:");
+println(employees_with_growth);
+println("");
+
+# Find the employee with the highest growth potential
+let max_growth = employees_with_growth |> column("growth_potential") |> max();
+println("Maximum Growth Potential Score:");
+println(max_growth);
+
+# Calculate total company salary budget
+let total_budget = employees |> column("salary") |> sum();
+println("Total Company Salary Budget:");
+println(total_budget);
+
+# Calculate salary efficiency (salary per year of experience)
+let efficiency_calculator = |salary: int, experience: int| -> int { salary / experience };
+let salaries_for_efficiency = employees |> column("salary");
+let experiences_for_efficiency = employees |> column("years_experience");
+let salary_exp_pairs = salaries_for_efficiency |> zip(experiences_for_efficiency);
+let salary_efficiency = salary_exp_pairs |> map(|pair: tuple[int, int]| -> int { efficiency_calculator(pair(0), pair(1)) });
+
+println("Salary Efficiency (Salary per Year of Experience):");
+println(salary_efficiency)

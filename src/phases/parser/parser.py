@@ -13,6 +13,7 @@ class Parser(PetlPhase):
     def __init__(self, debug=False):
         self.logger.__init__(debug)
         self.tokens = []
+        self.last_token = None
         self.tokens_length = 0
         self.current_token_index = 0
         self.dummy_count = 0
@@ -47,6 +48,7 @@ class Parser(PetlPhase):
 
     def match(self, against: Union[Delimiter, Keyword], optional=True) -> bool:
         token = self.current_token()
+
         if not token:
             if not optional:
                 self.error(f"Expected {against}, found end-of-file while parsing")
@@ -57,6 +59,9 @@ class Parser(PetlPhase):
         if not matched and not optional:
             self.error(f"Expected {against}, got {token.token_value}", token)
             self.advance()
+        elif not matched and not optional and token and token == self.last_token:
+            self.error("Attempted to match same token twice", token)
+            self.advance()
         elif matched:
             self.advance()
 
@@ -66,7 +71,12 @@ class Parser(PetlPhase):
         token = self.current_token()
         if token.token_type == Token.TokenType.IDENT:
             self.advance()
+            self.last_token = token
             return token.token_value
+        elif token == self.last_token:
+            self.error("Attempted to match same token twice", token)
+            self.advance()
+            return None
         else:
             if not optional:
                 self.error(f"Expected identifier, got {token.token_value}", token)
@@ -164,8 +174,6 @@ class Parser(PetlPhase):
             else:
                 return collection1
             pass
-        elif self.match(Delimiter.PAREN_LEFT, optional=True):
-            return self.parse_tuple_def_or_smp_expression()
         elif self.match(Delimiter.SCHEMA, optional=True):
             return self.parse_schema_def()
         elif self.match(Keyword.MATCH, optional=True):
@@ -190,6 +198,25 @@ class Parser(PetlPhase):
             after_alias_expression = self.parse_expression()
         expression_type: PetlType = after_alias_expression.petl_type
         return Alias(expression_type, token, identifier, alias_type, after_alias_expression)
+
+    def parse_tuple_def_or_smp_expression(self) -> Optional[Expression]:
+        token = self.current_token()
+
+        if self.match(Delimiter.PAREN_RIGHT, optional=True):
+            return LitExpression(NoneType(), token, NoneLiteral())
+
+        first_element: Expression = self.parse_simple_expression()
+        tuple_types: List[PetlType] = [first_element.petl_type]
+        tuple_elements: List[Expression] = [first_element]
+        while self.match(Delimiter.COMMA, optional=True):
+            tuple_element: Expression = self.parse_simple_expression()
+            tuple_types.append(tuple_element.petl_type)
+            tuple_elements.append(tuple_element)
+
+        if len(tuple_elements) == 1:
+            return first_element
+        else:
+            return TupleDefinition(TupleType(tuple_types), token, tuple_elements)
 
     def parse_utight_with_min(self, min: int) -> Optional[Expression]:
         token = self.current_token()
@@ -227,10 +254,6 @@ class Parser(PetlPhase):
             body: Expression = self.parse_expression()
             self.match(Delimiter.BRACE_RIGHT)
             return body
-        elif self.match(Delimiter.PAREN_LEFT, optional=True):
-            body: Expression = self.parse_simple_expression()
-            self.match(Delimiter.PAREN_RIGHT)
-            return body
         elif token:
             inner_application: Expression = self.parse_application()
             while self.match(Delimiter.BIRD, optional=True):
@@ -263,7 +286,6 @@ class Parser(PetlPhase):
             self.builtins.add(builtin_reference)
             return Reference(builtin_reference.func_type, token, token.token_value)
         elif self.match(Delimiter.PAREN_LEFT, optional=True):
-            self.advance()
             simple_exp: Expression = self.parse_tuple_def_or_smp_expression()
             self.match(Delimiter.PAREN_RIGHT)
             return simple_exp
@@ -367,26 +389,6 @@ class Parser(PetlPhase):
             self.match(Delimiter.BRACKET_RIGHT)
             return ListDefinition(ListType(first_element.petl_type), token, values=[first_element])
 
-    def parse_tuple_def_or_smp_expression(self) -> Optional[Expression]:
-        token = self.current_token()
-
-        if self.match(Delimiter.PAREN_RIGHT, optional=True):
-            return LitExpression(NoneType(), token, NoneLiteral())
-
-        first_element: Expression = self.parse_simple_expression()
-        tuple_types: List[PetlType] = [first_element.petl_type]
-        tuple_elements: List[Expression] = [first_element]
-        while self.match(Delimiter.COMMA, optional=True):
-            tuple_element: Expression = self.parse_simple_expression()
-            tuple_types.append(tuple_element.petl_type)
-            tuple_elements.append(tuple_element)
-        self.match(Delimiter.PAREN_RIGHT)
-
-        if len(tuple_elements) == 1:
-            return first_element
-        else:
-            return TupleDefinition(TupleType(tuple_types), token, tuple_elements)
-
     def parse_schema_def(self) -> Optional[SchemaDefinition]:
         token = self.current_token()
         self.match(Delimiter.BRACE_LEFT)
@@ -479,8 +481,9 @@ class Parser(PetlPhase):
         arguments: List[Expression] = []
         if not self.match(Delimiter.PAREN_RIGHT, optional=True):
             arguments.append(self.parse_simple_expression())
-            while self.match(Delimiter.COMMA, optional=True) or not self.match(Delimiter.PAREN_RIGHT, optional=False):
+            while self.match(Delimiter.COMMA, optional=True):
                 arguments.append(self.parse_simple_expression())
+            self.match(Delimiter.PAREN_RIGHT, optional=False)
         return arguments
 
     def parse_application(self) -> Optional[Expression]:
