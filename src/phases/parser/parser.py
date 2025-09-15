@@ -340,16 +340,15 @@ class Parser(PetlPhase):
     def parse_branch(self) -> Optional[Branch]:
         token = self.current_token()
         predicate: Expression = self.parse_simple_expression()
-        self.match(Delimiter.PAREN_RIGHT)
-        self.match(Delimiter.BRACE_LEFT)
+        self.match(Delimiter.BRACE_LEFT, optional=False)
         if_branch: Expression = self.parse_expression()
-        self.match(Delimiter.BRACE_RIGHT)
+        self.match(Delimiter.BRACE_RIGHT, optional=False)
 
         else_branch: Optional[Expression] = None
         if self.match(Keyword.ELSE, optional=True):
-            self.match(Delimiter.BRACE_LEFT)
+            self.match(Delimiter.BRACE_LEFT, optional=False)
             else_branch = self.parse_expression()
-            self.match(Delimiter.BRACE_RIGHT)
+            self.match(Delimiter.BRACE_RIGHT, optional=False)
 
         branch_type: PetlType = else_branch.petl_type if else_branch else NoneType()
         return Branch(branch_type, token, predicate, if_branch, else_branch)

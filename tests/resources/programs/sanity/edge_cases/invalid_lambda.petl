@@ -1,0 +1,2 @@
+let f = |x: int| -> ;
+print(f(2))

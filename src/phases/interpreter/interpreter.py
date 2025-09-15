@@ -324,7 +324,7 @@ class TreeWalkInterpreter(PetlPhase):
             self.error(f"Reached end of pattern-match, add catch-all case", match.token)
         return NoneValue()
 
-    def evaluate_arithmetic_operator(self, left: PetlValue, right: PetlValue, operator: Operator) -> Optional[PetlValue]:
+    def evaluate_arithmetic_operator(self, left: PetlValue, right: PetlValue, operator: Operator, token) -> Optional[PetlValue]:
         if operator.operator_type == Operator.OperatorType.PLUS:
             if isinstance(left, IntValue) and isinstance(right, IntValue):
                 return IntValue(left.value + right.value)
@@ -344,7 +344,11 @@ class TreeWalkInterpreter(PetlPhase):
                 return IntValue(left.value * right.value)
         elif operator.operator_type == Operator.OperatorType.DIVIDE:
             if isinstance(left, IntValue) and isinstance(right, IntValue):
-                return IntValue(int(left.value / right.value))
+                try:
+                    return IntValue(int(left.value / right.value))
+                except ZeroDivisionError:
+                    self.error(f"Division by zero", token)
+                    return None
         elif operator.operator_type == Operator.OperatorType.MODULUS:
             if isinstance(left, IntValue) and isinstance(right, IntValue):
                 return IntValue(left.value % right.value)
@@ -395,7 +399,7 @@ class TreeWalkInterpreter(PetlPhase):
         result_value: Optional[PetlValue] = None
 
         if operator.is_arithmetic():
-            result_value = self.evaluate_arithmetic_operator(left, right, operator)
+            result_value = self.evaluate_arithmetic_operator(left, right, operator, token)
         elif operator.is_boolean():
             result_value = self.evaluate_boolean_operator(left, right, operator)
         elif operator.is_collection():

@@ -1,4 +1,3 @@
-import traceback
 from typing import Optional
 
 from src.query.interpreter.environment import QueryEnvironment

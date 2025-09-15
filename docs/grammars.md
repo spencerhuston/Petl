@@ -49,7 +49,7 @@
 <schema> ::= '$''{'<ident>':'<type>[','<ident>':'<type>]*'}'
 
 <smp> ::= <utight>[<op><utight>]
-    | 'if' '('<smp>')' '{' <exp> '}' ['else' '{' <exp> '}']
+    | 'if' <smp> '{' <exp> '}' ['else' '{' <exp> '}']
     | 'for' <ident> 'in' <smp> '{' <exp> '}'
     | <collection>['++' <tight>]
     | <schema>

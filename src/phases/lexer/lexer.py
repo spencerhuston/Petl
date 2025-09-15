@@ -142,7 +142,8 @@ class Lexer(PetlPhase):
                 self.update_file_position(character)
 
                 if not self.is_valid_character(character):
-                    self.logger.warn(f"Unexpected character \'{character}\': {self.create_file_position().to_string()}")
+                    invalid_character = character if character.isascii() else character.encode('utf-8')
+                    self.logger.warn(f"Unexpected character \'{invalid_character}\': {self.create_file_position().to_string()}")
                     continue
                 if self.handle_extraneous(character):
                     continue
@@ -150,6 +151,9 @@ class Lexer(PetlPhase):
 
             # Push leftover token text
             self.push_non_delim_token()
+
+            if not self.tokens:
+                raise Exception("Invalid program, unable to parse")
 
             self.logger.debug_block(
                 "TOKENS",
@@ -160,7 +164,8 @@ class Lexer(PetlPhase):
             )
             tokens = self.tokens
         except Exception as scan_exception:
-            self.logger.error(f"Unhandled error occurred: {scan_exception}, {traceback.format_exc()}")
+            self.logger.error(f"Unhandled error occurred: {scan_exception}")
+            tokens = None
         finally:
             if self.logger.warnings_occurred():
                 self.logger.warn(f"One or more warnings occurred")
