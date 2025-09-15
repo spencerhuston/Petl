@@ -21,4 +21,4 @@ def test_table_doc_test(mocker, capsys):
 
 
 def test_employee_analysis(mocker, capsys):
-    assert get_petl_program_stdout(f"{directory_prefix}/employee_analysis.petl", mocker, capsys).endswith("""[15000, 7916, 6111, 22666, 5866]""")
+    assert get_petl_program_stdout(f"{directory_prefix}/employee_analysis.petl", mocker, capsys).endswith("""10586, 56007, 10505, 1700]""")

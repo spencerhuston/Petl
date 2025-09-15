@@ -7,17 +7,14 @@ let employee_schema = ${
     age: int,
     salary: int,
     years_experience: int,
-    department: string
+    state: string
 };
 
 # Create a table with sample employee data
-let employees = createTable(
+let employees = readCsv(
     employee_schema,
-    [("Alice Johnson", 28, 75000, 5, "Engineering"),
-     ("Bob Smith", 35, 95000, 12, "Marketing"),
-     ("Carol Davis", 42, 110000, 18, "Engineering"),
-     ("David Wilson", 29, 68000, 3, "Sales"),
-     ("Eva Brown", 38, 88000, 15, "Marketing")]
+    "./resources/csvs/employees",
+    true
 );
 
 # Print the original table
@@ -94,7 +91,7 @@ println("Total Company Salary Budget:");
 println(total_budget);
 
 # Calculate salary efficiency (salary per year of experience)
-let efficiency_calculator = |salary: int, experience: int| -> int { salary / experience };
+let efficiency_calculator = |salary: int, experience: int| -> int { if experience == 0 { 0 } else { salary / experience} };
 let salaries_for_efficiency = employees |> getColumn("salary");
 let experiences_for_efficiency = employees |> getColumn("years_experience");
 let salary_exp_pairs = salaries_for_efficiency |> zip(experiences_for_efficiency);
