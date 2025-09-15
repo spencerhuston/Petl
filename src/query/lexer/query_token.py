@@ -2,10 +2,10 @@ from enum import Enum
 from typing import Union, Optional
 
 from src.query.parser.operator import QueryOperator
-from src.utils.petl_enum import BaseEnum
+from src.utils.petl_enum import PetlBaseEnum
 
 
-class QueryRawDelimiter(str, BaseEnum):
+class QueryRawDelimiter(str, PetlBaseEnum):
     DENOTE = ":",
     ASSIGN = "=",
     PLUS = "+",
@@ -21,7 +21,7 @@ class QueryRawDelimiter(str, BaseEnum):
     TILDE = "~"
 
 
-class QueryDelimiter(str, BaseEnum):
+class QueryDelimiter(str, PetlBaseEnum):
     RANGE = "~",
     PLUS = "+",
     MINUS = "-",
@@ -65,7 +65,7 @@ def delimiter_to_operator(delim: QueryDelimiter) -> Optional[QueryOperator]:
         return None
 
 
-class QueryKeyword(str, BaseEnum):
+class QueryKeyword(str, PetlBaseEnum):
     TRUE = "true",
     FALSE = "false",
     AND = "and",

@@ -1,8 +1,8 @@
-from src.utils.petl_enum import BaseEnum
+from src.utils.petl_enum import PetlBaseEnum
 
 
 class QueryOperator:
-    class QueryOperatorType(str, BaseEnum):
+    class QueryOperatorType(str, PetlBaseEnum):
         PLUS = "+",
         MINUS = "-",
         MULTIPLY = "*",

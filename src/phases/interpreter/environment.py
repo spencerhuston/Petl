@@ -2,7 +2,7 @@ from typing import Dict
 
 from src.phases.interpreter.definitions.types import PetlType, NoneType
 from src.phases.interpreter.definitions.value import PetlValue, NoneValue
-from src.phases.lexer.definitions.token import Token
+from src.phases.lexer.definitions.token_petl import Token
 
 
 class InterpreterEnvironment:

@@ -5,7 +5,7 @@ from src.query.interpreter.interpreter import QueryInterpreter
 from src.query.interpreter.environment import QueryEnvironment
 from src.query.interpreter.value import QueryValue, QueryIntValue, QueryBoolValue, QueryCharValue, QueryStringValue
 from src.query.lexer.lexer import QueryLexer
-from src.query.lexer.token import QueryToken
+from src.query.lexer.query_token import QueryToken
 from src.query.parser.parser import QueryParser
 from src.query.parser.expression import QueryExpression
 

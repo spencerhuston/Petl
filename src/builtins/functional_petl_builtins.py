@@ -4,8 +4,8 @@ from src.builtins.builtin_definitions import extract_iterable_values, Builtin
 from src.phases.interpreter.definitions.value import *
 from src.phases.interpreter.environment import copy_environment, InterpreterEnvironment
 from src.phases.interpreter.type_resolution import types_conform
-from src.phases.lexer.definitions.keyword import Keyword
-from src.phases.lexer.definitions.token import Token
+from src.phases.lexer.definitions.keyword_petl import Keyword
+from src.phases.lexer.definitions.token_petl import Token
 from src.phases.parser.defintions.expression import Application
 
 

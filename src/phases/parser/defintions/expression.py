@@ -4,7 +4,7 @@ from pprint import pformat
 from typing import Union, List, Optional, Tuple
 
 from src.phases.interpreter.definitions.types import PetlType, UnknownType
-from src.phases.lexer.definitions.token import Token
+from src.phases.lexer.definitions.token_petl import Token
 from src.phases.parser.defintions.operator import Operator
 
 

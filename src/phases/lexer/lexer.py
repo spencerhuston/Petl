@@ -4,9 +4,9 @@ from copy import deepcopy
 from typing import List, Optional
 
 from src.phases.lexer.definitions.delimiter import Delimiter
-from src.phases.lexer.definitions.keyword import Keyword
+from src.phases.lexer.definitions.keyword_petl import Keyword
 from src.phases.lexer.definitions.raw_delimiter import RawDelimiter
-from src.phases.lexer.definitions.token import Token
+from src.phases.lexer.definitions.token_petl import Token
 from src.phases.phase import PetlPhase
 from src.utils.file_position import FilePosition
 

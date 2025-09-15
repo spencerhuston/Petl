@@ -1,8 +1,8 @@
-from src.utils.petl_enum import BaseEnum
+from src.utils.petl_enum import PetlBaseEnum
 
 
 class Operator:
-    class OperatorType(str, BaseEnum):
+    class OperatorType(str, PetlBaseEnum):
         PLUS = "+",
         MINUS = "-",
         MULTIPLY = "*",

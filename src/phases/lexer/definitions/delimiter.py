@@ -1,10 +1,10 @@
 from typing import Optional
 
 from src.phases.parser.defintions.operator import Operator
-from src.utils.petl_enum import BaseEnum
+from src.utils.petl_enum import PetlBaseEnum
 
 
-class Delimiter(str, BaseEnum):
+class Delimiter(str, PetlBaseEnum):
     DENOTE = ":",
     RETURN = "->",
     ASSIGN = "=",

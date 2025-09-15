@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Union, Optional
 
 from src.phases.lexer.definitions.delimiter import Delimiter, delimiter_to_operator
-from src.phases.lexer.definitions.keyword import Keyword, keyword_to_operator
+from src.phases.lexer.definitions.keyword_petl import Keyword, keyword_to_operator
 from src.phases.parser.defintions.operator import Operator
 from src.utils.file_position import FilePosition
 

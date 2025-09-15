@@ -1,4 +1,4 @@
-from src.phases.lexer.definitions.keyword import Keyword, keyword_to_operator
+from src.phases.lexer.definitions.keyword_petl import Keyword, keyword_to_operator
 from src.phases.parser.defintions.operator import Operator
 
 

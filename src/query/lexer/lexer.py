@@ -1,6 +1,6 @@
 from typing import List
 
-from src.query.lexer.token import QueryRawDelimiter, QueryToken, QueryKeyword, QueryDelimiter
+from src.query.lexer.query_token import QueryRawDelimiter, QueryToken, QueryKeyword, QueryDelimiter
 
 
 class QueryLexer:

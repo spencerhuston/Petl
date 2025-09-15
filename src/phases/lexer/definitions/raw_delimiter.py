@@ -1,7 +1,7 @@
-from src.utils.petl_enum import BaseEnum
+from src.utils.petl_enum import PetlBaseEnum
 
 
-class RawDelimiter(str, BaseEnum):
+class RawDelimiter(str, PetlBaseEnum):
     DENOTE = ":",
     ASSIGN = "=",
     NEWLINE_SLASH = "\\",

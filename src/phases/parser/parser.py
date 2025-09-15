@@ -4,7 +4,7 @@ from src.builtins.builtin_definitions import Builtin
 from src.builtins.builtins import get_builtin
 from src.phases.interpreter.definitions.types import *
 from src.phases.lexer.definitions.delimiter import Delimiter
-from src.phases.lexer.definitions.keyword import Keyword
+from src.phases.lexer.definitions.keyword_petl import Keyword
 from src.phases.parser.defintions.expression import *
 from src.phases.phase import PetlPhase
 

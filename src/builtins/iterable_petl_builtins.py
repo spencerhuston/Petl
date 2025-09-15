@@ -1,7 +1,7 @@
 from src.builtins.builtin_definitions import Builtin, extract_iterable_values, extract_element_type
 from src.phases.interpreter.definitions.value import *
 from src.phases.interpreter.environment import InterpreterEnvironment
-from src.phases.lexer.definitions.keyword import Keyword
+from src.phases.lexer.definitions.keyword_petl import Keyword
 from src.phases.parser.defintions.expression import Application
 
 

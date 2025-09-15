@@ -2,7 +2,7 @@ from typing import Optional, Union, List
 
 from src.query.interpreter.types import QueryUnknownType, QueryBoolType, QueryIntType, QueryType, QueryCharType, \
     QueryStringType
-from src.query.lexer.token import QueryToken, QueryDelimiter, QueryKeyword
+from src.query.lexer.query_token import QueryToken, QueryDelimiter, QueryKeyword
 from src.query.parser.expression import QueryExpression, QueryLitExpression, QueryLiteral, QueryPrimitive, \
     QueryBoolLiteral, QueryIntLiteral, QueryReference, QueryStringLiteral, QueryCharLiteral, QueryRangeDefinition, \
     QueryUnknownExpression

@@ -1,6 +1,6 @@
 from src.phases.lexer.definitions.delimiter import Delimiter
-from src.phases.lexer.definitions.keyword import Keyword
-from src.phases.lexer.definitions.token import Token
+from src.phases.lexer.definitions.keyword_petl import Keyword
+from src.phases.lexer.definitions.token_petl import Token
 from src.phases.parser.defintions.operator import Operator
 from src.utils.file_position import FilePosition
 

@@ -2,7 +2,7 @@ from typing import Any, Optional
 
 from src.phases.interpreter.definitions.value import *
 from src.phases.interpreter.environment import InterpreterEnvironment
-from src.phases.lexer.definitions.token import Token
+from src.phases.lexer.definitions.token_petl import Token
 from src.phases.parser.defintions.expression import UnknownExpression, Application
 
 

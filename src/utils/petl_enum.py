@@ -1,7 +1,7 @@
 from enum import Enum, EnumMeta
 
 
-class MetaEnum(EnumMeta):
+class PetlMetaEnum(EnumMeta):
     def __contains__(cls, item):
         try:
             cls(item)
@@ -10,5 +10,5 @@ class MetaEnum(EnumMeta):
         return True
 
 
-class BaseEnum(Enum, metaclass=MetaEnum):
+class PetlBaseEnum(Enum, metaclass=PetlMetaEnum):
     pass

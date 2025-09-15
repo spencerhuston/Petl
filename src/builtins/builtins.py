@@ -6,7 +6,7 @@ from src.builtins.list_petl_builtins import *
 from src.builtins.misc_petl_builtins import *
 from src.builtins.string_petl_builtins import *
 from src.builtins.table_petl_builtins import *
-from src.phases.lexer.definitions.keyword import Keyword
+from src.phases.lexer.definitions.keyword_petl import Keyword
 
 _builtins: Dict[str, Builtin] = {
     # IO
