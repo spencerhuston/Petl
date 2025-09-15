@@ -57,5 +57,9 @@ def test_join(mocker, capsys):
     assert get_petl_program_stdout(f"{directory_prefix}/join.petl", mocker, capsys) == """[(Alice, 27), (Bob, 45)]"""
 
 
+def test_join_duplicate_name(mocker, capsys):
+    assert "must be unique across both tables" in get_petl_program_stdout(f"{directory_prefix}/join_duplicate_name.petl", mocker, capsys)
+
+
 def test_select(mocker, capsys):
     assert get_petl_program_stdout(f"{directory_prefix}/select.petl", mocker, capsys) == """[(Alice, 27), (Bob, 45)]"""

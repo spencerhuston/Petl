@@ -85,16 +85,16 @@ class CreateTable(Builtin):
 class ReadCsv(Builtin):
     def __init__(self):
         parameters = [
+            ("schema", SchemaType()),
             ("path", StringType()),
-            ("header", BoolType()),
-            ("schema", SchemaType())
+            ("header", BoolType())
         ]
         Builtin.__init__(self, Keyword.READCSV.value, parameters, TableType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        schema_value: PetlValue = environment.get("schema", application.token, error)
         path_value: PetlValue = environment.get("path", application.token, error)
         header_value: PetlValue = environment.get("header", application.token, error)
-        schema_value: PetlValue = environment.get("schema", application.token, error)
 
         if isinstance(path_value, StringValue) and isinstance(header_value, BoolValue) and isinstance(schema_value,
                                                                                                       SchemaValue):
@@ -138,15 +138,15 @@ class ReadCsv(Builtin):
 class WriteCsv(Builtin):
     def __init__(self):
         parameters = [
-            ("path", StringType()),
             ("table", TableType()),
+            ("path", StringType()),
             ("header", BoolType())
         ]
         Builtin.__init__(self, Keyword.WRITECSV.value, parameters, BoolType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
-        path_value: PetlValue = environment.get("path", application.token, error)
         table_value: PetlValue = environment.get("table", application.token, error)
+        path_value: PetlValue = environment.get("path", application.token, error)
         header_value: PetlValue = environment.get("header", application.token, error)
         if isinstance(path_value, StringValue) and isinstance(table_value, TableValue) and isinstance(header_value,
                                                                                                       BoolValue):
@@ -208,8 +208,15 @@ class Join(Builtin):
                             joined_rows.append(TupleValue(TupleType(columns_types), joined_row_values))
 
             st = SchemaType(columns_types)
-            schema = SchemaValue(st, get_columns(left_table_column_indices) + get_columns(right_table_column_indices))
+            combined_columns = get_columns(left_table_column_indices) + get_columns(right_table_column_indices)
 
+            combined_columns_names = list(map(lambda c: c[0].value, combined_columns))
+            for column_name in combined_columns_names:
+                if combined_columns_names.count(column_name) > 1:
+                    error(f"Join column \'{column_name}\' must be unique across both tables", application.token)
+                    return NoneValue()
+
+            schema = SchemaValue(st, combined_columns)
             tbt = TableType(st)
             joined_table = TableValue(tbt, schema, joined_rows)
             return joined_table
@@ -243,15 +250,6 @@ class With(Builtin):
                     f"New column \'{name_value.value}\' must contain same number of rows ({row_count}) to be added to table",
                     application.token)
                 return NoneValue()
-
-
-# | string        | int | int    | int              | string      |
-# | name          | age | salary | years_experience | department  |
-# | Alice Johnson | 28  | 75000  | 5                | Engineering |
-# | Bob Smith     | 35  | 95000  | 12               | Marketing   |
-# | Carol Davis   | 42  | 110000 | 18               | Engineering |
-# | David Wilson  | 29  | 68000  | 3                | Sales       |
-# | Eva Brown     | 38  | 88000  | 15               | Marketing   |
 
             new_column_type = values_value.values[0].petl_type
             if isinstance(table_value.petl_type, TableType):

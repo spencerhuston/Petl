@@ -45,8 +45,16 @@ def test_single_let_range_definition(mocker, capsys):
 
 
 def test_type_mismatch_integer_literal_char_literal(mocker, capsys):
-    assert not get_petl_program_stdout(f"{directory_prefix}/type_mismatch_integer_literal_char_literal.petl", mocker, capsys) == """"""
+    assert "Type mismatch" in get_petl_program_stdout(f"{directory_prefix}/type_mismatch_integer_literal_char_literal.petl", mocker, capsys)
 
 
 def test_collection_parse_no_comma_error(mocker, capsys):
     assert "Argument count must be 1 for tuple access" in get_petl_program_stdout(f"{directory_prefix}/collection_parse_no_comma_error.petl", mocker, capsys)
+
+
+def test_no_after_let(mocker, capsys):
+    assert "Valid expression required" in get_petl_program_stdout(f"{directory_prefix}/no_after_let.petl", mocker, capsys)
+
+
+def test_collection_op_type(mocker, capsys):
+    assert "Type mismatch" in get_petl_program_stdout(f"{directory_prefix}/collection_op_type.petl", mocker, capsys)

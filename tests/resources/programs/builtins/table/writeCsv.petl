@@ -8,4 +8,4 @@ let t = createTable(
     ("Bob", 45, "$100000"),
     ("Mark", 23, "$45000")]
 );
-println(if writeCsv("resources/csvs/test_write", t, true) "Created successfully" else "Failed")
+println(if writeCsv(t, "resources/csvs/test_write", true) "Created successfully" else "Failed")

@@ -7,7 +7,7 @@ Creates a new ```table``` with the given schema ```s``` and rows ```r```
 
 ---
 
-```readCsv(p: string, header: bool, s: schema) -> table```<br>
+```readCsv(s: schema, p: string, header: bool) -> table```<br>
 Reads the CSV at path ```p``` and creates a new ```table``` according to schema ```s```
 if ```header``` is ```false``` or against the CSV's header row. **Note** that the file
 path ```p``` is relative to the interpreter's working directory and ".csv" is
@@ -15,7 +15,7 @@ automatically added
 
 ---
 
-```writeCsv(p: string, t: table, header: bool) -> bool```<br>
+```writeCsv(t: table, p: string, header: bool) -> bool```<br>
 Writes table ```t``` to path ```p```. Includes header row from schema-value from ```t```
 if ```header``` is ```true```. **Note** that the file path ```p``` is relative 
 to the interpreter's working directory and ".csv" is automatically added

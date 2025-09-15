@@ -375,29 +375,31 @@ class TreeWalkInterpreter(PetlPhase):
                 return BoolValue(left.value or right.value)
         return None
 
-    def evaluate_collection_operator(self, left: PetlValue, right: PetlValue, operator: Operator) -> Optional[PetlValue]:
-        if operator.operator_type == Operator.OperatorType.COLLECTION_CONCAT:
-            if isinstance(left, ListValue) and isinstance(right, ListValue):
-                return ListValue(left.petl_type, deepcopy(left.values) + deepcopy(right.values))
-            elif isinstance(left, TupleValue) and isinstance(right, TupleValue):
-                left_values: List[PetlValue] = deepcopy(left.values)
-                right_values: List[PetlValue] = deepcopy(right.values)
-                if isinstance(left.petl_type, TupleType) and isinstance(right.petl_type, TupleType):
-                    left_types: List[PetlType] = deepcopy(left.petl_type.tuple_types)
-                    right_types: List[PetlType] = deepcopy(right.petl_type.tuple_types)
-                    return TupleValue(TupleType(left_types + right_types), left_values + right_values)
-            elif isinstance(left, DictValue) and isinstance(right, DictValue):
-                pass
+    def evaluate_collection_operator(self, left: PetlValue, right: PetlValue, operator: Operator, token) -> Optional[PetlValue]:
+        if types_conform(token, left.petl_type, right.petl_type, self.error):
+            if operator.operator_type == Operator.OperatorType.COLLECTION_CONCAT:
+                if isinstance(left, ListValue) and isinstance(right, ListValue):
+                    return ListValue(left.petl_type, deepcopy(left.values) + deepcopy(right.values))
+                elif isinstance(left, TupleValue) and isinstance(right, TupleValue):
+                    left_values: List[PetlValue] = deepcopy(left.values)
+                    right_values: List[PetlValue] = deepcopy(right.values)
+                    if isinstance(left.petl_type, TupleType) and isinstance(right.petl_type, TupleType):
+                        left_types: List[PetlType] = deepcopy(left.petl_type.tuple_types)
+                        right_types: List[PetlType] = deepcopy(right.petl_type.tuple_types)
+                        return TupleValue(TupleType(left_types + right_types), left_values + right_values)
+                elif isinstance(left, DictValue) and isinstance(right, DictValue):
+                    pass
         return None
 
     def evaluate_operator(self, token: Token, left: PetlValue, right: PetlValue, operator: Operator) -> PetlValue:
         result_value: Optional[PetlValue] = None
+
         if operator.is_arithmetic():
             result_value = self.evaluate_arithmetic_operator(left, right, operator)
         elif operator.is_boolean():
             result_value = self.evaluate_boolean_operator(left, right, operator)
         elif operator.is_collection():
-            result_value = self.evaluate_collection_operator(left, right, operator)
+            result_value = self.evaluate_collection_operator(left, right, operator, token)
         else:
             self.error(f"Invalid operator", token)
 

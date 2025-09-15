@@ -14,3 +14,7 @@ def test_data_stream_example(mocker, capsys):
 
 def test_table_doc_test(mocker, capsys):
     assert get_petl_program_stdout(f"{directory_prefix}/table_doc_test.petl", mocker, capsys) == """[60000, 100000, 45000]"""
+
+
+def test_employee_analysis(mocker, capsys):
+    assert get_petl_program_stdout(f"{directory_prefix}/employee_analysis.petl", mocker, capsys).endswith("""[15000, 7916, 6111, 22666, 5866]""")

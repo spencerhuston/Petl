@@ -2,15 +2,15 @@ alias raw_employee_row = tuple[string, string, string, int, string];
 alias employee_row = tuple[string, string, string, int, int];
 
 let employees_table = readCsv(
-    "./resources/csvs/100_line_csv_test",
-    true,
     ${
         first: string,
         last: string,
         email: string,
         age: int,
         salary: string
-    }
+    },
+    "./resources/csvs/100_line_csv_test",
+    true
 );
 
 let isDigit = |c: char| -> bool {

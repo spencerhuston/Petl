@@ -151,6 +151,9 @@ class Parser(PetlPhase):
         after_let_expression: Optional[Expression] = None
         if self.match(Delimiter.STMT_END):
             after_let_expression = self.parse_expression()
+            if isinstance(after_let_expression, UnknownExpression):
+                self.error(f"Valid expression required after \';\'", token)
+
         expression_type = after_let_expression.petl_type if after_let_expression else NoneType
 
         return Let(expression_type, token, let_identifiers, let_type, let_expression, after_let_expression)
