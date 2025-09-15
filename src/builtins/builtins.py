@@ -65,14 +65,16 @@ _builtins: Dict[str, Builtin] = {
     # -----------------------------------------
     # Table
     Keyword.CREATETABLE.value: CreateTable(),
+    Keyword.COLUMN.value: Column(),
     Keyword.READCSV.value: ReadCsv(),
     Keyword.WRITECSV.value: WriteCsv(),
     Keyword.JOIN.value: Join(),
     Keyword.WITH.value: With(),
+    Keyword.APPEND.value: Append(),
     Keyword.SELECT.value: Select(),
     Keyword.DROP.value: Drop(),
-    Keyword.COLUMNS.value: Columns(),
-    Keyword.COLUMN.value: Column(),
+    Keyword.GETCOLUMNS.value: GetColumns(),
+    Keyword.GETCOLUMN.value: GetColumn(),
     Keyword.COLLECT.value: Collect(),
     Keyword.COUNT.value: Count(),
     # end Table

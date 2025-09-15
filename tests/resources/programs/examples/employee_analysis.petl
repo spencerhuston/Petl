@@ -27,12 +27,12 @@ println("");
 
 # Calculate salary bonuses (10% of salary)
 let bonus_calculator = |salary: int| -> int { salary * 10 / 100 };
-let salaries_with_bonus = employees |> column("salary") |> map(bonus_calculator);
+let salaries_with_bonus = employees |> getColumn("salary") |> map(bonus_calculator);
 println("Salary Bonuses (10%):");
 println(salaries_with_bonus);
 
 # Calculate total compensation (salary + bonus)
-let total_compensation = employees |> column("salary") |> map(|s: int| -> int { s + (s * 10 / 100) });
+let total_compensation = employees |> getColumn("salary") |> map(|s: int| -> int { s + (s * 10 / 100) });
 println("Total Compensation (Salary + Bonus):");
 println(total_compensation);
 
@@ -43,7 +43,7 @@ println(experienced_employees);
 println("");
 
 # Calculate average salary by department (using manual filtering since string literals are broken in PQL)
-let all_salaries = employees |> column("salary");
+let all_salaries = employees |> getColumn("salary");
 let engineering_salaries = [75000, 110000];  # Alice and Carol are in Engineering
 let marketing_salaries = [95000, 88000];      # Bob and Eva are in Marketing
 
@@ -58,7 +58,7 @@ println("Average Marketing Salary:");
 println(avg_marketing);
 
 # Create a salary ranking (highest to lowest)
-let sorted_salaries = employees |> column("salary") |> sort();
+let sorted_salaries = employees |> getColumn("salary") |> sort();
 let salary_ranking = sorted_salaries |> reverse();
 println("Salary Ranking (Highest to Lowest):");
 println(salary_ranking);
@@ -71,12 +71,12 @@ let growth_calculator = |age: int, experience: int| -> int {
 };
 
 # Calculate growth potential for each employee
-let ages = employees |> column("age");
-let experiences = employees |> column("years_experience");
+let ages = employees |> getColumn("age");
+let experiences = employees |> getColumn("years_experience");
 let age_exp_pairs = ages |> zip(experiences);
 let growth_potentials = age_exp_pairs |> map(|pair: tuple[int, int]| -> int { growth_calculator(pair(0), pair(1)) });
 
-# Add growth potential as a new column
+# Add growth potential as a new getColumn
 let employees_with_growth = employees |> with("growth_potential", growth_potentials);
 
 println("Employees with Growth Potential:");
@@ -84,19 +84,19 @@ println(employees_with_growth);
 println("");
 
 # Find the employee with the highest growth potential
-let max_growth = employees_with_growth |> column("growth_potential") |> max();
+let max_growth = employees_with_growth |> getColumn("growth_potential") |> max();
 println("Maximum Growth Potential Score:");
 println(max_growth);
 
 # Calculate total company salary budget
-let total_budget = employees |> column("salary") |> sum();
+let total_budget = employees |> getColumn("salary") |> sum();
 println("Total Company Salary Budget:");
 println(total_budget);
 
 # Calculate salary efficiency (salary per year of experience)
 let efficiency_calculator = |salary: int, experience: int| -> int { salary / experience };
-let salaries_for_efficiency = employees |> column("salary");
-let experiences_for_efficiency = employees |> column("years_experience");
+let salaries_for_efficiency = employees |> getColumn("salary");
+let experiences_for_efficiency = employees |> getColumn("years_experience");
 let salary_exp_pairs = salaries_for_efficiency |> zip(experiences_for_efficiency);
 let salary_efficiency = salary_exp_pairs |> map(|pair: tuple[int, int]| -> int { efficiency_calculator(pair(0), pair(1)) });
 

@@ -10,16 +10,16 @@ def test_collect(mocker, capsys):
     assert get_petl_program_stdout(f"{directory_prefix}/collect.petl", mocker, capsys) == """(Alice, 27, $60000)\n(Bob, 45, $100000)\n(Mark, 23, $45000)"""
 
 
-def test_columns(mocker, capsys):
-    assert get_petl_program_stdout(f"{directory_prefix}/columns.petl", mocker, capsys) == """[(Alice, 27), (Bob, 45), (Mark, 23)]"""
+def test_get_columns(mocker, capsys):
+    assert get_petl_program_stdout(f"{directory_prefix}/get_columns.petl", mocker, capsys) == """[(Alice, 27), (Bob, 45), (Mark, 23)]"""
 
 
-def test_column(mocker, capsys):
-    assert get_petl_program_stdout(f"{directory_prefix}/column.petl", mocker, capsys) == """[Alice, Bob, Mark]"""
+def test_get_column(mocker, capsys):
+    assert get_petl_program_stdout(f"{directory_prefix}/get_column.petl", mocker, capsys) == """[Alice, Bob, Mark]"""
 
 
-def test_column_does_not_exist(mocker, capsys):
-    assert """Column 'test' does not exist in this table""" in get_petl_program_stdout(f"{directory_prefix}/column_does_not_exist.petl", mocker, capsys)
+def test_get_column_does_not_exist(mocker, capsys):
+    assert """Column 'test' does not exist in this table""" in get_petl_program_stdout(f"{directory_prefix}/get_column_does_not_exist.petl", mocker, capsys)
 
 
 def test_count(mocker, capsys):
@@ -63,3 +63,11 @@ def test_join_duplicate_name(mocker, capsys):
 
 def test_select(mocker, capsys):
     assert get_petl_program_stdout(f"{directory_prefix}/select.petl", mocker, capsys) == """[(Alice, 27), (Bob, 45)]"""
+
+
+def test_column(mocker, capsys):
+    assert get_petl_program_stdout(f"{directory_prefix}/column.petl", mocker, capsys) == """[(1), (2), (3)]"""
+
+
+def test_append(mocker, capsys):
+    assert get_petl_program_stdout(f"{directory_prefix}/append.petl", mocker, capsys) == """(Eve, 30, $75000)"""

@@ -82,6 +82,32 @@ class CreateTable(Builtin):
         return NoneValue()
 
 
+class Column(Builtin):
+    def __init__(self):
+        parameters = [
+            ("list", ListType(AnyType())),
+            ("name", StringType())
+        ]
+        Builtin.__init__(self, Keyword.COLUMN.value, parameters, TableType())
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        list_value: PetlValue = environment.get("list", application.token, error)
+        name_value: PetlValue = environment.get("name", application.token, error)
+        if isinstance(list_value, ListValue) and isinstance(name_value, StringValue):
+            if len(list_value.values) == 0:
+                error("Cannot create table from empty list", application.token)
+                return NoneValue()
+            element_type = list_value.values[0].petl_type
+            if isinstance(list_value.petl_type, ListType):
+                list_value.petl_type.element_type = element_type
+
+            st = SchemaType([element_type])
+            schema = SchemaValue(st, [(name_value, element_type)])
+            rows = list(map(lambda v: TupleValue(TupleType([element_type]), [v]), list_value.values))
+            return TableValue(TableType(st), schema, rows)
+        return NoneValue()
+
+
 class ReadCsv(Builtin):
     def __init__(self):
         parameters = [
@@ -265,6 +291,33 @@ class With(Builtin):
         return NoneValue()
 
 
+class Append(Builtin):
+    def __init__(self):
+        parameters = [
+            ("table", TableType()),
+            ("rows", ListType(TupleType()))
+        ]
+        Builtin.__init__(self, Keyword.APPEND.value, parameters, TableType())
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        table_value: PetlValue = environment.get("table", application.token, error)
+        rows_value: PetlValue = environment.get("rows", application.token, error)
+        if isinstance(table_value, TableValue) and isinstance(rows_value, ListValue):
+            for row in rows_value.values:
+                if isinstance(row, TupleValue):
+                    if len(row.values) != len(table_value.schema.values):
+                        error(f"Appended row must have same number of columns as table", application.token)
+                        return NoneValue()
+                    for value, column in zip(row.values, table_value.schema.values):
+                        if not types_conform(application.token, value.petl_type, column[1], error):
+                            return NoneValue()
+                    if isinstance(row.petl_type, TupleType) and isinstance(table_value.petl_type, TableType):
+                        row.petl_type.tuple_types = table_value.petl_type.schema_type.column_types
+                    table_value.rows.append(row)
+            return table_value
+        return NoneValue()
+
+
 class Select(Builtin):
     def __init__(self):
         parameters = [
@@ -341,13 +394,13 @@ class Drop(Builtin):
         return NoneValue()
 
 
-class Columns(Builtin):
+class GetColumns(Builtin):
     def __init__(self):
         parameters = [
             ("table", TableType()),
             ("names", ListType(StringType()))
         ]
-        Builtin.__init__(self, Keyword.COLUMNS.value, parameters, TableType())
+        Builtin.__init__(self, Keyword.GETCOLUMNS.value, parameters, TableType())
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         table_value: PetlValue = environment.get("table", application.token, error)
@@ -377,13 +430,13 @@ class Columns(Builtin):
         return NoneValue()
 
 
-class Column(Builtin):
+class GetColumn(Builtin):
     def __init__(self):
         parameters = [
             ("table", TableType()),
             ("name", StringType())
         ]
-        Builtin.__init__(self, Keyword.COLUMN.value, parameters, ListType(TupleType()))
+        Builtin.__init__(self, Keyword.GETCOLUMN.value, parameters, ListType(TupleType()))
 
     def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
         table_value: PetlValue = environment.get("table", application.token, error)

@@ -8,4 +8,4 @@ let t = createTable(
     ("Bob", 45, "$100000"),
     ("Mark", 23, "$45000")]
 );
-println(collect(columns(t, ["name", "age"])))
+println(getColumn(t, "test"))

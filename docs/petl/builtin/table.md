@@ -7,6 +7,11 @@ Creates a new ```table``` with the given schema ```s``` and rows ```r```
 
 ---
 
+```column(c: list[any]) -> table```<br>
+Creates a new single-column ```table``` from the given list ```c```
+
+---
+
 ```readCsv(s: schema, p: string, header: bool) -> table```<br>
 Reads the CSV at path ```p``` and creates a new ```table``` according to schema ```s```
 if ```header``` is ```false``` or against the CSV's header row. **Note** that the file
@@ -37,6 +42,11 @@ Adds a new column of name ```name``` and values ```vs``` to table ```t```
 
 ---
 
+```append(t: table, r: list[tuple[...]]) -> table```<br>
+Appends one or more rows to table ```t```
+
+---
+
 ```select(t: table, cs: list[string], q: string) -> table```<br>
 Selects one or more columns in list ```cs``` that pass the PQL query ```q```. More details
 are available on the [Queries](../core/queries.md) page
@@ -52,13 +62,13 @@ Removes column of name ```c``` from table ```t```
 
 ---
 
-```columns(t: table, cs: list[string]) -> table```<br>
+```getColumns(t: table, cs: list[string]) -> table```<br>
 Returns a subset of table ```t``` with only columns ```cs```. 
 Like ```select``` but with no query
 
 ---
 
-```column(t: table, c: string) -> list[any]```<br>
+```getColumn(t: table, c: string) -> list[any]```<br>
 Returns values of column of name ```c``` from table ```t``` as a ```list```
 
 ---

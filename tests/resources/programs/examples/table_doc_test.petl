@@ -22,5 +22,5 @@ let format_salary = |salary: string| -> int {
     salary |> filter(is_digit) |> toInt
 };
 
-let salaries = t |> column("salary") |> map(format_salary);
+let salaries = t |> getColumn("salary") |> map(format_salary);
 println(salaries)
