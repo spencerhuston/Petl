@@ -21,6 +21,6 @@ let t2 = createTable(
 );
 
 t1 |> join(t2, ["left.name", "left.age", "right.state"], "left.name == right.name and left.age in 25~45")
-|> select(["name"], "state == "Texas"")
+|> select(["name"], """state == "Texas"""")
 |> collect()
 |> println

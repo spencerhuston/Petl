@@ -24,15 +24,11 @@ def petl_to_query_value(value: PetlValue) -> QueryValue:
 
 
 def execute_query(query_text: str, variables: List[Tuple[str, PetlValue]], token, error) -> bool:
-    try:
-        tokens: List[QueryToken] = QueryLexer().scan(query_text)
-        query_ast_root: QueryExpression = QueryParser().parse(tokens)
-        environment = QueryEnvironment()
-        for variable in variables:
-            environment.add(identifier=variable[0], value=petl_to_query_value(variable[1]))
-        query_result_value: QueryValue = QueryInterpreter().interpret(query_ast_root, environment)
-        if isinstance(query_result_value, QueryBoolValue):
-            return query_result_value.value
-    except Exception as query_exception:
-        error(f"Query failed: {query_exception}", token)
-    return False
+    tokens: List[QueryToken] = QueryLexer().scan(query_text)
+    query_ast_root: QueryExpression = QueryParser().parse(tokens)
+    environment = QueryEnvironment()
+    for variable in variables:
+        environment.add(identifier=variable[0], value=petl_to_query_value(variable[1]))
+    query_result_value: QueryValue = QueryInterpreter().interpret(query_ast_root, environment, token, error)
+    if isinstance(query_result_value, QueryBoolValue):
+        return query_result_value.value

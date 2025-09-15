@@ -9,6 +9,6 @@ all available for direct usage in any Petl code without importing required.
 - [Iterable](./iterable.md)
 - [List](./list.md)
 - [Integer](./integer.md)
-- [String](./list.md)
+- [String](./string.md)
 - [I/O](./io.md)
 - [Miscellaneous](./misc.md)

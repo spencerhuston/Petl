@@ -24,11 +24,12 @@ class QueryInterpreter:
         else:
             raise Exception(f"Invalid type for pattern matching on literal value")
 
-    def interpret(self, root: QueryExpression, environment: QueryEnvironment) -> QueryValue:
+    def interpret(self, root: QueryExpression, environment: QueryEnvironment, token, error) -> QueryValue:
         try:
             return self.evaluate(root, environment, QueryBoolType())
         except Exception as interpreter_exception:
-            raise Exception(f"Unhandled exception while interpreting: {interpreter_exception}, {traceback.format_exc()}")
+            error(f"Unhandled exception while interpreting: {interpreter_exception}", token)
+            return QueryBoolValue(False)
 
     def evaluate(self, expression: QueryExpression, environment: QueryEnvironment, expected_type: QueryType) -> QueryValue:
         if isinstance(expression, QueryLitExpression):

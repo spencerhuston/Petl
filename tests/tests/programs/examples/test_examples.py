@@ -12,6 +12,10 @@ def test_data_stream_example(mocker, capsys):
     assert get_petl_program_stdout(f"{directory_prefix}/data_stream_example.petl", mocker, capsys) == """[50000, 35000]"""
 
 
+def test_query_doc_test(mocker, capsys):
+    assert get_petl_program_stdout(f"{directory_prefix}/query_doc_test.petl", mocker, capsys) == """[(Alice)]"""
+
+
 def test_table_doc_test(mocker, capsys):
     assert get_petl_program_stdout(f"{directory_prefix}/table_doc_test.petl", mocker, capsys) == """[60000, 100000, 45000]"""
 

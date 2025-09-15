@@ -319,6 +319,9 @@ class Parser(PetlPhase):
                     return LitExpression(CharType(), token, CharLiteral(token.token_value.replace('\'', '')))
                 else:
                     return LitExpression(StringType(), token, StringLiteral(token.token_value.replace('\'', '')))
+            elif token.token_value.startswith("\"\"\""):
+                self.advance()
+                return LitExpression(StringType(), token, StringLiteral(token.token_value.replace('\"\"\"', '')))
             elif token.token_value.startswith('\"'):
                 self.advance()
                 return LitExpression(StringType(), token, StringLiteral(token.token_value.replace('\"', '')))

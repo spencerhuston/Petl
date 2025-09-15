@@ -11,11 +11,13 @@ operations among 1 or more values in a given row. The grammar for PQL be found
 ---
 
 ### Support
-1. All literal values in Petl (minus ```none```)
-2. All boolean and arithmetic operators available in Petl
-3. Ranges
-4. ```in``` operator for checking if an ```int``` value lives in a given ```range```
-5. Variable references
+1. To use quoted values like ```"<string>"``` or ```'<char>'``` within the query text, begin and
+end the entire query text with triple quotes, e.g. ```"""<string> == "Hello World""""```
+2. All literal values in Petl (minus ```none```)
+3. All boolean and arithmetic operators available in Petl
+4. Ranges
+5. ```in``` operator for checking if an ```int``` value lives in a given ```range```
+6. Variable references
    1. References are populated for a given row using the provided list of column 
    names
    2. Therefore, references used in a PQL query must exist in the columns listed for the given
@@ -24,8 +26,6 @@ operations among 1 or more values in a given row. The grammar for PQL be found
    4. For ```join``` calls, listed column names from the first listed table must have ```left.```
    appended to the front. Calls from the second table must have ```right.```. This ensures any
    column names that overlap between the two tables are correctly referenced
-
-###### Note: String literals in queries are currently broken
 
 #### Example
 ```
