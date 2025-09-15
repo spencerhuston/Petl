@@ -1,6 +1,7 @@
-ranges, type aliasing, union types
-
 ## Other
+
+---
+
 Petl supports a few other nice-to-have features.
 
 ---

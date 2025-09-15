@@ -1,4 +1,7 @@
 ## Pattern-matching
+
+---
+
 Another core feature of Petl is the ability to pattern-match. Petl supports pattern-matching
 via:
 - type - If the value is of the listed type

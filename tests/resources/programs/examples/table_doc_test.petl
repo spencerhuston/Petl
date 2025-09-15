@@ -1,0 +1,26 @@
+let s = ${
+        name: string,
+        age: int,
+        salary: string
+    };
+
+let t = createTable(
+    s,
+    [("Alice", 27, "$60,000"),
+     ("Bob", 45, "$100,000"),
+     ("Mark", 23, "$45,000")]
+);
+
+let is_digit = |c: char| -> bool {
+    match c {
+        case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => true,
+        case _ => false
+    }
+};
+
+let format_salary = |salary: string| -> int {
+    salary |> filter(is_digit) |> toInt
+};
+
+let salaries = t |> column("salary") |> map(format_salary);
+println(salaries)

@@ -1,4 +1,7 @@
 ## Primitive Operations
+
+---
+
 Like any another language, Petl hosts the usual unary and binary arithmetic and boolean
 operators. Usual operator precedence takes place.
 

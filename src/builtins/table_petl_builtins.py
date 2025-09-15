@@ -49,7 +49,10 @@ def get_column_types(table_column_indices: Dict[int, Tuple[str, PetlType]]) -> L
 
 
 def get_columns(table_column_indices: Dict[int, Tuple[str, PetlType]]) -> List[Tuple[StringValue, PetlType]]:
-    return list(map(lambda k: (StringValue(table_column_indices[k][0]), table_column_indices[k][1]), table_column_indices))
+    return list(map(
+        lambda k: (StringValue(table_column_indices[k][0].replace("left.", "").replace("right.", "")),
+                   table_column_indices[k][1]),
+        table_column_indices))
 # end helper functions #
 
 

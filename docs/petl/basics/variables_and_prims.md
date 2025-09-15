@@ -1,5 +1,7 @@
 ## Primitive Types
 
+---
+
 Petl has the following primitives:
 - ```int``` Integer type
 - ```bool``` Boolean type, either ```true``` or ```false```
@@ -19,7 +21,7 @@ variable is created. However, they can be redeclared and shadow the previous
 variable in a new scope. Likewise, _all_ statements that do not end in ```;``` 
 will implicitly return a value. 
 
-To declare a variable, use the following syntax
+To declare a variable, use the following syntax. Types are inferred.
 ```
 let a = 5
 ```

@@ -1,5 +1,3 @@
-bird operator)
-
 ## Lambdas
 
 ---
@@ -43,8 +41,9 @@ Being that data manipulation is a large focus in Petl, the language offers a bui
 function composition operator, ```|>```, that acts as an equivalent to ```andThen```
 in a language like Scala. It is purely syntactic sugar, done by allowing the first
 argument of a function to precede the function call itself before the operator. **Note** that
-if a function only has 1 argument the function can be called with _or_ without parenthesis.
-A function with zero parameters cannot be called with the operator.
+if a function only has 1 argument and it is the last call in the chain, the function 
+can be called with _or_ without parenthesis. A function with zero parameters cannot 
+be called with the operator.
 
 #### Examples
 ```
