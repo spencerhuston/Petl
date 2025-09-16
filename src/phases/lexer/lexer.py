@@ -1,5 +1,4 @@
 import functools
-import traceback
 from copy import deepcopy
 from typing import List, Optional
 

@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "petl"
+version = "0.1.0.1"
+authors = [
+    { name="Spencer Huston", email="sjh91910@gmail.com" },
+]
+description = "Petl is a strongly and statically-typed, interpreted, toy, general-purpose language focused on table-based data manipulation."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = [
+    "LICENSE",
+]
+
+[project.urls]
+Homepage = "https://github.com/spencerhuston/Petl"
+Issues = "https://github.com/spencerhuston/Petl/issues"
+
+[tool.setuptools]
+platforms = ["Linux", "MacOS", "Windows"]
+packages.find.include = ["src", "docs"]
+packages.find.exclude = ["tests", "tests.*"]
+
+[project.scripts]
+petl = "petl.main:main"
