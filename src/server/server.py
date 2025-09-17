@@ -1,25 +1,18 @@
-import atexit
-import csv
 import io
 import json
-import logging
 import os
-import shutil
 import uuid
-
 from contextlib import redirect_stdout
-from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Optional
 
-from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, session
 
 from petllang.execution.execute import execute_petl_script_direct
-
-logging.basicConfig(format='%(asctime)s %(message)s')
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+from server.cleanup import update_user_activity, add_new_user
+from server.csv_utils import FILE_COUNT_KEY, validate_csv_writable, create_csv_helper, CSV_DIRECTORY, delete_csv_helper
+from server.logger import logger
+from server.petlassistant import get_llm_response
 
 app = Flask(__name__)
 
@@ -28,24 +21,6 @@ app.config["SESSION_PERMANENT"] = False
 
 USER_ID_KEY = "userId"
 INTERPRETER_HISTORY_KEY = "history"
-
-CSV_DIRECTORY = Path(f"{os.getcwd()}/csvs")
-MAX_CSV_SIZE = 20000  # Maximum number of cells in CSV (rows * columns)
-
-FILE_COUNT_KEY = "file_count"
-MAX_FILE_COUNT = 5
-
-
-users: Dict[str, datetime] = {}
-
-
-def add_new_user(user_id: str):
-    users[user_id] = datetime.now()
-
-
-def update_user_activity(user_id: str):
-    if user_id in users:
-        users[user_id] = datetime.now()
 
 
 def valid_user() -> bool:
@@ -70,7 +45,6 @@ def start_session():
         logger.info(f"New session started with ID: {user_id}")
         return "Session started"
     else:
-        print(session)
         return "Session already exists"
 
 
@@ -112,55 +86,6 @@ def history():
     return json.dumps(session_history)
 
 
-def validate_csv_writable(csv_name: str,
-                          csv_content: str,
-                          user_csv_directory: Path,
-                          csv_path: Path) -> Optional[str]:
-    if not csv_name or not csv_content:
-        logger.warning("CSV name or content not provided")
-        return "CSV name and content must be provided."
-    elif len(csv_content[0]) * len(csv_content) > MAX_CSV_SIZE:
-        logger.warning("CSV exceeded maximum size")
-        return "CSV content exceeds maximum allowed size."
-    elif "," in csv_name or "/" in csv_name or "\\" in csv_name:
-        error_message = "CSV name contains invalid characters."
-        logger.warning(error_message)
-        return error_message
-
-    if not user_csv_directory.exists():
-        user_csv_directory.mkdir(parents=True, exist_ok=True)
-
-    if csv_path.exists():
-        logger.warning("Removing existing CSV")
-        os.remove(csv_path)
-
-    if session.get(FILE_COUNT_KEY, 0) >= MAX_FILE_COUNT:
-        return "Too many CSV files exist. Please delete some before creating new ones."
-
-    return None
-
-
-def create_csv_helper(csv_name: str, csv_path: Path, csv_content: str) -> Optional[str]:
-    logger.info(f"Creating new CSV: {csv_name}.csv")
-
-    try:
-        with open(csv_path, "w", newline="") as csv_file:
-            writer = csv.writer(csv_file)
-            writer.writerows(csv_content)
-
-        if FILE_COUNT_KEY in session:
-            session[FILE_COUNT_KEY] += 1
-        else:
-            session[FILE_COUNT_KEY] = 1
-
-        logger.info(f"CSV {csv_name}.csv created successfully.")
-        return None
-    except Exception as csv_write_exception:
-        error_message = f"Error writing CSV: {csv_write_exception}"
-        logger.error(error_message)
-        return error_message
-
-
 @app.route('/create_csv', methods=['POST'])
 def create_csv():
     if not valid_user():
@@ -193,51 +118,18 @@ def delete_csv():
     csv_name = request.get_json()["name"]
     user_csv_directory = Path(f"{CSV_DIRECTORY}/{session.get(USER_ID_KEY)}")
     csv_path = Path(f"{user_csv_directory}/{csv_name}.csv")
-
-    logger.info(f"Attempting to delete CSV at path: {csv_path}")
-
-    if os.path.exists(csv_path):
-        try:
-            os.remove(csv_path)
-            if FILE_COUNT_KEY in session and session[FILE_COUNT_KEY] > 0:
-                session[FILE_COUNT_KEY] -= 1
-
-            logger.info(f"CSV {csv_name}.csv deleted successfully.")
-            return json.dumps(os.listdir(user_csv_directory))
-        except Exception as delete_exception:
-            error_message = f"Error deleting CSV: {delete_exception}"
-            logger.error(error_message)
-            return error_message
+    return delete_csv_helper(csv_path, user_csv_directory)
 
 
-def cleanup():
-    for user in users.keys():
-        if (datetime.now() - users[user]).total_seconds() > 5:
-            del users[user]
-            user_csv_directory = Path(f"{os.getcwd()}/csvs/{user}")
-            try:
-                if os.path.exists(user_csv_directory):
-                    shutil.rmtree(user_csv_directory)
-            except Exception as cleanup_exception:
-                logger.error(f"Error cleaning up user directory {user_csv_directory}: {cleanup_exception}")
-            logger.info(f"Cleaned up user: {user}")
+@app.route('/chat', methods=['POST'])
+def process_chat():
+    if not valid_user():
+        return "Unauthorized", 401
 
+    chat_message = request.get_json()["message"]
+    logger.info(f"Received chat message:\n{chat_message}")
 
-def full_clean():
-    base_csv_directory = Path(f"{os.getcwd()}/csvs")
-    try:
-        if os.path.exists(base_csv_directory):
-            shutil.rmtree(base_csv_directory)
-    except Exception as full_clean_exception:
-        logger.error(f"Error performing full cleanup of {base_csv_directory}: {full_clean_exception}")
-    logger.info(f"Performed full cleanup of CSV directory")
-    session.clear()
+    response = get_llm_response(chat_message)
 
-
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=cleanup, trigger="interval", seconds=60)
-scheduler.start()
-
-# Shut down the scheduler when exiting the app
-atexit.register(lambda: scheduler.shutdown())
-atexit.register(lambda: full_clean())
+    logger.debug(response)
+    return response
