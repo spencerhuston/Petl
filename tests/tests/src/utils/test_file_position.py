@@ -1,4 +1,4 @@
-from src.utils.file_position import FilePosition
+from petllang.utils.file_position import FilePosition
 
 
 def test_to_string():

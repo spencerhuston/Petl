@@ -1,10 +1,10 @@
-import src.builtins.io_petl_builtins
-from src.phases.interpreter.definitions.types import IntType, BoolType, StringType, ListType, TupleType, DictType, \
+import petllang.builtins.io_petl_builtins
+from petllang.phases.interpreter.definitions.types import IntType, BoolType, StringType, ListType, TupleType, DictType, \
     SchemaType, TableType, FuncType
-from src.phases.interpreter.definitions.value import values_equal, IntValue, BoolValue, CharValue, StringValue, \
+from petllang.phases.interpreter.definitions.value import values_equal, IntValue, BoolValue, CharValue, StringValue, \
     NoneValue, \
     ListValue, TupleValue, DictValue, SchemaValue, TableValue, FuncValue
-from src.phases.parser.defintions.expression import IntLiteral, LitExpression
+from petllang.phases.parser.defintions.expression import IntLiteral, LitExpression
 
 
 def test_values_equal():
@@ -117,4 +117,4 @@ def test_func_value_to_string_not_builtin():
 
 
 def test_func_value_to_string_builtin():
-    assert src.builtins.io_petl_builtins.PrintLn().to_value().to_string() == "builtin:println(value: any) -> none"
+    assert petllang.builtins.io_petl_builtins.PrintLn().to_value().to_string() == "builtin:println(value: any) -> none"

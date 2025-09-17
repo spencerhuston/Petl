@@ -1,4 +1,4 @@
-from src.phases.interpreter.definitions.types import _type_list_to_string, IntType, BoolType, UnionType, ListType, TupleType, \
+from petllang.phases.interpreter.definitions.types import _type_list_to_string, IntType, BoolType, UnionType, ListType, TupleType, \
     DictType, SchemaType, TableType, FuncType
 
 

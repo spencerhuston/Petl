@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "petl"
-version = "0.1.0.1"
+name = "petllang"
+version = "0.1.1"
 authors = [
     { name="Spencer Huston", email="sjh91910@gmail.com" },
 ]
@@ -26,8 +26,6 @@ Issues = "https://github.com/spencerhuston/Petl/issues"
 
 [tool.setuptools]
 platforms = ["Linux", "MacOS", "Windows"]
-packages.find.include = ["src", "docs"]
-packages.find.exclude = ["tests", "tests.*"]
 
 [project.scripts]
-petl = "petl.main:main"
+petl = "petllang:main"

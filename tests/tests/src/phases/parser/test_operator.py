@@ -1,4 +1,4 @@
-from src.phases.parser.defintions.operator import Operator
+from petllang.phases.parser.defintions.operator import Operator
 
 
 def test_to_string():

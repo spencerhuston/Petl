@@ -1,8 +1,8 @@
-from src.phases.lexer.definitions.delimiter import Delimiter
-from src.phases.lexer.definitions.keyword_petl import Keyword
-from src.phases.lexer.definitions.token_petl import Token
-from src.phases.parser.defintions.operator import Operator
-from src.utils.file_position import FilePosition
+from petllang.phases.lexer.definitions.delimiter import Delimiter
+from petllang.phases.lexer.definitions.keyword_petl import Keyword
+from petllang.phases.lexer.definitions.token_petl import Token
+from petllang.phases.parser.defintions.operator import Operator
+from petllang.utils.file_position import FilePosition
 
 
 def test_get_value_string():

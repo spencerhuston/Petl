@@ -1,5 +1,5 @@
-from src.phases.lexer.definitions.delimiter import Delimiter, delimiter_to_operator
-from src.phases.parser.defintions.operator import Operator
+from petllang.phases.lexer.definitions.delimiter import Delimiter, delimiter_to_operator
+from petllang.phases.parser.defintions.operator import Operator
 
 
 def test_delimiter_to_operator():
