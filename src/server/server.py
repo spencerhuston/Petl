@@ -1,12 +1,18 @@
+import atexit
 import csv
 import io
 import json
 import logging
 import os
+import shutil
 import uuid
+
 from contextlib import redirect_stdout
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict
+
+from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, session
 
 from petllang.execution.execute import execute_petl_script_direct
@@ -17,11 +23,10 @@ logger.setLevel(logging.DEBUG)
 
 app = Flask(__name__)
 
-app.secret_key = 'BAD_SECRET_KEY'
+app.secret_key = os.urandom(32)
 app.config["SESSION_PERMANENT"] = False
 
 USER_ID_KEY = "userId"
-
 INTERPRETER_HISTORY_KEY = "history"
 
 CSV_DIRECTORY = Path(f"{os.getcwd()}/csvs")
@@ -31,27 +36,47 @@ FILE_COUNT_KEY = "file_count"
 MAX_FILE_COUNT = 5
 
 
-def validate_user_id() -> bool:
+users: Dict[str, datetime] = {}
+
+
+def add_new_user(user_id: str):
+    users[user_id] = datetime.now()
+
+
+def update_user_activity(user_id: str):
+    if user_id in users:
+        users[user_id] = datetime.now()
+
+
+def valid_user() -> bool:
     user_id = session.get(USER_ID_KEY)
     if not user_id:
         logger.warning("No user ID found in session")
         return False
     logger.info(f"User ID: {user_id}")
+    update_user_activity(user_id)
     return True
 
 
 @app.route('/')
 def start_session():
-    session[USER_ID_KEY] = uuid.uuid4()
-    session[FILE_COUNT_KEY] = 0
-    session[INTERPRETER_HISTORY_KEY] = []
-    logger.info(f"New session started with ID: {session.get(USER_ID_KEY)}")
-    return 200
+    if USER_ID_KEY not in session:
+        user_id = uuid.uuid4()
+        session[USER_ID_KEY] = user_id
+        session[FILE_COUNT_KEY] = 0
+        session[INTERPRETER_HISTORY_KEY] = []
+
+        add_new_user(str(user_id))
+        logger.info(f"New session started with ID: {user_id}")
+        return "Session started"
+    else:
+        print(session)
+        return "Session already exists"
 
 
 @app.route('/interpret', methods=['POST'])
 def interpret():
-    if not validate_user_id():
+    if not valid_user():
         return "Unauthorized", 401
 
     petl_input: str = request.get_json()["input"]
@@ -59,7 +84,9 @@ def interpret():
     logger.info("New interpreter request")
     logger.debug(f"\nInterpreter Input\n{petl_input}\n")
 
-    session[INTERPRETER_HISTORY_KEY].append(petl_input)
+    temp = session[INTERPRETER_HISTORY_KEY]
+    temp.append(petl_input)
+    session[INTERPRETER_HISTORY_KEY] = temp
 
     try:
         stdout_buffer = io.StringIO()
@@ -77,7 +104,7 @@ def interpret():
 
 @app.route('/history', methods=['GET'])
 def history():
-    if not validate_user_id():
+    if not valid_user():
         return "Unauthorized", 401
 
     session_history = session.get(INTERPRETER_HISTORY_KEY, [])
@@ -136,7 +163,7 @@ def create_csv_helper(csv_name: str, csv_path: Path, csv_content: str) -> Option
 
 @app.route('/create_csv', methods=['POST'])
 def create_csv():
-    if not validate_user_id():
+    if not valid_user():
         return "Unauthorized", 401
 
     request_json = request.get_json()
@@ -160,7 +187,7 @@ def create_csv():
 
 @app.route('/delete_csv', methods=['POST'])
 def delete_csv():
-    if not validate_user_id():
+    if not valid_user():
         return "Unauthorized", 401
 
     csv_name = request.get_json()["name"]
@@ -181,3 +208,36 @@ def delete_csv():
             error_message = f"Error deleting CSV: {delete_exception}"
             logger.error(error_message)
             return error_message
+
+
+def cleanup():
+    for user in users.keys():
+        if (datetime.now() - users[user]).total_seconds() > 5:
+            del users[user]
+            user_csv_directory = Path(f"{os.getcwd()}/csvs/{user}")
+            try:
+                if os.path.exists(user_csv_directory):
+                    shutil.rmtree(user_csv_directory)
+            except Exception as cleanup_exception:
+                logger.error(f"Error cleaning up user directory {user_csv_directory}: {cleanup_exception}")
+            logger.info(f"Cleaned up user: {user}")
+
+
+def full_clean():
+    base_csv_directory = Path(f"{os.getcwd()}/csvs")
+    try:
+        if os.path.exists(base_csv_directory):
+            shutil.rmtree(base_csv_directory)
+    except Exception as full_clean_exception:
+        logger.error(f"Error performing full cleanup of {base_csv_directory}: {full_clean_exception}")
+    logger.info(f"Performed full cleanup of CSV directory")
+    session.clear()
+
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=cleanup, trigger="interval", seconds=60)
+scheduler.start()
+
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
+atexit.register(lambda: full_clean())
