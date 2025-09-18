@@ -68,14 +68,14 @@ class Pattern(ABC):
 
 @dataclass
 class TypePattern(Pattern):
-    identifier: str = ""
-    case_type: PetlType = UnknownType()
-    predicate: Optional[Expression] = None
+    identifier: str = field(default="")
+    case_type: PetlType = field(default=UnknownType())
+    predicate: Optional[Expression] = field(default=None)
 
 
 @dataclass
 class LiteralPattern(Pattern):
-    literal: Literal = NoneLiteral()
+    literal: Literal = field(default=NoneLiteral())
 
 
 @dataclass
@@ -85,7 +85,7 @@ class MultiLiteralPattern(Pattern):
 
 @dataclass
 class RangePattern(Pattern):
-    range: Expression = UnknownExpression()
+    range: Expression = field(default=UnknownExpression())
 
 
 @dataclass
@@ -100,8 +100,8 @@ class UnknownPattern(Pattern):
 
 @dataclass
 class Case:
-    pattern: Pattern = UnknownPattern()
-    case_expression: Expression = UnknownExpression()
+    pattern: Pattern = field(default=UnknownPattern())
+    case_expression: Expression = field(default=UnknownExpression())
 
 
 # End pattern matching definitions
@@ -112,55 +112,55 @@ class Case:
 
 @dataclass
 class LitExpression(Expression):
-    literal: Literal = Literal()
+    literal: Literal = field(default=Literal())
 
 
 @dataclass
 class Let(Expression):
     identifiers: List[str] = field(default_factory=list)
-    let_type: PetlType = UnknownType()
-    let_expression: Expression = UnknownExpression()
-    after_let_expression: Expression = UnknownExpression()
+    let_type: PetlType = field(default=UnknownType())
+    let_expression: Expression = field(default=UnknownExpression())
+    after_let_expression: Expression = field(default=UnknownExpression())
 
 
 @dataclass
 class Alias(Expression):
     identifier: str = ""
-    alias_type: PetlType = UnknownType()
-    after_alias_expression: Expression = UnknownExpression()
+    alias_type: PetlType = field(default=UnknownType())
+    after_alias_expression: Expression = field(default=UnknownExpression())
 
 
 @dataclass
 class Parameter:
     identifier: str = ""
-    parameter_type: PetlType = UnknownType()
+    parameter_type: PetlType = field(default=UnknownType())
     token: Token = Token()
 
 
 @dataclass
 class Lambda(Expression):
     parameters: List[Parameter] = field(default_factory=list)
-    return_type: PetlType = UnknownType()
-    body: Expression = UnknownExpression()
+    return_type: PetlType = field(default=UnknownType())
+    body: Expression = field(default=UnknownExpression())
 
 
 @dataclass
 class Application(Expression):
-    identifier: Expression = UnknownExpression()
+    identifier: Expression = field(default=UnknownExpression())
     arguments: List[Expression] = field(default_factory=list)
 
 
 @dataclass
 class Match(Expression):
-    match_expression: Expression = UnknownExpression()
+    match_expression: Expression = field(default=UnknownExpression())
     cases: List[Case] = field(default_factory=list)
 
 
 @dataclass
 class Primitive(Expression):
     operator: Operator = Operator()
-    left: Expression = UnknownExpression()
-    right: Expression = UnknownExpression()
+    left: Expression = field(default=UnknownExpression())
+    right: Expression = field(default=UnknownExpression())
 
 
 @dataclass
@@ -170,17 +170,17 @@ class Reference(Expression):
 
 @dataclass
 class Branch(Expression):
-    predicate: Expression = UnknownExpression()
-    if_branch: Expression = UnknownExpression()
-    else_branch: Expression = UnknownExpression()
+    predicate: Expression = field(default=UnknownExpression())
+    if_branch: Expression = field(default=UnknownExpression())
+    else_branch: Expression = field(default=UnknownExpression())
 
 
 @dataclass
 class For(Expression):
     reference: str = ""
-    iterable: Expression = UnknownExpression()
-    body: Expression = UnknownExpression()
-    after_for_expression: Expression = UnknownExpression()
+    iterable: Expression = field(default=UnknownExpression())
+    body: Expression = field(default=UnknownExpression())
+    after_for_expression: Expression = field(default=UnknownExpression())
 
 
 @dataclass
@@ -190,8 +190,8 @@ class ListDefinition(Expression):
 
 @dataclass
 class RangeDefinition(Expression):
-    start: Literal = Literal()
-    end: Literal = Literal()
+    start: Literal = field(default=Literal())
+    end: Literal = field(default=Literal())
 
 
 @dataclass
