@@ -22,7 +22,9 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install pytest
       - name: Test with pytest
-        run: python3 -m pytest tests/tests --doctest-modules --junitxml=junit/test-results-${{ matrix.python-version }}.xml
+        run: |
+          cd tests
+          python3 -m pytest tests --doctest-modules --junitxml=junit/test-results-${{ matrix.python-version }}.xml
       - name: Upload pytest test results
         uses: actions/upload-artifact@v4
         with:
