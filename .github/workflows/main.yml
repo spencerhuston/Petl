@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install pytest
+          python3 -m pip install -r requirements.txt
       - name: Test with pytest
         run: python3 -m pytest --doctest-modules --junitxml=junit/test-results-${{ matrix.python-version }}.xml
       - name: Upload pytest test results
