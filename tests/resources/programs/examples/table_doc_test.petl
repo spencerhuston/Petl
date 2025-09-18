@@ -19,7 +19,7 @@ let is_digit = |c: char| -> bool {
 };
 
 let format_salary = |salary: string| -> int {
-    salary |> filter(is_digit) |> toInt
+    salary |> filter(is_digit) |> joinStr("") |> toInt
 };
 
 let salaries = t |> getColumn("salary") |> map(format_salary);

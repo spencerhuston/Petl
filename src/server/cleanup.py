@@ -6,12 +6,12 @@ from pathlib import Path
 from typing import Dict
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from flask import session
 
 from server.logger import logger
 
 users: Dict[str, datetime] = {}
-USER_SESSION_TIMEOUT_DURATION = 60 * 60 * 2
+USER_SESSION_TIMEOUT_DURATION = 60 * 30 # 30 minutes
+CLEANUP_INTERVAL = 60 * 15 # 15 minutes
 
 
 def add_new_user(user_id: str):
@@ -24,9 +24,9 @@ def update_user_activity(user_id: str):
 
 
 def cleanup():
-    for user in users.keys():
+    users_keys = users.keys()
+    for user in users_keys:
         if (datetime.now() - users[user]).total_seconds() > USER_SESSION_TIMEOUT_DURATION:
-            del users[user]
             user_csv_directory = Path(f"{os.getcwd()}/csvs/{user}")
             try:
                 if os.path.exists(user_csv_directory):
@@ -44,11 +44,10 @@ def full_clean():
     except Exception as full_clean_exception:
         logger.error(f"Error performing full cleanup of {base_csv_directory}: {full_clean_exception}")
     logger.info(f"Performed full cleanup of CSV directory")
-    session.clear()
 
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=cleanup, trigger="interval", seconds=60 * 15)
+scheduler.add_job(func=cleanup, trigger="interval", seconds=CLEANUP_INTERVAL)
 scheduler.start()
 
 # Shut down the scheduler when exiting the app

@@ -29,7 +29,7 @@ let isDigit = |c: char| -> bool {
     }
 };
 let salaryToString = |salary: string| -> int {
-    salary |> filter(isDigit) |> toInt()
+    salary |> filter(isDigit) |> joinStr("") |> toInt()
 };
 let formatEmployeeRow = |row: raw_employee_row| -> employee_row {
     (row(0), row(1), row(2), row(3), salaryToString(row(4)))

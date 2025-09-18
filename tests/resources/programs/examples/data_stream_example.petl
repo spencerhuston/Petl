@@ -19,7 +19,7 @@ let getSalary = |entry: tuple[string, string]| -> string {
 };
 
 let salaryStringToInt = |salaryString: string| -> int {
-    salaryString |> filter(isDigit) |> toInt
+    salaryString |> filter(isDigit) |> joinStr("") |> toInt
 };
 
 let createSalaryFilter = |salaryLimit: int| -> int -> bool {
