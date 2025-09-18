@@ -1,5 +1,5 @@
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pprint import pformat
 from typing import Union
 
@@ -9,7 +9,7 @@ from petllang.query.parser.operator import QueryOperator
 
 @dataclass
 class QueryExpression(ABC):
-    query_type: QueryType = QueryUnknownType()
+    query_type: QueryType = field(default_factory=QueryUnknownType)
 
     def to_string(self):
         return pformat(self)
@@ -22,7 +22,7 @@ class QueryUnknownExpression(QueryExpression):
 
 @dataclass
 class QueryLiteral(ABC):
-    value: Union[int, bool, str, None] = None
+    value: Union[int, bool, str, None] = field(default_factory=str)
 
 
 @dataclass
@@ -47,22 +47,22 @@ class QueryStringLiteral(QueryLiteral):
 
 @dataclass
 class QueryLitExpression(QueryExpression):
-    literal: QueryLiteral = QueryLiteral()
+    literal: QueryLiteral = field(default_factory=QueryLiteral)
 
 
 @dataclass
 class QueryPrimitive(QueryExpression):
-    operator: QueryOperator = QueryOperator()
-    left: QueryExpression = QueryUnknownExpression()
-    right: QueryExpression = QueryUnknownExpression()
+    operator: QueryOperator = field(default_factory=QueryOperator)
+    left: QueryExpression = field(default_factory=QueryUnknownExpression)
+    right: QueryExpression = field(default_factory=QueryUnknownExpression)
 
 
 @dataclass
 class QueryReference(QueryExpression):
-    identifier: str = ""
+    identifier: str = field(default_factory=str)
 
 
 @dataclass
 class QueryRangeDefinition(QueryExpression):
-    start: QueryLiteral = QueryLiteral()
-    end: QueryLiteral = QueryLiteral()
+    start: QueryLiteral = field(default_factory=QueryLiteral)
+    end: QueryLiteral = field(default_factory=QueryLiteral)

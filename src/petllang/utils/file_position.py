@@ -1,11 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
 class FilePosition:
-    line: int = 0
-    column: int = 0
-    line_text: str = ""
+    line: int = field(default_factory=int)
+    column: int = field(default_factory=int)
+    line_text: str = field(default_factory=str)
 
     def to_string(self):
         character_location_str: str = ('-' * self.column) + "^"

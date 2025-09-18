@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Union, Optional
 
@@ -17,7 +17,7 @@ class Token:
         VALUE = 3,
         IDENT = 4
 
-    token_value: Union[str, Delimiter, Keyword] = ""
+    token_value: Union[str, Delimiter, Keyword] = field(default_factory=str)
 
     def __init__(self, token_type=TokenType.UNKNOWN, file_position=FilePosition(), token_value=""):
         self.token_type = token_type

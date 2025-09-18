@@ -10,8 +10,8 @@ from petllang.phases.parser.defintions.operator import Operator
 
 @dataclass
 class Expression(ABC):
-    petl_type: PetlType = UnknownType()
-    token: Token = Token()
+    petl_type: PetlType = field(default_factory=UnknownType)
+    token: Token = field(default_factory=Token)
 
     def to_string(self):
         return pformat(self)
@@ -30,7 +30,7 @@ class UnknownExpression(Expression):
 
 @dataclass
 class Literal(ABC):
-    value: Union[int, bool, str, None] = None
+    value: Union[int, bool, str, None] = field(default_factory=str)
 
 
 @dataclass
@@ -125,16 +125,16 @@ class Let(Expression):
 
 @dataclass
 class Alias(Expression):
-    identifier: str = ""
+    identifier: str = field(default_factory=str)
     alias_type: PetlType = field(default_factory=UnknownType)
     after_alias_expression: Expression = field(default_factory=UnknownExpression)
 
 
 @dataclass
 class Parameter:
-    identifier: str = ""
+    identifier: str = field(default_factory=str)
     parameter_type: PetlType = field(default_factory=UnknownType)
-    token: Token = Token()
+    token: Token = field(default_factory=Token)
 
 
 @dataclass
@@ -158,14 +158,14 @@ class Match(Expression):
 
 @dataclass
 class Primitive(Expression):
-    operator: Operator = Operator()
+    operator: Operator = field(default_factory=Operator)
     left: Expression = field(default_factory=UnknownExpression)
     right: Expression = field(default_factory=UnknownExpression)
 
 
 @dataclass
 class Reference(Expression):
-    identifier: str = ""
+    identifier: str = field(default_factory=str)
 
 
 @dataclass
@@ -177,7 +177,7 @@ class Branch(Expression):
 
 @dataclass
 class For(Expression):
-    reference: str = ""
+    reference: str = field(default_factory=str)
     iterable: Expression = field(default_factory=UnknownExpression)
     body: Expression = field(default_factory=UnknownExpression)
     after_for_expression: Expression = field(default_factory=UnknownExpression)
