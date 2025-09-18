@@ -42,4 +42,5 @@ class Token:
             return None
 
     def to_string(self) -> str:
-        return f"{self.token_type}: {self.token_value}\n{self.file_position.to_string()}"
+        token_value_text = self.token_value if isinstance(self.token_value, str) else self.token_value.value
+        return f"{self.token_type}: {token_value_text}\n{self.file_position.to_string()}"

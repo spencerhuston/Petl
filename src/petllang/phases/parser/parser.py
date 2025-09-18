@@ -51,13 +51,13 @@ class Parser(PetlPhase):
 
         if not token:
             if not optional:
-                self.error(f"Expected {against}, found end-of-file while parsing")
+                self.error(f"Expected {against.value}, found end-of-file while parsing")
             return False
 
         matched = token.token_value == against
 
         if not matched and not optional:
-            self.error(f"Expected {against}, got {token.token_value}", token)
+            self.error(f"Expected {against.value}, got {token.token_value}", token)
             self.advance()
         elif not matched and not optional and token and token == self.last_token:
             self.error("Attempted to match same token twice", token)
