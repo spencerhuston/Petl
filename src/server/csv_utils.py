@@ -82,7 +82,7 @@ def delete_csv_helper(csv_path: Path, directory: Path) -> Optional[str]:
             if FILE_COUNT_KEY in session and session[FILE_COUNT_KEY] > 0:
                 session[FILE_COUNT_KEY] -= 1
 
-            logger.info(f"CSV {csv_path}.csv deleted successfully.")
+            logger.info(f"CSV {csv_path} deleted successfully.")
             return json.dumps(os.listdir(directory))
         except Exception as delete_exception:
             error_message = f"Error deleting CSV: {delete_exception}"

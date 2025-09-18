@@ -48,6 +48,7 @@ _builtins: Dict[str, Builtin] = {
     # String
     Keyword.SUBSTR.value: Substr(),
     Keyword.TOSTR.value: ToStr(),
+    Keyword.JOINSTR.value: JoinStr(),
     Keyword.TOUPPER.value: ToUpper(),
     Keyword.TOLOWER.value: ToLower(),
     Keyword.STARTSWITH.value: StartsWith(),

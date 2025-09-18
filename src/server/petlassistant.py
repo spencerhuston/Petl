@@ -18,7 +18,7 @@ def walk_files(directory: Path) -> List[str]:
                 content += [*walk_files(full_path)]
             else:
                 with open(full_path, 'r') as context_file:
-                    logger.info(f"Embedding: {full_path}")
+                    logger.info(f"Reading context: {full_path}")
                     content.append(context_file.read()
                                    .replace('`', '')
                                    .replace("##", '')
@@ -31,7 +31,7 @@ def walk_files(directory: Path) -> List[str]:
 def get_context() -> List[str]:
     logger.info("Fetching context")
     context = [*walk_files(Path("docs")), *walk_files(Path("tests/resources/programs"))]
-    logger.info("Successfully got context")
+    logger.info("Successfully retrieved context")
     return context
 
 

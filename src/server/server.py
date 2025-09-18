@@ -116,8 +116,10 @@ def delete_csv():
         return "Unauthorized", 401
 
     csv_name = request.get_json()["name"]
+
     user_csv_directory = Path(f"{CSV_DIRECTORY}/{session.get(USER_ID_KEY)}")
     csv_path = Path(f"{user_csv_directory}/{csv_name}.csv")
+
     return delete_csv_helper(csv_path, user_csv_directory)
 
 

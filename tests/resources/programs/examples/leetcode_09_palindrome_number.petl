@@ -1,0 +1,18 @@
+let is_palindrome = |x: int| -> bool {
+# Convert the number to a string and then back to a list of characters
+    let str_x = toStr(x);
+    let list_x = str_x |> map(|c: char| -> char { c });
+
+    if list_x(0) == '-' {
+        false
+    } else {
+        # Reverse the list of characters
+        let reversed_list_x = list_x |> reverse();
+
+        # Convert the reversed list of characters back to a string and compare with the original
+        let reversed_str_x = reversed_list_x |> joinStr("");
+        x == toInt(reversed_str_x)
+    }
+};
+
+print(is_palindrome(121))

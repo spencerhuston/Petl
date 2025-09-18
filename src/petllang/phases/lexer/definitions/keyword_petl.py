@@ -66,6 +66,7 @@ class Keyword(str, PetlBaseEnum):
     # String
     SUBSTR = "substr",
     TOSTR = "toStr",
+    JOINSTR = "joinStr",
     TOUPPER = "toUpper",
     TOLOWER = "toLower",
     STARTSWITH = "startsWith",
@@ -122,6 +123,7 @@ class Keyword(str, PetlBaseEnum):
                self == self.INTERSECT or \
                self == self.SUBSTR or \
                self == self.TOSTR or \
+               self == self.JOINSTR or \
                self == self.TOUPPER or \
                self == self.TOLOWER or \
                self == self.STARTSWITH or \

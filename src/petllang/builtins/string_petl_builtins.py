@@ -43,6 +43,21 @@ class ToStr(Builtin):
         return StringValue(environment.get("v", application.token, error).to_string())
 
 
+class JoinStr(Builtin):
+    def __init__(self):
+        parameters = [
+            ("v", ListType(AnyType())),
+            ("joiner", StringType())
+        ]
+        Builtin.__init__(self, Keyword.JOINSTR.value, parameters, StringType())
+
+    def evaluate(self, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
+        list_value: PetlValue = environment.get("v", application.token, error)
+        join_value: PetlValue = environment.get("joiner", application.token, error)
+        if isinstance(list_value, ListValue) and isinstance(join_value, StringValue):
+            return StringValue(join_value.value.join([value.to_string() for value in list_value.values]))
+
+
 class ToUpper(Builtin):
     def __init__(self):
         parameters = [("s", StringType())]

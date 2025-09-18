@@ -22,17 +22,6 @@ def evaluate_element(values: List[PetlValue], function_value: FuncValue, element
     return interpreter.evaluate(function_value.body, body_environment, element_type)
 
 
-def get_text_mapping(iterable_value: PetlValue, element_type: PetlType, element_values: List[PetlValue]) -> PetlValue:
-    if isinstance(iterable_value.petl_type, StringType):
-        def extract_char_value(c1: CharValue) -> str:
-            return c1.value
-
-        element_str_values: List[str] = list(map(lambda c: extract_char_value(c), element_values))
-        return StringValue(functools.reduce(lambda c1, c2: c1 + c2, element_str_values))
-    else:
-        return ListValue(ListType(element_type), element_values)
-
-
 def evaluate_higher_order_function(name, application: Application, environment: InterpreterEnvironment, interpreter, error) -> PetlValue:
     iterable_value: PetlValue = environment.get("iterable", application.token, error)
     function_value: PetlValue = environment.get("function_value", application.token, error)
@@ -56,7 +45,7 @@ def evaluate_higher_order_function(name, application: Application, environment: 
                         return False
 
                 element_values = list(filter(lambda v: evaluate_bool_element(v), iterable_values))
-            return get_text_mapping(iterable_value, element_type, element_values)
+            return ListValue(ListType(element_type), element_values)
     return NoneValue()
 
 
