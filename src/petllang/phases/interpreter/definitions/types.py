@@ -84,7 +84,7 @@ class StringType(LiteralType, IterableType):
 
 @dataclass
 class ListType(IterableType):
-    list_type: PetlType = field(default=UnknownType())
+    list_type: PetlType = field(default_factory=UnknownType)
 
     def to_string(self) -> str:
         return f"list[{self.list_type.to_string()}]"
@@ -100,8 +100,8 @@ class TupleType(IterableType):
 
 @dataclass
 class DictType(IterableType):
-    key_type: PetlType = field(default=UnknownType())
-    value_type: PetlType = field(default=UnknownType())
+    key_type: PetlType = field(default_factory=UnknownType)
+    value_type: PetlType = field(default_factory=UnknownType)
 
     def to_string(self) -> str:
         return f"dict[{self.key_type.to_string()}:{self.value_type.to_string()}]"
@@ -117,7 +117,7 @@ class SchemaType(PetlType):
 
 @dataclass
 class TableType(IterableType):
-    schema_type: SchemaType = field(default=SchemaType())
+    schema_type: SchemaType = field(default_factory=SchemaType)
 
     def to_string(self) -> str:
         return f"table[{self.schema_type.to_string()}]"
@@ -126,7 +126,7 @@ class TableType(IterableType):
 @dataclass
 class FuncType(PetlType):
     parameter_types: List[PetlType] = field(default_factory=list)
-    return_type: PetlType = field(default=UnknownType())
+    return_type: PetlType = field(default_factory=UnknownType)
 
     def to_string(self) -> str:
         parameter_type_list_str = functools.reduce(
