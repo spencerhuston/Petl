@@ -12,7 +12,7 @@ from petllang.execution.execute import execute_petl_script_direct
 from server.cleanup import update_user_activity, add_new_user
 from server.csv_utils import FILE_COUNT_KEY, validate_csv_writable, create_csv_helper, CSV_DIRECTORY, delete_csv_helper
 from server.logger import logger
-from server.petlassistant import get_llm_response
+from server.petl_assistant import get_llm_response
 
 app = Flask(__name__)
 
