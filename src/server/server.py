@@ -1,137 +1,121 @@
 import io
 import json
 import os
+import shutil
 import uuid
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout, asynccontextmanager
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Annotated
 
-from flask import Flask, request, session
+from apscheduler.schedulers.background import BackgroundScheduler
+from fastapi import FastAPI, status, Depends, Cookie, Response, HTTPException
 
 from petllang.execution.execute import execute_petl_script_direct
-from server.cleanup import update_user_activity, add_new_user
-from server.csv_utils import FILE_COUNT_KEY, validate_csv_writable, create_csv_helper, CSV_DIRECTORY, delete_csv_helper
+from server.config import Config
+from server.redis_client import redis_client, HISTORY_KEY, FILES_KEY, LAST_UPDATE_TIME_KEY, DATE_FORMAT, cleanup
+from server.server_utils import validate_csv_writable, create_csv, delete_csv, \
+    get_csv_path
 from server.logger import logger
-from server.petl_assistant import get_llm_response
+from server.petl_assistant import get_llm_response, construct_vector_store
 
-app = Flask(__name__)
 
+def on_exit():
+    base_csv_directory = Path(f"{os.getcwd()}/csvs")
+    try:
+        if os.path.exists(base_csv_directory):
+            shutil.rmtree(base_csv_directory)
+    except Exception as full_clean_exception:
+        logger.error(f"Error performing full cleanup of {base_csv_directory}: {full_clean_exception}")
+    logger.info(f"Performed full cleanup of CSV directory")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    construct_vector_store()
+
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=cleanup, trigger="interval", seconds=Config.CLEANUP.INTERVAL_SECONDS)
+    scheduler.start()
+
+    yield
+
+    redis_client.close()
+    scheduler.shutdown()
+    on_exit()
+
+
+app = FastAPI(lifespan=lifespan)
 app.secret_key = os.urandom(32)
-app.config["SESSION_PERMANENT"] = False
-
-USER_ID_KEY = "userId"
-INTERPRETER_HISTORY_KEY = "history"
 
 
-def valid_user() -> bool:
-    user_id = session.get(USER_ID_KEY)
-    if not user_id:
-        logger.warning("No user ID found in session")
-        return False
-    logger.info(f"User ID: {user_id}")
-    update_user_activity(user_id)
-    return True
+async def verify_user(cookie_key: Annotated[str | None, Cookie()] = None):
+    if not cookie_key:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Unauthorized: No session cookie found.")
 
 
-@app.route('/')
-def start_session():
-    if USER_ID_KEY not in session:
-        user_id = uuid.uuid4()
-        session[USER_ID_KEY] = user_id
-        session[FILE_COUNT_KEY] = 0
-        session[INTERPRETER_HISTORY_KEY] = []
+@app.get('/', status_code=status.HTTP_201_CREATED)
+def start_user_session(response: Response, cookie_key: Annotated[str | None, Cookie()] = None):
+    if not cookie_key:
+        session_id = str(uuid.uuid4())
+        logger.info("New session ID: " + session_id)
+        redis_client.hsetex(name=session_id,
+                            mapping={
+                                HISTORY_KEY: [],
+                                FILES_KEY: [],
+                                LAST_UPDATE_TIME_KEY: datetime.now().strftime(DATE_FORMAT)
+                            },
+                            ex=Config.REDIS.EXPIRE_SECONDS)
+        response.set_cookie(key=cookie_key, value=session_id)
+    response.status_code = status.HTTP_200_OK
 
-        add_new_user(str(user_id))
-        logger.info(f"New session started with ID: {user_id}")
-        return "Session started"
-    else:
-        return "Session already exists"
 
+@app.post('/interpret', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_user)])
+async def interpret(input_code: str, cookie_key: str):
+    logger.info(f"Interpreter request: {input_code}")
 
-@app.route('/interpret', methods=['POST'])
-def interpret():
-    if not valid_user():
-        return "Unauthorized", 401
-
-    petl_input: str = request.get_json()["input"]
-
-    logger.info("New interpreter request")
-    logger.debug(f"\nInterpreter Input\n{petl_input}\n")
-
-    temp = session[INTERPRETER_HISTORY_KEY]
-    temp.append(petl_input)
-    session[INTERPRETER_HISTORY_KEY] = temp
+    history = redis_client.hget(cookie_key, HISTORY_KEY)
+    history.append(input_code)
+    redis_client.hset(cookie_key, HISTORY_KEY, history)
 
     try:
         stdout_buffer = io.StringIO()
         with redirect_stdout(stdout_buffer):
-            result: Optional[str] = execute_petl_script_direct(petl_input)
+            result: Optional[str] = execute_petl_script_direct(input_code)
 
         return_string = stdout_buffer.getvalue() if result else "Invalid program"
         logger.debug(f"Interpreter Output:\n{return_string}\n")
         return return_string
     except Exception as interpret_exception:
-        error_message = f"Error during interpretation: {interpret_exception}"
-        logger.error(error_message)
-        return error_message
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Interpretation error: {interpret_exception}")
 
 
-@app.route('/history', methods=['GET'])
-def history():
-    if not valid_user():
-        return "Unauthorized", 401
-
-    session_history = session.get(INTERPRETER_HISTORY_KEY, [])
+@app.get('/history', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_user)])
+def history(cookie_key: str):
+    session_history = redis_client.hget(cookie_key, HISTORY_KEY) or []
     logger.info(f"Fetching interpreter history: {session_history}")
     return json.dumps(session_history)
 
 
-@app.route('/create_csv', methods=['POST'])
-def create_csv():
-    if not valid_user():
-        return "Unauthorized", 401
+@app.post('/csv', status_code=status.HTTP_201_CREATED, dependencies=[Depends(verify_user)])
+def create(name: str, content: str, cookie_key: str):
+    directory = Path(f"{Config.CSV.DIRECTORY}/{cookie_key}")
 
-    request_json = request.get_json()
-    csv_name: str = request_json["name"]
-    csv_content: str = request_json["content"]
+    validate_csv_writable(name, content, directory, cookie_key)
+    create_csv(get_csv_path(directory, name), content, cookie_key)
 
-    user_csv_directory = Path(f"{CSV_DIRECTORY}/{session.get(USER_ID_KEY)}")
-    csv_path = Path(f"{user_csv_directory}/{csv_name}.csv")
-
-    error_message = validate_csv_writable(csv_name, csv_content, user_csv_directory, csv_path)
-    if error_message:
-        logger.warning(error_message)
-        return error_message
-
-    error_message = create_csv_helper(csv_name, csv_path, csv_content)
-    if error_message:
-        return error_message
-    else:
-        return json.dumps(os.listdir(user_csv_directory))
+    return json.dumps(os.listdir(directory))
 
 
-@app.route('/delete_csv', methods=['POST'])
-def delete_csv():
-    if not valid_user():
-        return "Unauthorized", 401
-
-    csv_name = request.get_json()["name"]
-
-    user_csv_directory = Path(f"{CSV_DIRECTORY}/{session.get(USER_ID_KEY)}")
-    csv_path = Path(f"{user_csv_directory}/{csv_name}.csv")
-
-    return delete_csv_helper(csv_path, user_csv_directory)
+@app.delete('/csv', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_user)])
+def delete(name: str, cookie_key: str):
+    directory = Path(f"{Config.CSV.DIRECTORY}/{cookie_key}")
+    return delete_csv(directory, get_csv_path(directory, name), cookie_key)
 
 
-@app.route('/chat', methods=['POST'])
-def process_chat():
-    if not valid_user():
-        return "Unauthorized", 401
-
-    chat_message = request.get_json()["message"]
-    logger.info(f"Received chat message:\n{chat_message}")
-
-    response = get_llm_response(chat_message)
-
-    logger.debug(response)
-    return response
+@app.post('/assistant', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_user)])
+async def assistant(message: str):
+    logger.info(f"Received chat message:\n{message}")
+    return get_llm_response(message)

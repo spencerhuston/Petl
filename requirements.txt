@@ -1,4 +1,4 @@
-flask
+fastapi[standard]
 ollama
 langchain-ollama
 numpy
@@ -7,3 +7,6 @@ pytest
 pytest-mock
 bs4
 markdown
+pydantic
+PyYAML
+redis
