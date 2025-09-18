@@ -1,7 +1,7 @@
 from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
 
-directory_prefix = "resources/programs/builtins/list"
+directory_prefix = "tests/resources/programs/builtins/list"
 
 
 def test_contains(mocker, capsys):

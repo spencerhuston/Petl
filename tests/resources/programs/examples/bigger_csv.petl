@@ -9,7 +9,7 @@ let employees_table = readCsv(
         age: int,
         salary: string
     },
-    "./resources/csvs/100_line_csv_test",
+    "./tests/resources/csvs/100_line_csv_test",
     true
 );
 

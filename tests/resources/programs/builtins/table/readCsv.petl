@@ -1,6 +1,6 @@
 let t = readCsv(
     ${name: string, age: int, salary: string},
-    "./resources/csvs/small",
+    "./tests/resources/csvs/small",
     true
 );
 println(t)

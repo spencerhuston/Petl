@@ -1,7 +1,7 @@
 from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
 
-directory_prefix = "resources/programs/sanity/collection"
+directory_prefix = "tests/resources/programs/sanity/collection"
 
 
 def test_dict_definition_app(mocker, capsys):

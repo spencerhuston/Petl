@@ -13,7 +13,7 @@ let employee_schema = ${
 # Create a table with sample employee data
 let employees = readCsv(
     employee_schema,
-    "./resources/csvs/employees",
+    "./tests/resources/csvs/employees",
     true
 );
 

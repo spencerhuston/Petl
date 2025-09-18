@@ -1,6 +1,6 @@
 from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
-directory_prefix = "resources/programs/features"
+directory_prefix = "tests/resources/programs/features"
 
 
 def test_alias(mocker, capsys):

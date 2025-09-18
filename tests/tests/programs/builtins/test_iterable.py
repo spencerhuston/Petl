@@ -1,7 +1,7 @@
 from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
 
-directory_prefix = "resources/programs/builtins/iterable"
+directory_prefix = "tests/resources/programs/builtins/iterable"
 
 
 def test_len(mocker, capsys):

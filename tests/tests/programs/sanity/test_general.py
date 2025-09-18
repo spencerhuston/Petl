@@ -1,7 +1,7 @@
 from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
 
-directory_prefix = "resources/programs/sanity/general"
+directory_prefix = "tests/resources/programs/sanity/general"
 
 
 def test_alias_tuple_type(mocker, capsys):
