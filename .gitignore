@@ -156,3 +156,5 @@ cython_debug/
 *.iml
 Petl.iml
 .vscode/settings.json
+tests/junit/test-results-3.10
+junit/test-results-3.10
