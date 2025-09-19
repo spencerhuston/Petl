@@ -6,18 +6,19 @@ import uuid
 from contextlib import redirect_stdout, asynccontextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Annotated
+from typing import Optional, Union
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, status, Depends, Cookie, Response, HTTPException
 
 from petllang.execution.execute import execute_petl_script_direct
 from server.config import Config
-from server.redis_client import redis_client, HISTORY_KEY, FILES_KEY, LAST_UPDATE_TIME_KEY, DATE_FORMAT, cleanup
-from server.server_utils import validate_csv_writable, create_csv, delete_csv, \
-    get_csv_path
 from server.logger import logger
+from server.models import InterpreterModel, CreateCsvModel, DeleteCsvModel, AssistantModel, csv_content_type
 from server.petl_assistant import get_llm_response, construct_vector_store
+from server.redis_client import redis_client, HISTORY_KEY, FILES_KEY, LAST_UPDATE_TIME_KEY, DATE_FORMAT, cleanup, \
+    get_session, session_list_add_value
+from server.server_utils import validate_csv_writable, create_csv, delete_csv, get_csv_path
 
 
 def on_exit():
@@ -32,8 +33,6 @@ def on_exit():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    construct_vector_store()
-
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=cleanup, trigger="interval", seconds=Config.CLEANUP.INTERVAL_SECONDS)
     scheduler.start()
@@ -49,40 +48,40 @@ app = FastAPI(lifespan=lifespan)
 app.secret_key = os.urandom(32)
 
 
-async def verify_user(cookie_key: Annotated[str | None, Cookie()] = None):
-    if not cookie_key:
+async def verify_user(petl_cookie: Union[str, None] = Cookie(None)):
+    if not petl_cookie:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Unauthorized: No session cookie found.")
 
 
 @app.get('/', status_code=status.HTTP_201_CREATED)
-def start_user_session(response: Response, cookie_key: Annotated[str | None, Cookie()] = None):
-    if not cookie_key:
-        session_id = str(uuid.uuid4())
+def start_user_session(response: Response, petl_cookie: Union[str, None] = Cookie(None)):
+    if not petl_cookie:
+        #session_id = str(uuid.uuid4())
+        session_id = "TEST_COOKIE"
         logger.info("New session ID: " + session_id)
-        redis_client.hsetex(name=session_id,
-                            mapping={
-                                HISTORY_KEY: [],
-                                FILES_KEY: [],
-                                LAST_UPDATE_TIME_KEY: datetime.now().strftime(DATE_FORMAT)
-                            },
-                            ex=Config.REDIS.EXPIRE_SECONDS)
-        response.set_cookie(key=cookie_key, value=session_id)
+        redis_client.setex(name=session_id,
+                           time=Config.REDIS.EXPIRE_SECONDS,
+                           value=json.dumps({
+                               HISTORY_KEY: [],
+                               FILES_KEY: [],
+                               LAST_UPDATE_TIME_KEY: datetime.now().strftime(DATE_FORMAT)
+                           }))
+        response.set_cookie(key="petl_cookie", value=session_id)
     response.status_code = status.HTTP_200_OK
 
 
 @app.post('/interpret', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_user)])
-async def interpret(input_code: str, cookie_key: str):
-    logger.info(f"Interpreter request: {input_code}")
+async def interpret(inpterpreter_model: InterpreterModel, petl_cookie: Union[str, None] = Cookie(None)):
+    input = inpterpreter_model.input
+    logger.info(f"Interpreter request: {input}")
 
-    history = redis_client.hget(cookie_key, HISTORY_KEY)
-    history.append(input_code)
-    redis_client.hset(cookie_key, HISTORY_KEY, history)
+    session_list_add_value(petl_cookie, HISTORY_KEY, input)
 
     try:
         stdout_buffer = io.StringIO()
         with redirect_stdout(stdout_buffer):
-            result: Optional[str] = execute_petl_script_direct(input_code)
+            result: Optional[str] = execute_petl_script_direct(input)
 
         return_string = stdout_buffer.getvalue() if result else "Invalid program"
         logger.debug(f"Interpreter Output:\n{return_string}\n")
@@ -93,29 +92,35 @@ async def interpret(input_code: str, cookie_key: str):
 
 
 @app.get('/history', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_user)])
-def history(cookie_key: str):
-    session_history = redis_client.hget(cookie_key, HISTORY_KEY) or []
+def history(petl_cookie: Union[str, None] = Cookie(None)):
+    _, session_history = get_session(petl_cookie, HISTORY_KEY)
     logger.info(f"Fetching interpreter history: {session_history}")
     return json.dumps(session_history)
 
 
 @app.post('/csv', status_code=status.HTTP_201_CREATED, dependencies=[Depends(verify_user)])
-def create(name: str, content: str, cookie_key: str):
-    directory = Path(f"{Config.CSV.DIRECTORY}/{cookie_key}")
+def create(create_csv_model: CreateCsvModel, petl_cookie: Union[str, None] = Cookie(None)):
+    directory = Path(f"{Config.CSV.DIRECTORY}/{petl_cookie}")
 
-    validate_csv_writable(name, content, directory, cookie_key)
-    create_csv(get_csv_path(directory, name), content, cookie_key)
+    name: str = create_csv_model.name
+    content: csv_content_type = create_csv_model.content
+    include_headers: bool = create_csv_model.include_headers
+
+    validate_csv_writable(name, content, directory, petl_cookie)
+    create_csv(get_csv_path(directory, name), content, include_headers, petl_cookie)
 
     return json.dumps(os.listdir(directory))
 
 
 @app.delete('/csv', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_user)])
-def delete(name: str, cookie_key: str):
-    directory = Path(f"{Config.CSV.DIRECTORY}/{cookie_key}")
-    return delete_csv(directory, get_csv_path(directory, name), cookie_key)
+def delete(delete_csv_model: DeleteCsvModel, petl_cookie: Union[str, None] = Cookie(None)):
+    name = delete_csv_model.name
+    directory = Path(f"{Config.CSV.DIRECTORY}/{petl_cookie}")
+    return delete_csv(directory, get_csv_path(directory, name), petl_cookie)
 
 
 @app.post('/assistant', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_user)])
-async def assistant(message: str):
+async def assistant(assistant_model: AssistantModel):
+    message = assistant_model.message
     logger.info(f"Received chat message:\n{message}")
     return get_llm_response(message)

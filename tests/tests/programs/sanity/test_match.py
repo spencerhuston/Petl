@@ -1,7 +1,7 @@
 from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
 
-directory_prefix = "tests/resources/programs/sanity/match"
+directory_prefix = "resources/examples/programs/sanity/match"
 
 
 def test_match_range(mocker, capsys):

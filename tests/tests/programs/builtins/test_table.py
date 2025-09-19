@@ -3,7 +3,7 @@ from pathlib import Path
 
 from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
-directory_prefix = "tests/resources/programs/builtins/table"
+directory_prefix = "resources/examples/programs/builtins/table"
 
 
 def test_collect(mocker, capsys):
@@ -43,7 +43,7 @@ def test_read_csv(mocker, capsys):
 
 def test_write_csv(mocker, capsys):
     assert get_petl_program_stdout(f"{directory_prefix}/writeCsv.petl", mocker, capsys) == "Created successfully"
-    csv_path = Path("resources/csvs/test_write.csv")
+    csv_path = Path("resources/examples/csvs/test_write.csv")
     if os.path.exists(csv_path):
         os.remove(csv_path)
 

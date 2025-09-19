@@ -1,7 +1,7 @@
 from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
 
-directory_prefix = "tests/resources/programs/sanity/lambda"
+directory_prefix = "resources/examples/programs/sanity/lambda"
 
 
 def test_lambda_closure(mocker, capsys):

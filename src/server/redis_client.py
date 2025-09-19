@@ -1,12 +1,20 @@
+import json
 import os
 import shutil
+from datetime import datetime
 
 import redis
 
 from server.config import Config
 from server.logger import logger
 
+logger.info("Starting Redis client")
 redis_client = redis.Redis(host=Config.REDIS.URL, port=Config.REDIS.PORT, db=Config.REDIS.DB, decode_responses=True)
+try:
+    redis_client.ping()
+except ConnectionError as redis_client_connection_error:
+    raise Exception(f"Redis connection error: {redis_client_connection_error}\n\nTry server restart")
+logger.info("Redis client successfully connected")
 
 
 HISTORY_KEY = "history"
@@ -28,3 +36,28 @@ def cleanup():
         except Exception as cleanup_exception:
             logger.error(f"Error cleaning up session directory {session_csv_directory}: {cleanup_exception}")
         logger.info(f"Cleaned up session: {session_id}")
+
+
+def get_session(session_key: str, key: str) -> (dict, list):
+    session_mapping: dict = json.loads(redis_client.get(session_key))
+    session_list = session_mapping.get(key, [])
+    return session_mapping, session_list
+
+
+def update_session_mapping(session_key: str, session_mapping: dict):
+    session_mapping[LAST_UPDATE_TIME_KEY] = datetime.now().strftime(DATE_FORMAT)
+    redis_client.set(session_key, json.dumps(session_mapping), ex=Config.REDIS.EXPIRE_SECONDS)
+
+
+def session_list_add_value(session_key: str, key: str, value: str):
+    session_mapping, session_list = get_session(session_key, key)
+    session_list.append(value)
+    session_mapping[key] = session_list
+    update_session_mapping(session_key, session_mapping)
+
+
+def session_list_remove_value(session_key: str, key: str, value: str):
+    session_mapping, session_list = get_session(session_key, key)
+    session_list.remove(value)
+    session_mapping[key] = session_list
+    update_session_mapping(session_key, session_mapping)

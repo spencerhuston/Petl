@@ -1,7 +1,7 @@
 from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
 
-directory_prefix = "tests/resources/programs/builtins/functional"
+directory_prefix = "resources/examples/programs/builtins/functional"
 
 
 def test_filter(mocker, capsys):

@@ -1,7 +1,7 @@
 from tests.tests.programs.test_petl_program import get_petl_program_stdout
 
 
-directory_prefix = "tests/resources/programs/sanity/edge_cases"
+directory_prefix = "resources/examples/programs/sanity/edge_cases"
 
 
 def test_comments(mocker, capsys):

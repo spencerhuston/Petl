@@ -8,7 +8,8 @@ from fastapi import HTTPException, status
 
 from server.config import Config
 from server.logger import logger
-from server.redis_client import redis_client, FILES_KEY
+from server.models import csv_content_type
+from server.redis_client import FILES_KEY, session_list_add_value, session_list_remove_value, get_session
 
 
 def get_csv_path(directory: Path, name: str) -> Path:
@@ -16,7 +17,7 @@ def get_csv_path(directory: Path, name: str) -> Path:
 
 
 def validate_csv_content(name: str,
-                         content: str):
+                         content: list[list[str]]):
     error: Optional[str] = None
     if not name or not content:
         error = "CSV name and content must be provided."
@@ -31,9 +32,9 @@ def validate_csv_content(name: str,
 
 
 def validate_csv_writable(name: str,
-                          content: str,
+                          content: csv_content_type,
                           directory: Path,
-                          cookie_key: str):
+                          session_key: str):
     validate_csv_content(name, content)
     if not directory.exists():
         directory.mkdir(parents=True, exist_ok=True)
@@ -43,44 +44,37 @@ def validate_csv_writable(name: str,
         logger.info(f"Removing existing CSV: {path}")
         os.remove(path)
 
-    if len(redis_client.get(cookie_key)[FILES_KEY]) >= Config.CSV.MAX.FILES:
+    _, files = get_session(session_key, FILES_KEY)
+    if len(files) >= Config.CSV.MAX.FILES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Too many CSV files exist. Please delete some before creating new ones.")
 
 
-def create_csv(path: Path, content: str, cookie_key: str):
+def create_csv(path: Path, content: csv_content_type, include_headers: bool, session_key: str):
     logger.info(f"Creating new CSV: {path}.csv")
 
     try:
         with open(path, "w", newline="") as file:
             writer = csv.writer(file)
-            writer.writerows(content)
+            writer.writerows(content if not include_headers else content[1:])
 
         if not os.path.exists(path):
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                 detail=f"Failed to write CSV")
 
-        files = redis_client.hget(cookie_key, FILES_KEY)
-        files.append(str(path))
-        redis_client.hset(cookie_key, FILES_KEY, files)
-
+        session_list_add_value(session_key, FILES_KEY, str(path))
         logger.info(f"CSV {path}.csv created successfully.")
     except Exception as csv_write_exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Error writing CSV: {csv_write_exception}")
 
 
-def delete_csv(directory: Path, path: Path, cookie_key: str) -> Optional[str]:
+def delete_csv(directory: Path, path: Path, session_key: str) -> Optional[str]:
     logger.info(f"Attempting to delete CSV at path: {path}")
     if os.path.exists(path):
         try:
             os.remove(path)
-
-            files = redis_client.hget(cookie_key, FILES_KEY)
-            files.remove(str(path))
-            redis_client.hset(cookie_key, FILES_KEY, files)
-
-            redis_client.get(cookie_key)[FILES_KEY].remove(str(path))
+            session_list_remove_value(session_key, FILES_KEY, str(path))
             logger.info(f"CSV {path} deleted successfully.")
             return json.dumps(os.listdir(directory))
         except Exception as delete_exception:

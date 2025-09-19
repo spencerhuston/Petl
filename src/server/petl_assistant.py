@@ -5,10 +5,10 @@ from typing import List, Optional
 
 from bs4 import BeautifulSoup
 from fastapi import HTTPException, status
+from langchain_core.vectorstores import InMemoryVectorStore, VectorStoreRetriever
 from langchain_ollama import OllamaEmbeddings
 from markdown import markdown
 from ollama import ChatResponse, chat
-from langchain_core.vectorstores import InMemoryVectorStore, VectorStoreRetriever
 
 from server.config import Config
 from server.logger import logger
@@ -46,10 +46,6 @@ def get_context() -> List[str]:
     return context_list
 
 
-context = get_context()
-vectorStoreRetriever: Optional[VectorStoreRetriever] = None
-
-
 def construct_vector_store():
     embeddings = OllamaEmbeddings(
         model=Config.MODELS.EMBED
@@ -63,6 +59,10 @@ def construct_vector_store():
     logger.info("Vector store constructed")
 
     return retriever
+
+
+context = get_context()
+vectorStoreRetriever: VectorStoreRetriever = construct_vector_store()
 
 
 class Prompt:

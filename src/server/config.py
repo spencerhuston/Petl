@@ -3,7 +3,8 @@ from pathlib import Path
 
 import yaml
 
-with open('resources/config.yaml', 'r') as file:
+cwd = Path(os.getcwd())
+with open(Path(f"{cwd}/resources/server/server_config.yaml"), 'r') as file:
     config = yaml.safe_load(file)
 
 
@@ -20,7 +21,7 @@ class Config:
         __default = {
             "directory": "csvs"
         }
-        DIRECTORY: Path = Path(os.getcwd()) / config.get("csv", __default)["directory"]
+        DIRECTORY: Path = cwd / config.get("csv", __default)["directory"]
 
         class MAX:
             __default = {
@@ -47,4 +48,4 @@ class Config:
         URL: str = config.get("redis", __default)["host"]
         PORT: int = config.get("redis", __default)["port"]
         DB: int = config.get("redis", __default)["db"]
-        EXPIRE_SECONDS: int = config.get("redis", __default)["db"]
+        EXPIRE_SECONDS: int = config.get("redis", __default)["expire_seconds"]
