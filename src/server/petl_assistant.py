@@ -48,7 +48,6 @@ def get_context() -> List[str]:
 
 
 def construct_vector_store():
-    logger.info(subprocess.run(['ls', './'], capture_output=True, text=True, check=True))
     embeddings = OllamaEmbeddings(
         model=Config.MODELS.EMBED,
         base_url=Config.MODELS.URL

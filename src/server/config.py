@@ -3,9 +3,23 @@ from pathlib import Path
 
 import yaml
 
+
 cwd = Path(os.getcwd())
-with open(Path(f"{cwd}/resources/server/server_config.yaml"), 'r') as file:
-    config = yaml.safe_load(file)
+
+
+def load_config():
+    config_path = "server_config"
+    if not os.getenv("RUNNING_DOCKER"):
+        config_path += "_local"
+    config_path = Path(f"{cwd}/resources/server/{config_path}.yaml")
+    try:
+        with open(config_path, 'r') as config_file:
+            return yaml.safe_load(config_file)
+    except Exception as config_load_exception:
+        raise Exception(f"Error loading configuration file {config_path}: {config_load_exception}")
+
+
+config: dict = load_config()
 
 
 class Config:

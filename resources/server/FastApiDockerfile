@@ -13,4 +13,5 @@ COPY . /petl
 
 EXPOSE 8000
 
+ENV RUNNING_DOCKER=true
 CMD ["python3", "-m", "fastapi", "run", "--workers", "8", "src/server/server.py"]
