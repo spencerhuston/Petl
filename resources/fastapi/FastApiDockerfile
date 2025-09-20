@@ -1,0 +1,17 @@
+# Build the main image with Redis server
+FROM python:3.11-slim AS builder
+
+WORKDIR /petl
+
+COPY ./requirements.txt /petl/requirements.txt
+
+RUN apt -y update
+RUN apt -y upgrade
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . /petl
+
+EXPOSE 8000
+
+CMD ["python3", "-m", "fastapi", "run", "src/server/server.py"]

@@ -1,8 +1,10 @@
 import os
 import re
+import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
+import ollama
 from bs4 import BeautifulSoup
 from fastapi import HTTPException, status
 from langchain_core.vectorstores import InMemoryVectorStore, VectorStoreRetriever
@@ -41,14 +43,16 @@ def walk_files(directory: Path) -> List[str]:
 
 def get_context() -> List[str]:
     logger.info("Fetching context")
-    context_list = [*walk_files(Path("docs")), *walk_files(Path("tests/resources/programs"))]
+    context_list = [*walk_files(Path("docs")), *walk_files(Path("resources/examples/programs"))]
     logger.info("Successfully retrieved context")
     return context_list
 
 
 def construct_vector_store():
+    logger.info(subprocess.run(['ls', './'], capture_output=True, text=True, check=True))
     embeddings = OllamaEmbeddings(
-        model=Config.MODELS.EMBED
+        model=Config.MODELS.EMBED,
+        base_url=Config.MODELS.URL
     )
 
     logger.info("Constructing vector store")
@@ -95,12 +99,13 @@ def get_llm_response(message: str) -> str:
                  f"{Prompt.Footer}\n\n"
         logger.info(prompt)
 
-        response: ChatResponse = chat(model=Config.MODELS.CORE, messages=[
-            {
+        response: ChatResponse = chat(
+            model=Config.MODELS.CORE,
+            messages=[{
                 "role": "user",
                 "content": prompt
-            },
-        ])
+            }]
+        )
         logger.info(response)
         return response['message']['content']
     except Exception as llm_exception:
