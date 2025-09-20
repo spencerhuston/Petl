@@ -4,13 +4,12 @@ import subprocess
 from pathlib import Path
 from typing import List
 
-import ollama
 from bs4 import BeautifulSoup
 from fastapi import HTTPException, status
 from langchain_core.vectorstores import InMemoryVectorStore, VectorStoreRetriever
 from langchain_ollama import OllamaEmbeddings
 from markdown import markdown
-from ollama import ChatResponse, chat
+from ollama import ChatResponse, Client
 
 from server.config import Config
 from server.logger import logger
@@ -67,6 +66,7 @@ def construct_vector_store():
 
 context = get_context()
 vectorStoreRetriever: VectorStoreRetriever = construct_vector_store()
+ollama_client = Client(host=Config.MODELS.URL)
 
 
 class Prompt:
@@ -88,7 +88,7 @@ class Prompt:
 
 def get_llm_response(message: str) -> str:
     try:
-        prompt_context = vectorStoreRetriever.invoke(message)
+        prompt_context = list(map(lambda document: document.page_content, vectorStoreRetriever.invoke(message)))
 
         prompt = f"{Prompt.Header}\n\n" \
                  f"{context}\n\n" \
@@ -99,7 +99,7 @@ def get_llm_response(message: str) -> str:
                  f"{Prompt.Footer}\n\n"
         logger.info(prompt)
 
-        response: ChatResponse = chat(
+        response: ChatResponse = ollama_client.chat(
             model=Config.MODELS.CORE,
             messages=[{
                 "role": "user",

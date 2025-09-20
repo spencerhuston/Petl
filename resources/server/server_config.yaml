@@ -1,5 +1,5 @@
 models:
-  core: qwen2.5:7b
+  core: qwen2.5:1.5b
   embed: nomic-embed-text
   url: ollama
   port: 11434
