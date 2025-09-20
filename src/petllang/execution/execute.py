@@ -1,7 +1,9 @@
+import io
+from contextlib import redirect_stdout
 from datetime import datetime
 from typing import Optional, List
 
-from petllang.phases.interpreter.definitions.value import PetlValue
+from petllang.phases.interpreter.definitions.value import PetlValue, NoneValue
 from petllang.phases.interpreter.environment import InterpreterEnvironment
 from petllang.phases.interpreter.interpreter import TreeWalkInterpreter, load_builtins
 from petllang.phases.lexer.definitions.token_petl import Token
@@ -9,13 +11,23 @@ from petllang.phases.lexer.lexer import Lexer
 from petllang.phases.parser.defintions.expression import Expression, UnknownExpression
 from petllang.phases.parser.parser import Parser
 from petllang.utils.log import Log
+from server.server_utils import escape_ansi
 
 
-def execute_petl_script_direct(petl_raw_str: str) -> Optional[str]:
+async def execute_petl_script_direct(petl_input: str) -> str:
     debug = False
     logger: Log = Log(debug)
-    result: Optional[PetlValue] = execute_petl_script(petl_raw_str, debug, logger)
-    return result.to_string() if result else None
+
+    stdout_buffer = io.StringIO()
+    with redirect_stdout(stdout_buffer):
+        program_return_value: PetlValue = execute_petl_script(petl_input, debug, logger)
+
+    result = escape_ansi(stdout_buffer.getvalue())
+    if not isinstance(program_return_value, NoneValue):
+        result += program_return_value.to_string()
+
+    logger.debug(f"Interpreter Output:\n{result}\n")
+    return result
 
 
 def execute_petl_script(petl_raw_str: str,

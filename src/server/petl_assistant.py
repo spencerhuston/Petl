@@ -86,7 +86,7 @@ class Prompt:
     """
 
 
-def get_llm_response(message: str) -> str:
+async def get_llm_response(message: str) -> str:
     try:
         prompt_context = list(map(lambda document: document.page_content, vectorStoreRetriever.invoke(message)))
 

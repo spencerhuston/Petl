@@ -13,6 +13,9 @@ from petllang.phases.parser.defintions.expression import Application
 from petllang.query.executor import execute_query
 
 
+session_directory: Optional[str] = None
+
+
 # Join and Select helper functions #
 def get_selected_indices(table_columns: List[Tuple[StringValue, PetlType]],
                          selected_columns: List[str],
@@ -136,8 +139,10 @@ class ReadCsv(Builtin):
                     map(lambda value, column: types_conform(application.token, value.petl_type, column[1], error), row,
                         schema_value.values))
 
+            path = Path(path_value.value + ".csv")
+            if session_directory:
+                path = Path(f"{session_directory}/{path.name}")
             try:
-                path = Path(path_value.value + ".csv")
                 with open(path, mode='r') as csv_file:
                     csv_file_rows: List[List[str]] = list(csv.reader(csv_file))
                     if isinstance(schema_value.petl_type, SchemaType):
@@ -156,6 +161,9 @@ class ReadCsv(Builtin):
                                     rows.append(TupleValue(row_type, petl_value_row))
 
                             return TableValue(TableType(schema_value.petl_type), schema_value, rows)
+            except FileNotFoundError as _:
+                failed_path = Path(f"{path_value.value}.csv") if not session_directory else path
+                error(f"CSV file not found: {failed_path}", application.token)
             except Exception as read_csv_exception:
                 error(f"Failed to read CSV: {path_value.value}: {read_csv_exception}", application.token)
         return NoneValue()
@@ -184,7 +192,10 @@ class WriteCsv(Builtin):
                 if isinstance(row, TupleValue):
                     rows.append(list(map(lambda v: v.value, row.values)))
             try:
-                path = Path(path_value.value + ".csv")
+                if session_directory:
+                    raise Exception("\'writeCsv\' builtin is disabled in server mode")
+
+                path = Path(f"{path_value.value}.csv")
                 with open(path, "w", newline='') as csv_file:
                     csv_writer = csv.writer(csv_file)
                     if header:

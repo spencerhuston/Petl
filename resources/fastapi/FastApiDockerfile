@@ -1,4 +1,3 @@
-# Build the main image with Redis server
 FROM python:3.11-slim AS builder
 
 WORKDIR /petl
@@ -14,4 +13,4 @@ COPY . /petl
 
 EXPOSE 8000
 
-CMD ["python3", "-m", "fastapi", "run", "src/server/server.py"]
+CMD ["python3", "-m", "fastapi", "run", "--workers", "8", "src/server/server.py"]

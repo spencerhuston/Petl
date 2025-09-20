@@ -3,8 +3,6 @@ from pathlib import Path
 
 import yaml
 
-from server.logger import logger
-
 cwd = Path(os.getcwd())
 with open(Path(f"{cwd}/resources/server/server_config.yaml"), 'r') as file:
     config = yaml.safe_load(file)

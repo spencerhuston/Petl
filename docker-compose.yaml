@@ -20,6 +20,7 @@ services:
     expose:
       - "6379"
     command: ["redis-server"]
+    restart: unless-stopped
 
   ollama:
     build:
@@ -29,3 +30,4 @@ services:
     hostname: ollama
     expose:
       - "11434"
+    restart: unless-stopped

@@ -5,9 +5,9 @@ from os import getcwd
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
+from petllang.execution.execute import execute_petl_script
 from petllang.phases.interpreter.definitions.value import PetlValue, NoneValue
 from petllang.phases.interpreter.environment import InterpreterEnvironment
-from petllang.execution.execute import execute_petl_script
 from petllang.utils.log import Log
 
 

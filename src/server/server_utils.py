@@ -1,6 +1,6 @@
 import csv
-import json
 import os
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -10,6 +10,11 @@ from server.config import Config
 from server.logger import logger
 from server.models import csv_content_type
 from server.redis_client import FILES_KEY, session_list_add_value, session_list_remove_value, get_session
+
+
+def escape_ansi(result: str) -> str:
+    ansi_escape_regex = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
+    return ansi_escape_regex.sub('', result)
 
 
 def get_csv_path(directory: Path, name: str) -> Path:
@@ -56,7 +61,7 @@ def create_csv(path: Path, content: csv_content_type, include_headers: bool, ses
     try:
         with open(path, "w", newline="") as file:
             writer = csv.writer(file)
-            writer.writerows(content if not include_headers else content[1:])
+            writer.writerows(content if include_headers else content[1:])
 
         if not os.path.exists(path):
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -69,14 +74,13 @@ def create_csv(path: Path, content: csv_content_type, include_headers: bool, ses
                             detail=f"Error writing CSV: {csv_write_exception}")
 
 
-def delete_csv(directory: Path, path: Path, session_key: str) -> Optional[str]:
+def delete_csv(path: Path, session_key: str):
     logger.info(f"Attempting to delete CSV at path: {path}")
     if os.path.exists(path):
         try:
             os.remove(path)
             session_list_remove_value(session_key, FILES_KEY, str(path))
             logger.info(f"CSV {path} deleted successfully.")
-            return json.dumps(os.listdir(directory))
         except Exception as delete_exception:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                 detail=f"Error deleting CSV: {delete_exception}")

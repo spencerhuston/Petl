@@ -13,10 +13,10 @@ Creates a new single-column ```table``` from the given list ```c```
 ---
 
 ```readCsv(s: schema, p: string, header: bool) -> table```<br>
-Reads the CSV at path ```p``` and creates a new ```table``` according to schema ```s```
-if ```header``` is ```false``` or against the CSV's header row. **Note** that the file
-path ```p``` is relative to the interpreter's working directory and ".csv" is
-automatically added
+Reads the CSV at path ```p``` and creates a new ```table``` according to schema ```s```.
+If ```header``` is ```true```, it will match the schema against the CSV's header row, else
+it will ignore the header. **Note** that the file path ```p``` is relative to the 
+interpreter's working directory and ".csv" is automatically added
 
 ---
 
