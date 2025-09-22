@@ -9,6 +9,7 @@ Takes any value ```v``` and converts it to a ```string``` value
 
 ```startsWith(s1: string, s2: string) -> bool```<br>
 Returns ```true``` if ```s1``` starts with ```s2```, ```false``` otherwise
+
 ---
 
 ```endsWith(s1: string, s2: string) -> bool```<br>
