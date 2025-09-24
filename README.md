@@ -2,6 +2,10 @@
 
 ---
 
+*Online interactive code editor is currently under development.*
+
+---
+
 Petl is a (toy) strongly, statically-typed, interpreted, general-purpose language 
 focused on table-based data manipulation. It is so focused in fact, that tables 
 and schemas are each their own first-class type in Petl. Likewise, queries for Petl's 
