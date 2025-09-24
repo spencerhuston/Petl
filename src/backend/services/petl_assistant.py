@@ -10,8 +10,8 @@ from langchain_ollama import OllamaEmbeddings
 from markdown import markdown
 from ollama import ChatResponse, Client
 
-from server.utils.config import Config
-from server.utils.logger import logger
+from backend.utils.config import Config
+from backend.utils.logger import logger
 
 
 def markdown_to_text(markdown_text: str) -> str:
