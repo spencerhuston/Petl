@@ -6,10 +6,10 @@ from typing import Optional
 
 from fastapi import HTTPException, status
 
-from server.config import Config
-from server.logger import logger
-from server.models import csv_content_type
-from server.redis_client import FILES_KEY, session_list_add_value, session_list_remove_value, get_session
+from server.utils.config import Config
+from server.utils.logger import logger
+from server.utils.models import csv_content_type
+from server.services.redis_client import FILES_KEY, session_list_add_value, session_list_remove_value, get_session
 
 
 def escape_ansi(result: str) -> str:

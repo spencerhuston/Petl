@@ -1,0 +1,39 @@
+h1 {
+  font-family: Consolas, sans-serif;
+}
+#editor {
+  width: 50%;
+  height: 25%;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+  font-size: 16px;
+  resize: none;
+  font-family: Consolas, monospace;
+  margin-bottom: 4px;
+}
+#output {
+  width: 20%;
+  height: 25%;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  background-color: #f0f0f0;
+  font-size: 16px;
+  resize: none;
+  font-family: Consolas, monospace;
+}
+button {
+  margin-bottom: 30px;
+}
+.form-container {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+}
+.form-container form {
+  padding: 15px;
+}

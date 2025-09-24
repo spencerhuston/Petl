@@ -1,5 +1,4 @@
 import json
-import json
 import os
 import shutil
 from contextlib import asynccontextmanager
@@ -12,13 +11,13 @@ from fastapi import FastAPI, status, Depends, Cookie, Response, HTTPException
 
 from petllang.builtins import table_petl_builtins
 from petllang.execution.execute import execute_petl_script_direct
-from server.config import Config
-from server.logger import logger
-from server.models import InterpreterModel, CreateCsvModel, DeleteCsvModel, AssistantModel, csv_content_type
-from server.petl_assistant import get_llm_response
-from server.redis_client import redis_client, HISTORY_KEY, FILES_KEY, LAST_UPDATE_TIME_KEY, DATE_FORMAT, cleanup, \
+from server.utils.config import Config
+from server.utils.logger import logger
+from server.utils.models import InterpreterModel, CreateCsvModel, DeleteCsvModel, AssistantModel, csv_content_type
+from server.services.petl_assistant import get_llm_response
+from server.services.redis_client import redis_client, HISTORY_KEY, FILES_KEY, LAST_UPDATE_TIME_KEY, DATE_FORMAT, cleanup, \
     get_session, session_list_add_value
-from server.server_utils import validate_csv_writable, create_csv, delete_csv, get_csv_path
+from server.utils.server_utils import validate_csv_writable, create_csv, delete_csv, get_csv_path
 
 
 def on_exit():

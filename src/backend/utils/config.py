@@ -8,10 +8,10 @@ cwd = Path(os.getcwd())
 
 
 def load_config():
-    config_path = "server_config"
+    config_path = "services"
     if not os.getenv("RUNNING_DOCKER"):
         config_path += "_local"
-    config_path = Path(f"{cwd}/resources/server/{config_path}.yaml")
+    config_path = Path(f"{cwd}/resources/config/{config_path}.yaml")
     try:
         with open(config_path, 'r') as config_file:
             return yaml.safe_load(config_file)

@@ -11,7 +11,7 @@ from petllang.phases.lexer.lexer import Lexer
 from petllang.phases.parser.defintions.expression import Expression, UnknownExpression
 from petllang.phases.parser.parser import Parser
 from petllang.utils.log import Log
-from server.server_utils import escape_ansi
+from server.utils.server_utils import escape_ansi
 
 
 async def execute_petl_script_direct(petl_input: str) -> str:

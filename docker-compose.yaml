@@ -2,7 +2,7 @@ services:
   fastapi:
     build:
       context: .
-      dockerfile: resources/server/FastApiDockerfile
+      dockerfile: docker/FastApiDockerfile
     container_name: fastapi
     ports:
       - "8000:8000"
@@ -11,7 +11,7 @@ services:
     depends_on:
       - ollama
       - redis
-    restart: unless-stopped
+    restart: always
 
   redis:
     image: "redis:latest"
@@ -20,14 +20,14 @@ services:
     expose:
       - "6379"
     command: ["redis-server"]
-    restart: unless-stopped
+    restart: always
 
   ollama:
     build:
       context: .
-      dockerfile: resources/server/OllamaDockerfile
+      dockerfile: docker/OllamaDockerfile
     container_name: ollama
     hostname: ollama
     expose:
       - "11434"
-    restart: unless-stopped
+    restart: always

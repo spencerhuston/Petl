@@ -1,6 +1,5 @@
 import os
 import re
-import subprocess
 from pathlib import Path
 from typing import List
 
@@ -11,8 +10,8 @@ from langchain_ollama import OllamaEmbeddings
 from markdown import markdown
 from ollama import ChatResponse, Client
 
-from server.config import Config
-from server.logger import logger
+from server.utils.config import Config
+from server.utils.logger import logger
 
 
 def markdown_to_text(markdown_text: str) -> str:

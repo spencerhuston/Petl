@@ -5,8 +5,8 @@ from datetime import datetime
 
 import redis
 
-from server.config import Config
-from server.logger import logger
+from server.utils.config import Config
+from server.utils.logger import logger
 
 logger.info("Starting Redis client")
 redis_client = redis.Redis(host=Config.REDIS.URL, port=Config.REDIS.PORT, db=Config.REDIS.DB, decode_responses=True)
