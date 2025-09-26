@@ -30,7 +30,7 @@ operators. Usual operator precedence takes place.
 ---
 
 ## Other
-- ```++``` Used for concatenating 2 identically-typed [iterable](./collections.md)-values
+- ```++``` Used for concatenating 2 identically-typed [iterable](collections.md)-values
 together, preserving element order, with the same operator precedence as ```+``` and ```-```
 ```
 let a = [1, 2, 3];

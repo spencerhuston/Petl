@@ -41,7 +41,7 @@ def walk_files(directory: Path) -> List[str]:
 
 def get_context() -> List[str]:
     logger.info("Fetching context")
-    context_list = [*walk_files(Path("docs")), *walk_files(Path("resources/examples/programs"))]
+    context_list = [*walk_files(Path("resources/docs")), *walk_files(Path("resources/examples/programs"))]
     logger.info("Successfully retrieved context")
     return context_list
 

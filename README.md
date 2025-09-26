@@ -22,20 +22,20 @@ small sets of data, or for prototyping larger dataset processing via subsets.
 ---
 
 - Basics
-  - [REPL and Comments](docs/petl/basics/repl_comments.md)
-  - [Variables and Primitve Types](docs/petl/basics/variables_and_prims.md)
-  - [Arithmetic and Boolean Operations](docs/petl/basics/arith_bool_ops.md)
-  - [Flow Control](docs/petl/basics/flow_control.md)
-  - [Collections](docs/petl/basics/collections.md)
-  - [Lambdas](docs/petl/basics/lambdas.md)
+  - [REPL and Comments](resources/docs/petl/basics/repl_comments.md)
+  - [Variables and Primitve Types](resources/docs/petl/basics/variables_and_prims.md)
+  - [Arithmetic and Boolean Operations](resources/docs/petl/basics/arith_bool_ops.md)
+  - [Flow Control](resources/docs/petl/basics/flow_control.md)
+  - [Collections](resources/docs/petl/basics/collections.md)
+  - [Lambdas](resources/docs/petl/basics/lambdas.md)
 - Core
-  - [Pattern Matching](docs/petl/core/pattern_matching.md)
-  - [Tables and Schemas](docs/petl/core/tables_schemas.md)
-  - [PQL](docs/petl/core/queries.md)
-  - [Other](docs/petl/core/other.md)
+  - [Pattern Matching](resources/docs/petl/core/pattern_matching.md)
+  - [Tables and Schemas](resources/docs/petl/core/tables_schemas.md)
+  - [PQL](resources/docs/petl/core/queries.md)
+  - [Other](resources/docs/petl/core/other.md)
     * ```union```-types
     * Ranges
     * Type-aliasing
-- [Builtin Functions](docs/petl/builtin/builtin.md)
+- [Builtin Functions](resources/docs/petl/builtin/builtin.md)
 
 ---

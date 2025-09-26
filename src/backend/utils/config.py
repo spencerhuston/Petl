@@ -13,7 +13,7 @@ def load_config():
         config_path = "ecs"
     elif os.getenv("RUNNING_DOCKER"):
         config_path = "docker"
-    config_path = Path(f"{cwd}/resources/config/services_{config_path}.yaml")
+    config_path = Path(f"{cwd}/infrastructure/config/services_{config_path}.yaml")
     try:
         with open(config_path, 'r') as config_file:
             return yaml.safe_load(config_file)

@@ -29,7 +29,7 @@ to the interpreter's working directory and ".csv" is automatically added
 
 ```join(t1: table, t2: table, cs: list[string], q: string) -> table```<br>
 Creates a new ```table``` from the inner-join of tables ```t1``` and ```t2```. More details
-are available on the [Queries](../core/queries.md) page
+are available on the [Queries](docs/petl/core/queries.md) page
 
 **Notes**
 1. Only the columns listed in ```cs``` are kept
@@ -49,7 +49,7 @@ Appends one or more rows to table ```t```
 
 ```select(t: table, cs: list[string], q: string) -> table```<br>
 Selects one or more columns in list ```cs``` that pass the PQL query ```q```. More details
-are available on the [Queries](../core/queries.md) page
+are available on the [Queries](docs/petl/core/queries.md) page
 
 **Notes**
 1. Only the columns listed in ```cs``` are kept

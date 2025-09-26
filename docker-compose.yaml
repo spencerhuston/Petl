@@ -2,7 +2,7 @@ services:
   fastapi:
     build:
       context: .
-      dockerfile: docker/FastApiDockerfile
+      dockerfile: infrastructure/docker/FastApiDockerfile
     container_name: fastapi
     ports:
       - "8000:8000"
@@ -25,7 +25,7 @@ services:
   ollama:
     build:
       context: .
-      dockerfile: docker/OllamaDockerfile
+      dockerfile: infrastructure/docker/OllamaDockerfile
     container_name: ollama
     hostname: ollama
     expose:

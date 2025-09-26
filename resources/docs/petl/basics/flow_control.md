@@ -8,7 +8,7 @@
 ```
 if (<condition>) { <statement> } [else { <statement> }]
 ```
-As stated in the [variables](./variables_and_prims.md) section, all statements implicitly 
+As stated in the [variables](variables_and_prims.md) section, all statements implicitly 
 return a value, including ```if's```. Due to the ```else``` block being-optional, 
 if only the ```if```is present, the entire statement will return a ```none``` type.
 
@@ -43,7 +43,7 @@ for <iterator name> in <iterable statement> {
 
 Petl ```for```-loops are side-effect only, meaning they have no return value 
 (implicitly return ```none```). **Note** that the iterator can only be constructed by the 
-```<iterable statement>```, which must return an [iterable-type](./collections.md).
+```<iterable statement>```, which must return an [iterable-type](collections.md).
 
 #### Examples
 

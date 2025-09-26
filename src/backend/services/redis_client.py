@@ -24,7 +24,7 @@ DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 def cleanup():
-    current_session_ids = list(map(lambda session_id: session_id.decode('utf-8'), redis_client.scan_iter()))
+    current_session_ids = list(map(lambda session_id: session_id, redis_client.scan_iter()))
     all_session_ids = os.listdir(Config.CSV.DIRECTORY)
     expired_session_ids = list(set(current_session_ids) - set(all_session_ids))
 
