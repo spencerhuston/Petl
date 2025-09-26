@@ -9,7 +9,7 @@ from backend.utils.config import Config
 from backend.utils.logger import logger
 
 logger.info("Starting Redis client")
-redis_client = redis.Redis(host=Config.REDIS.URL, port=Config.REDIS.PORT, db=Config.REDIS.DB, decode_responses=True)
+redis_client = redis.Redis(host=Config.REDIS.HOST, port=Config.REDIS.PORT, db=Config.REDIS.DB, decode_responses=True)
 try:
     redis_client.ping()
 except ConnectionError as redis_client_connection_error:

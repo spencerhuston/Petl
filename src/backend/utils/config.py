@@ -8,10 +8,12 @@ cwd = Path(os.getcwd())
 
 
 def load_config():
-    config_path = "services"
-    if not os.getenv("RUNNING_DOCKER"):
-        config_path += "_local"
-    config_path = Path(f"{cwd}/resources/config/{config_path}.yaml")
+    config_path = "local"
+    if os.getenv("RUNNING_ECS"):
+        config_path = "ecs"
+    elif os.getenv("RUNNING_DOCKER"):
+        config_path = "docker"
+    config_path = Path(f"{cwd}/resources/config/services_{config_path}.yaml")
     try:
         with open(config_path, 'r') as config_file:
             return yaml.safe_load(config_file)
@@ -25,15 +27,18 @@ config: dict = load_config()
 class Config:
     class MODELS:
         __default = {
+            "host": "localhost",
+            "port": 11434,
+            "enabled": False,
             "core": "qwen2.5:7b",
-            "embed": "nomic-embed-text",
-            "url": "http://localhost",
-            "port": 11434
+            "embed": "nomic-embed-text"
         }
+        HOST: str = config.get("models", __default)["host"]
+        PORT: int = config.get("models", __default)["port"]
+        ENABLED: bool = config.get("models", __default)["enabled"]
         CORE: str = config.get("models", __default)["core"]
         EMBED: str = config.get("models", __default)["embed"]
-        HOST: str = config.get("models", __default)["url"]
-        PORT: int = config.get("models", __default)["port"]
+
         URL: str = f"http://{HOST}:{PORT}"
 
     class CSV:
@@ -64,7 +69,7 @@ class Config:
             "port": 6379,
             "db": 0
         }
-        URL: str = config.get("redis", __default)["host"]
+        HOST: str = config.get("redis", __default)["host"]
         PORT: int = config.get("redis", __default)["port"]
         DB: int = config.get("redis", __default)["db"]
         EXPIRE_SECONDS: int = config.get("redis", __default)["expire_seconds"]

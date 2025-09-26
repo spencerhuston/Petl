@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from bs4 import BeautifulSoup
 from fastapi import HTTPException, status
@@ -47,24 +47,25 @@ def get_context() -> List[str]:
 
 
 def construct_vector_store():
-    embeddings = OllamaEmbeddings(
-        model=Config.MODELS.EMBED,
-        base_url=Config.MODELS.URL
-    )
+    retriever: Optional[VectorStoreRetriever] = None
+    if Config.MODELS.ENABLED:
+        embeddings = OllamaEmbeddings(
+            model=Config.MODELS.EMBED,
+            base_url=Config.MODELS.URL
+        )
 
-    logger.info("Constructing vector store")
-    retriever = InMemoryVectorStore.from_texts(
-        context,
-        embedding=embeddings
-    ).as_retriever()
-    logger.info("Vector store constructed")
-
+        logger.info("Constructing vector store")
+        retriever = InMemoryVectorStore.from_texts(
+            context,
+            embedding=embeddings
+        ).as_retriever()
+        logger.info("Vector store constructed")
     return retriever
 
 
 context = get_context()
-vectorStoreRetriever: VectorStoreRetriever = construct_vector_store()
-ollama_client = Client(host=Config.MODELS.URL)
+vectorStoreRetriever: Optional[VectorStoreRetriever] = construct_vector_store()
+ollama_client: Optional[Client] = Client(host=Config.MODELS.URL) if Config.MODELS.ENABLED else None
 
 
 class Prompt:

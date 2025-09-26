@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -32,6 +33,8 @@ def on_exit():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    os.makedirs(Config.CSV.DIRECTORY, exist_ok=True)
+
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=cleanup, trigger="interval", seconds=Config.CLEANUP.INTERVAL_SECONDS)
     scheduler.start()
@@ -53,11 +56,10 @@ def verify_user(petl_cookie: Union[str, None] = Cookie(None)):
                             detail="Unauthorized: No session cookie found.")
 
 
-@app.get('/', status_code=status.HTTP_201_CREATED)
+@app.get('/start', status_code=status.HTTP_201_CREATED)
 def start_user_session(response: Response, petl_cookie: Union[str, None] = Cookie(None)):
     if not petl_cookie:
-        #session_id = str(uuid.uuid4())
-        session_id = "TEST_COOKIE"
+        session_id = str(uuid.uuid4())
         logger.info("New session ID: " + session_id)
         redis_client.setex(name=session_id,
                            time=Config.REDIS.EXPIRE_SECONDS,
@@ -118,6 +120,9 @@ def delete(delete_csv_model: DeleteCsvModel, petl_cookie: Union[str, None] = Coo
 
 @app.post('/assistant', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_user)])
 async def assistant(assistant_model: AssistantModel):
-    message = assistant_model.message
-    logger.info(f"Received chat message:\n{message}")
-    return await get_llm_response(message)
+    if Config.MODELS.ENABLED:
+        message = assistant_model.message
+        logger.info(f"Received chat message:\n{message}")
+        return await get_llm_response(message)
+    else:
+        return "Model interaction is currently disabled."

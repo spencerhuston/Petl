@@ -1,8 +1,8 @@
 models:
   host: localhost
   port: 11434
-  enabled: true
-  core: qwen2.5:7b
+  enabled: false
+  core: qwen2.5:1.5b
   embed: nomic-embed-text
 
 csv:
