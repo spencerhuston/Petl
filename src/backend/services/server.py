@@ -56,6 +56,19 @@ def verify_user(petl_cookie: Union[str, None] = Cookie(None)):
                             detail="Unauthorized: No session cookie found.")
 
 
+@app.get('/', status_code=status.HTTP_200_OK)
+def root():
+    return {
+        "status": "ok",
+        "message": "Welcome to the PetlLang API. Please start a session at /start."
+    }
+
+
+@app.get('/health', status_code=status.HTTP_200_OK)
+def health():
+    return {"status": "ok"}
+
+
 @app.get('/start', status_code=status.HTTP_201_CREATED)
 def start_user_session(response: Response, petl_cookie: Union[str, None] = Cookie(None)):
     if not petl_cookie:
