@@ -1,16 +1,14 @@
-import asyncio
 import json
 import os
 import shutil
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
-from http.client import REQUEST_TIMEOUT
 from pathlib import Path
 from typing import Union
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI, status, Depends, Cookie, Request, Response, HTTPException
+from fastapi import FastAPI, status, Depends, Cookie, Response, HTTPException
 
 from petllang.builtins import table_petl_builtins
 from petllang.execution.execute import execute_petl_script_direct
@@ -50,15 +48,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.secret_key = os.urandom(32)
-
-
-@app.middleware('http')
-async def timeout_middleware(request: Request, call_next):
-    try:
-        return await asyncio.wait_for(call_next(request), timeout=REQUEST_TIMEOUT)
-    except asyncio.TimeoutError:
-        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                            detail="Request exceeded the time limit for processing.")
 
 
 def verify_user(petl_cookie: Union[str, None] = Cookie(None)):
@@ -113,7 +102,7 @@ async def interpret(interpreter_model: InterpreterModel, petl_cookie: Union[str,
     table_petl_builtins.session_key = petl_cookie
 
     try:
-        return await execute_petl_script_direct(code_input)
+        return {"result": await execute_petl_script_direct(code_input)}
     except Exception as interpret_exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Interpretation error: {interpret_exception}")
@@ -123,7 +112,7 @@ async def interpret(interpreter_model: InterpreterModel, petl_cookie: Union[str,
 def history(petl_cookie: Union[str, None] = Cookie(None)):
     _, session_history = get_session(petl_cookie, HISTORY_KEY)
     logger.info(f"Fetching interpreter history: {session_history}")
-    return session_history
+    return {"history": session_history}
 
 
 @app.delete('/csv', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_user)])
@@ -131,14 +120,14 @@ def delete(delete_csv_model: DeleteCsvModel, petl_cookie: Union[str, None] = Coo
     name = delete_csv_model.name
     directory = Path(f"{Config.CSV.DIRECTORY}/{petl_cookie}")
     delete_csv(get_csv_path(directory, name), petl_cookie)
-    return os.listdir(directory)
+    return {"csvs": os.listdir(directory)}
 
 
 @app.post('/assistant', status_code=status.HTTP_200_OK, dependencies=[Depends(verify_user)])
 async def assistant(assistant_model: AssistantModel):
+    response = "Model interaction is currently disabled."
     if Config.MODELS.ENABLED:
         message = assistant_model.message
         logger.info(f"Received chat message:\n{message}")
-        return await get_llm_response(message)
-    else:
-        return "Model interaction is currently disabled."
+        response = await get_llm_response(message)
+    return {"response": response}
