@@ -4,6 +4,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Dict, Optional
 
+from backend.utils.config import Config
 from petllang.builtins.builtin_definitions import Builtin, from_string_value
 from petllang.phases.interpreter.definitions.value import *
 from petllang.phases.interpreter.environment import InterpreterEnvironment
@@ -12,8 +13,7 @@ from petllang.phases.lexer.definitions.keyword_petl import Keyword
 from petllang.phases.parser.defintions.expression import Application
 from petllang.query.executor import execute_query
 
-
-session_directory: Optional[str] = None
+session_key: Optional[str] = None
 
 
 # Join and Select helper functions #
@@ -140,8 +140,9 @@ class ReadCsv(Builtin):
                         schema_value.values))
 
             path = Path(path_value.value + ".csv")
-            if session_directory:
-                path = Path(f"{session_directory}/{path.name}")
+            if session_key:
+                #TODO sanitize path_value to prevent directory traversal attacks
+                path = Path(f"{Config.CSV.DIRECTORY}/{session_key}/{path.name}")
             try:
                 with open(path, mode='r') as csv_file:
                     csv_file_rows: List[List[str]] = list(csv.reader(csv_file))
@@ -162,7 +163,7 @@ class ReadCsv(Builtin):
 
                             return TableValue(TableType(schema_value.petl_type), schema_value, rows)
             except FileNotFoundError as _:
-                failed_path = Path(f"{path_value.value}.csv") if not session_directory else path
+                failed_path = Path(f"{path_value.value}.csv") if not session_key else path
                 error(f"CSV file not found: {failed_path}", application.token)
             except Exception as read_csv_exception:
                 error(f"Failed to read CSV: {path_value.value}: {read_csv_exception}", application.token)
@@ -182,8 +183,8 @@ class WriteCsv(Builtin):
         table_value: PetlValue = environment.get("table", application.token, error)
         path_value: PetlValue = environment.get("path", application.token, error)
         header_value: PetlValue = environment.get("header", application.token, error)
-        if isinstance(path_value, StringValue) and isinstance(table_value, TableValue) and isinstance(header_value,
-                                                                                                      BoolValue):
+
+        if isinstance(path_value, StringValue) and isinstance(table_value, TableValue) and isinstance(header_value, BoolValue):
             header = []
             if header_value.value:
                 header = [v[0].value for v in table_value.schema.values]
@@ -191,11 +192,15 @@ class WriteCsv(Builtin):
             for row in table_value.rows:
                 if isinstance(row, TupleValue):
                     rows.append(list(map(lambda v: v.value, row.values)))
-            try:
-                if session_directory:
-                    raise Exception("\'writeCsv\' builtin is disabled in server mode")
 
-                path = Path(f"{path_value.value}.csv")
+            path = Path(f"{path_value.value}.csv")
+            if session_key:
+                #TODO sanitize path_value to prevent directory traversal attacks
+                directory = Path(f"{Config.CSV.DIRECTORY}/{session_key}")
+                if not directory.exists():
+                    directory.mkdir(parents=True, exist_ok=True)
+                path_value = StringValue(f"{directory}/{path_value.value}")
+            try:
                 with open(path, "w", newline='') as csv_file:
                     csv_writer = csv.writer(csv_file)
                     if header:

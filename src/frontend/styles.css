@@ -1,39 +1,57 @@
 h1 {
   font-family: Consolas, sans-serif;
 }
-#editor {
-  width: 50%;
-  height: 25%;
+#editorTextArea {
+  width: 60%;
+  height: 35%;
   padding: 12px;
   box-sizing: border-box;
   border: 2px solid #ccc;
   border-radius: 4px;
   background-color: #f8f8f8;
-  font-size: 16px;
+  font-size: 18px;
   resize: none;
   font-family: Consolas, monospace;
-  margin-bottom: 4px;
 }
-#output {
+#currentCsvTextArea {
   width: 20%;
+  height: 10%;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  background-color: #f0f0f0;
+  font-size: 18px;
+  resize: none;
+  font-family: Consolas, monospace;
+}
+#historySelect {
+  text-align: center;
+  width: 60%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  color: #333;
+  font-family: Consolas, sans-serif;
+  font-size: 18px;
+  margin-bottom: 2%;
+}
+#runButton {
+  font-size: 20px;
+  font-family: Consolas, sans-serif;
+  padding: 15px 30px;
+  margin-bottom: 3%;
+}
+#outputTextArea {
+  width: 40%;
   height: 25%;
   padding: 12px;
   box-sizing: border-box;
   border: 2px solid #ccc;
   border-radius: 4px;
   background-color: #f0f0f0;
-  font-size: 16px;
+  font-size: 18px;
   resize: none;
   font-family: Consolas, monospace;
-}
-button {
-  margin-bottom: 30px;
-}
-.form-container {
-  display: flex;
-  justify-content: space-around;
-  gap: 20px;
-}
-.form-container form {
-  padding: 15px;
 }

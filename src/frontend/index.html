@@ -1,2 +1,28 @@
 <link href="./styles.css" rel="stylesheet" />
+<title>Petl Editor</title>
 <h1>Petl Language Interactive Editor</h1>
+<h4 style="font-family: Consolas, monospace;">
+    Documentation
+    <br>
+    <a href="https://github.com/spencerhuston/Petl/blob/main/README.md" target=”_blank”>
+        https://github.com/spencerhuston/Petl/blob/main/README.md
+    </a>
+</h4>
+
+<div class="container">
+    <form>
+        <textarea id="editorTextArea" placeholder='println("Hello World!")' spellcheck="false"></textarea>
+        <textarea id="currentCsvTextArea" placeholder="Active CSVs..." readonly spellcheck="false"></textarea>
+    </form>
+</div>
+<div>
+    <form>
+        <select id="historySelect" onchange="loadHistoryOption()">
+            <option value="" selected disabled>-- Select from history --</option>
+        </select>
+        <br>
+        <button id="runButton" onclick="runPetlCode()">Run</button>
+        <br>
+        <textarea id="outputTextArea" placeholder="Output will be displayed here..." readonly spellcheck="false"></textarea>
+    </form>
+</div>

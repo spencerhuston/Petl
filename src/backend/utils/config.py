@@ -62,6 +62,7 @@ class Config:
             "interval_seconds": 900
         }
         INTERVAL_SECONDS: int = config.get("cleanup", __default)["interval_seconds"]
+        HISTORY_MAX_ENTRIES: int = 10
 
     class REDIS:
         __default = {
